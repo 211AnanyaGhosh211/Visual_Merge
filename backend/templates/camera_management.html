@@ -1,0 +1,503 @@
+<html>
+ <head>
+  <title>
+   Camera Management
+  </title>
+  <script src="https://cdn.tailwindcss.com">
+  </script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" src="style.css"/>
+  <style>
+   body {
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 34px;
+            height: 20px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(14px);
+        }
+        .toggle-checkbox:checked {
+            @apply: right-0 border-blue-400;
+            right: 0;
+            border-color: #60A5FA;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            @apply: bg-blue-400;
+            background-color: #60A5FA;
+        }
+
+  </style>
+ </head>
+ <body class="bg-gray-100 flex">
+  <div class="w-64 bg-yellow-400 text-black p-5 h-screen rounded-lg">
+    <img alt="EFRAME Logo" class="w-full h-auto mb-5 rounded-lg" src="{{ url_for('static', filename='eframe-logo.png') }}"/>
+   <ul class="space-y-3">
+    <li class="hover:bg-black hover:text-white p-2 rounded-lg">
+        <button onclick="navigateTo('dashboard.html')" class="flex items-center">
+            <i class="fas fa-tachometer-alt mr-3"></i> Dashboard
+        </button>
+    </li>
+    <li class="hover:bg-black hover:text-white p-2 rounded-lg">
+        <button onclick="navigateTo('employee_config.html')" class="flex items-center">
+            <i class="fas fa-users mr-3"></i> Employee Configurations
+        </button>
+    </li>
+    <li class="hover:bg-black hover:text-white p-2 rounded-lg">
+        <button onclick="navigateTo('model_management.html')" class="flex items-center">
+            <i class="fas fa-cogs mr-3"></i> Model Management
+        </button>
+    </li>
+    <li class="hover:bg-black hover:text-white p-2 rounded-lg">
+        <button onclick="navigateTo('model_mapping.html')" class="flex items-center">
+            <i class="fas fa-cube mr-3"></i> Model Mapping
+        </button>
+    </li>
+    <li class="hover:bg-black hover:text-white p-2 rounded-lg">
+        <button onclick="navigateTo('camera_management.html')" class="flex items-center">
+            <i class="fas fa-cog mr-3"></i> Camera Management
+        </button>
+    </li>
+    <li class="hover:bg-black hover:text-white p-2 rounded-lg">
+        <button onclick="navigateTo('camera_dashboard.html')" class="flex items-center">
+            <i class="fas fa-camera mr-3"></i> Camera Dashboard
+        </button>
+    </li>
+    <li class="hover:bg-black hover:text-white p-2 rounded-lg">
+        <button onclick="navigateTo('notifications.html')" class="flex items-center">
+            <i class="fas fa-bell mr-3"></i> Notifications
+        </button>
+    </li>
+    <li class="hover:bg-black hover:text-white p-2 rounded-lg">
+        <button onclick="navigateTo('settings.html')" class="flex items-center">
+            <i class="fas fa-cog mr-3"></i> Settings
+        </button>
+    </li>
+</ul>
+  </div>
+  <div class="flex-grow bg-white p-5 rounded-lg ml-5" id="content">
+   <div class="flex justify-between items-center bg-yellow-400 text-black p-3 rounded-lg">
+    <h1 class="text-xl" id="header-title">
+     Camera Management
+    </h1>
+    <div class="flex items-center">
+     <span>
+      Super Admin
+     </span>
+     <button onclick="navigateTo('profile.html')" class="ml-3">
+        <img alt="User profile picture" class="ml-3 rounded-full w-10 h-10" src="https://placehold.co/40x40"/>
+      </button>
+    </div>
+   </div>
+   <div class="flex justify-between mt-5" id="main-content">
+   <div class="w-full bg-white p-5 rounded-lg shadow-lg">
+    <div class="flex justify-between items-center mb-4">
+<div class="flex space-x-2">
+<button class="bg-green-500 text-white px-4 py-2 rounded" onclick="addNewCamera()">
++ ADD NEW
+</button>
+<button class="bg-red-500 text-white px-4 py-2 rounded" onclick="deleteCheckedCameras()">
+Delete
+</button>
+</div>
+<div>
+<label class="mr-2" for="entries">
+Show
+</label>
+<select class="border rounded px-2 py-1" id="entries">
+<option>
+10
+</option>
+<option>
+25
+</option>
+<option>
+50
+</option>
+<option>
+100
+</option>
+</select>
+<span class="ml-2">
+entries
+</span>
+</div>
+</div>
+<table class="w-full text-left border-collapse" id="cameraTable">
+<thead>
+<tr class="bg-gray-200">
+<th class="p-2">
+<input type="checkbox"/>
+</th>
+<th class="p-2">
+Camera Name
+</th>
+<th class="p-2">
+Camera Ip
+</th>
+<th class="p-2">
+RTSP URL
+</th>
+<th class="p-2">
+Playback URL
+</th>
+<th class="p-2">
+Zone
+</th>
+<th class="p-2">
+Status
+</th>
+<th class="p-2">
+Action
+</th>
+</tr>
+</thead>
+<tbody>
+<tr class="border-b">
+<td class="p-2">
+<input type="checkbox"/>
+</td>
+<td class="p-2">
+Zone 1
+</td>
+<td class="p-2">
+192.168.0.6
+</td>
+<td class="p-2">
+rtsp://192.168.0.6/stream1
+</td>
+<td class="p-2">
+playback/zone1.mp4
+</td>
+<td class="p-2">
+Zone 1
+</td>
+<td class="p-2">
+<div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" id="toggle1" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer" for="toggle1">
+</label>
+</div>
+</td>
+<td class="p-2">
+<button class="text-yellow-500">
+<i class="fas fa-edit">
+</i>
+</button>
+<button class="text-red-500">
+<i class="fas fa-trash">
+</i>
+</button>
+</td>
+</tr>
+<tr class="border-b">
+<td class="p-2">
+<input type="checkbox"/>
+</td>
+<td class="p-2">
+Zone 2
+</td>
+<td class="p-2">
+192.168.0.4
+</td>
+<td class="p-2">
+rtsp://192.168.0.4/stream2
+</td>
+<td class="p-2">
+playback/zone2.mp4
+</td>
+<td class="p-2">
+Zone 2
+</td>
+<td class="p-2">
+<div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" id="toggle2" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer" for="toggle2">
+</label>
+</div>
+</td>
+<td class="p-2">
+<button class="text-yellow-500">
+<i class="fas fa-edit">
+</i>
+</button>
+<button class="text-red-500">
+<i class="fas fa-trash">
+</i>
+</button>
+</td>
+</tr>
+<tr class="border-b">
+<td class="p-2">
+<input type="checkbox"/>
+</td>
+<td class="p-2">
+Zone 3
+</td>
+<td class="p-2">
+192.168.0.5
+</td>
+<td class="p-2">
+rtsp://192.168.0.5/stream3
+</td>
+<td class="p-2">
+playback/zone3.mp4
+</td>
+<td class="p-2">
+Zone 3
+</td>
+<td class="p-2">
+<div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+<input class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" id="toggle3" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer" for="toggle3">
+</label>
+</div>
+</td>
+<td class="p-2">
+<button class="text-yellow-500">
+<i class="fas fa-edit">
+</i>
+</button>
+<button class="text-red-500">
+<i class="fas fa-trash">
+</i>
+</button>
+</td>
+</tr>
+<tr class="border-b">
+<td class="p-2">
+<input type="checkbox"/>
+</td>
+<td class="p-2">
+Zone 4
+</td>
+<td class="p-2">
+192.168.0.3
+</td>
+<td class="p-2">
+rtsp://192.168.0.3/stream4
+</td>
+<td class="p-2">
+playback/zone4.mp4
+</td>
+<td class="p-2">
+Zone 4
+</td>
+<td class="p-2">
+<div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" id="toggle4" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer" for="toggle4">
+</label>
+</div>
+</td>
+<td class="p-2">
+<button class="text-yellow-500">
+<i class="fas fa-edit">
+</i>
+</button>
+<button class="text-red-500">
+<i class="fas fa-trash">
+</i>
+</button>
+</td>
+</tr>
+<tr class="border-b">
+<td class="p-2">
+<input type="checkbox"/>
+</td>
+<td class="p-2">
+Zone 5
+</td>
+<td class="p-2">
+192.168.0.2
+</td>
+<td class="p-2">
+rtsp://192.168.0.2/stream5
+</td>
+<td class="p-2">
+playback/zone5.mp4
+</td>
+<td class="p-2">
+Zone 5
+</td>
+<td class="p-2">
+<div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+<input class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" id="toggle5" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer" for="toggle5">
+</label>
+</div>
+</td>
+<td class="p-2">
+<button class="text-yellow-500">
+<i class="fas fa-edit">
+</i>
+</button>
+<button class="text-red-500">
+<i class="fas fa-trash">
+</i>
+</button>
+</td>
+</tr>
+<tr class="border-b">
+<td class="p-2">
+<input type="checkbox"/>
+</td>
+<td class="p-2">
+Zone 6
+</td>
+<td class="p-2">
+192.168.0.1
+</td>
+<td class="p-2">
+rtsp://192.168.0.1/stream6
+</td>
+<td class="p-2">
+playback/zone6.mp4
+</td>
+<td class="p-2">
+Zone 6
+</td>
+<td class="p-2">
+<div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" id="toggle6" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer" for="toggle6">
+</label>
+</div>
+</td>
+<td class="p-2">
+<button class="text-yellow-500">
+<i class="fas fa-edit">
+</i>
+</button>
+<button class="text-red-500">
+<i class="fas fa-trash">
+</i>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="flex justify-between items-center mt-4">
+<span>
+Showing 1 - 6 of 6 items
+</span>
+<div>
+<label class="mr-2" for="entries">
+Show
+</label>
+<select class="border rounded px-2 py-1" id="entries">
+<option>
+10
+</option>
+<option>
+25
+</option>
+<option>
+50
+</option>
+<option>
+100
+</option>
+</select>
+<span class="ml-2">
+entries
+</span>
+</div>
+</div>
+</div>
+</div>
+   <div class="text-center mt-5 text-sm text-gray-600">
+    <p>
+     Copyright ©2025 &amp; Developed by
+     <a class="text-red-500 hover:underline" href="#">
+      Eframe Pvt. Ltd.
+     </a>
+    </p>
+   </div>
+  </div>
+  <script>
+    function addNewCamera() {
+    const table = document.getElementById('cameraTable').getElementsByTagName('tbody')[0];
+    const newRow = table.insertRow();
+    newRow.classList.add('border-b');
+    newRow.innerHTML = `
+      <td class="p-2"><input type="checkbox"/></td>
+      <td class="p-2">New Zone</td>
+      <td class="p-2">192.168.0.x</td>
+      <td class="p-2">rtsp://192.168.0.x/stream</td>
+      <td class="p-2">playback/newzone.mp4</td>
+      <td class="p-2">New Zone</td>
+      <td class="p-2">
+        <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+          <input class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" type="checkbox"/>
+          <label class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+        </div>
+      </td>
+      <td class="p-2">
+        <button class="text-yellow-500"><i class="fas fa-edit"></i></button>
+        <button class="text-red-500"><i class="fas fa-trash"></i></button>
+      </td>
+    `;
+   }
+
+   function deleteCheckedCameras() {
+    const table = document.getElementById('cameraTable').getElementsByTagName('tbody')[0];
+    const rows = table.getElementsByTagName('tr');
+    const rowsToDelete = [];
+    for (let i = 0; i < rows.length; i++) {
+      const checkbox = rows[i].getElementsByTagName('input')[0];
+      if (checkbox && checkbox.checked) {
+        rowsToDelete.push(rows[i]);
+      }
+    }
+    if (rowsToDelete.length > 0 && confirm('Are you sure you want to delete the selected cameras?')) {
+      rowsToDelete.forEach(row => row.remove());
+    }
+   }
+   
+   function navigateTo(url) {
+            window.location.href = url;
+        }
+  </script>
+ </body>
+</html>

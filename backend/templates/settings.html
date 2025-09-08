@@ -1,0 +1,98 @@
+<html>
+ <head>
+  <title>
+   Settings
+  </title>
+  <script src="https://cdn.tailwindcss.com">
+  </script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" src="style.css"/>
+  <style>
+   body {
+            font-family: 'Roboto', sans-serif;
+        }
+  </style>
+ </head>
+ <body class="bg-gray-100 flex">
+  <div class="w-64 bg-yellow-400 text-black p-5 h-screen rounded-lg">
+    <img alt="EFRAME Logo" class="w-full h-auto mb-5 rounded-lg" src="{{ url_for('static', filename='eframe-logo.png') }}"/>
+   <ul class="space-y-3">
+    <li class="hover:bg-black hover:text-white p-2 rounded-lg">
+        <button onclick="navigateTo('dashboard.html')" class="flex items-center">
+            <i class="fas fa-tachometer-alt mr-3"></i> Dashboard
+        </button>
+    </li>
+    <li class="hover:bg-black hover:text-white p-2 rounded-lg">
+        <button onclick="navigateTo('employee_config.html')" class="flex items-center">
+            <i class="fas fa-users mr-3"></i> Employee Configurations
+        </button>
+    </li>
+    <li class="hover:bg-black hover:text-white p-2 rounded-lg">
+        <button onclick="navigateTo('model_management.html')" class="flex items-center">
+            <i class="fas fa-cogs mr-3"></i> Model Management
+        </button>
+    </li>
+    <li class="hover:bg-black hover:text-white p-2 rounded-lg">
+        <button onclick="navigateTo('model_mapping.html')" class="flex items-center">
+            <i class="fas fa-cube mr-3"></i> Model Mapping
+        </button>
+    </li>
+    <li class="hover:bg-black hover:text-white p-2 rounded-lg">
+        <button onclick="navigateTo('camera_management.html')" class="flex items-center">
+            <i class="fas fa-cog mr-3"></i> Camera Management
+        </button>
+    </li>
+    <li class="hover:bg-black hover:text-white p-2 rounded-lg">
+        <button onclick="navigateTo('camera_dashboard.html')" class="flex items-center">
+            <i class="fas fa-camera mr-3"></i> Camera Dashboard
+        </button>
+    </li>
+    <li class="hover:bg-black hover:text-white p-2 rounded-lg">
+        <button onclick="navigateTo('notifications.html')" class="flex items-center">
+            <i class="fas fa-bell mr-3"></i> Notifications
+        </button>
+    </li>
+    <li class="hover:bg-black hover:text-white p-2 rounded-lg">
+        <button onclick="navigateTo('settings.html')" class="flex items-center">
+            <i class="fas fa-cog mr-3"></i> Settings
+        </button>
+    </li>
+</ul>
+  </div>
+  <div class="flex-grow bg-white p-5 rounded-lg ml-5" id="content">
+    <div class="flex justify-between items-center bg-yellow-400 text-black p-3 rounded-lg">
+     <h1 class="text-xl" id="header-title">
+      Settings
+     </h1>
+     <div class="flex items-center">
+      <span>
+       Super Admin
+      </span>
+      <button onclick="navigateTo('profile.html')" class="ml-3">
+        <img alt="User profile picture" class="ml-3 rounded-full w-10 h-10" src="https://placehold.co/40x40"/>
+      </button>
+     </div>
+    </div>
+    <div class="flex justify-between mt-5" id="main-content">
+        <div class="w-full bg-white p-5 rounded-lg shadow-lg">
+            <h2 class="text-lg mb-2">Settings</h2>
+        </div>
+    </div>
+    <div class="text-center mt-5 text-sm text-gray-600">
+     <p>
+      Copyright ©2025 &amp; Developed by
+      <a class="text-red-500 hover:underline" href="#">
+       Eframe Pvt. Ltd.
+      </a>
+     </p>
+    </div>
+   </div>
+ 
+  <script>
+    function navigateTo(url) {
+            window.location.href = url;
+        }
+  </script>
+ </body>
+</html>
