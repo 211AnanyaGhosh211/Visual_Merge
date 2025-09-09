@@ -1,15 +1,10 @@
 import React, { useState } from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
+import {BrowserRouter as Router,Routes,Route,Navigate,} from "react-router-dom";
 import SimpleSidebar from "./Components/Sidebar_Component/SimpleSidebar";
 import CameraDashboard from "./pages/Camera_Dashboard/CameraDashboard";
 import EmployeeConfig from "./pages/EmployeeConfigurationPage/EmployeeConfig";
 import Notifications from "./pages/NotificationPage/Notifications";
-import Settings from "./pages/SettingsPage/Settings";
+// import Settings from "./pages/SettingsPage/Settings";
 import ModelMapping from "./pages/ModelMappingPage/ModelMapping";
 import ModelManagement from "./pages/ModelManagementPage/ModelManagement";
 import Dashboard from "./pages/dashboard/Dashboard";
@@ -64,7 +59,7 @@ function AppRoutes() {
               element={<EmployeeConfig />}
             />
             <Route path="/notifications" element={<Notifications />} />
-            <Route path="/settings" element={<Settings />} />
+            {/* <Route path="/settings" element={<Settings />} /> */}
             <Route path="/model-mapping" element={<ModelMapping />} />
             <Route path="/model-management" element={<ModelManagement />} />
             <Route path="/camera-management" element={<CameraManagement />} />

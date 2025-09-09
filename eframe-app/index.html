@@ -2,7 +2,21 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/x-icon" href="/eframe-large.ico" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/eframe-large-16x16.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/eframe-large-32x32.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/eframe-large-48x48.png" />
+    <link rel="icon" type="image/png" sizes="64x64" href="/eframe-large-64x64.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/eframe-large-64x64.png" />
+    <!-- Debug: Check if favicon is loading -->
+    <script>
+      console.log('Favicon should be loading from /eframe-large.ico');
+      // Force favicon reload
+      const link = document.querySelector('link[rel="icon"]');
+      if (link) {
+        link.href = link.href + '?t=' + Date.now();
+      }
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <title>EFRAME - Camera Dashboard</title>
