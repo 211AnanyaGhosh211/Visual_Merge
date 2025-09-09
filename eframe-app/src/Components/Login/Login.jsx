@@ -4,6 +4,7 @@ import { useAuth } from "../../contexts/AuthContext";
 const Login = () => {
   const [formData, setFormData] = useState({
     adminId: "",
+    username: "",
     password: "",
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -25,8 +26,8 @@ const Login = () => {
     setIsLoading(true);
     setError("");
 
-    if (!formData.adminId || !formData.password) {
-      setError("Please enter both Employee ID and Password");
+    if (!formData.adminId || !formData.username || !formData.password) {
+      setError("Please enter Admin ID, Username and Password");
       setIsLoading(false);
       return;
     }
@@ -38,7 +39,8 @@ const Login = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          employeeId: formData.adminId,
+          adminId: formData.adminId,
+          username: formData.username,
           password: formData.password,
         }),
       });
@@ -104,6 +106,20 @@ const Login = () => {
                 name="adminId"
                 placeholder="Admin ID"
                 value={formData.adminId}
+                onChange={handleChange}
+                disabled={isLoading}
+                className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent placeholder-gray-400 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                required
+              />
+            </div>
+
+            {/* Username Input */}
+            <div>
+              <input
+                type="text"
+                name="username"
+                placeholder="Username"
+                value={formData.username}
                 onChange={handleChange}
                 disabled={isLoading}
                 className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent placeholder-gray-400 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"

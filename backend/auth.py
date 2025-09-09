@@ -30,8 +30,8 @@ auth_db = AuthDBUtil(host='localhost', user='root',
 @auth_bp.route('/login', methods=['POST', 'OPTIONS'])
 def login():
     """
-    Login endpoint that authenticates users against the database
-    Expects JSON payload: {"employeeId": "7", "password": "plaintext_password"}
+    Login endpoint that authenticates users against the admins table
+    Expects JSON payload: {"adminId": "1", "password": "plaintext_password"}
     """
     # Handle preflight OPTIONS request
     if request.method == 'OPTIONS':
@@ -45,42 +45,43 @@ def login():
         data = request.get_json()
 
         # Validate required fields
-        if not data or 'employeeId' not in data or 'password' not in data:
+        if not data or 'adminId' not in data or 'username' not in data or 'password' not in data:
             return jsonify({
                 "success": False,
-                "error": "Missing required fields: employeeId and password"
+                "error": "Missing required fields: adminId, username and password"
             }), 400
 
-        employee_id = data['employeeId']
+        admin_id = data['adminId']
+        username = data['username']
         password = data['password']
 
         # Validate input
-        if not employee_id or not password:
+        if not admin_id or not username or not password:
             return jsonify({
                 "success": False,
-                "error": "Employee ID and password cannot be empty"
+                "error": "Admin ID, username and password cannot be empty"
             }), 400
 
         # Hash the provided password using SHA2 (SHA-256)
         hashed_password = hashlib.sha256(password.encode('utf-8')).hexdigest()
 
-        # Query database for employee
+        # Query database for admin
         query = """
-        SELECT EmployeeName, EmployeeID, Password 
-        FROM EmployeeInfo.Registered_Employees 
-        WHERE EmployeeID = %s
+        SELECT AdminID, Username, Password, Role 
+        FROM EmployeeInfo.Admins 
+        WHERE AdminID = %s AND Username = %s
         """
 
-        auth_db.cursor.execute(query, (employee_id,))
+        auth_db.cursor.execute(query, (admin_id, username))
         result = auth_db.cursor.fetchone()
 
         if not result:
             return jsonify({
                 "success": False,
-                "error": f"Employee ID '{employee_id}' is not present in the database"
+                "error": f"Admin ID '{admin_id}' with username '{username}' is not present in the database"
             }), 401
 
-        employee_name, db_employee_id, db_password = result
+        db_admin_id, db_username, db_password, role = result
 
         # Compare hashed passwords
         if hashed_password == db_password:
@@ -88,8 +89,9 @@ def login():
                 "success": True,
                 "message": "Login successful",
                 "user": {
-                    "employeeId": db_employee_id,
-                    "employeeName": employee_name,
+                    "adminId": db_admin_id,
+                    "username": username,
+                    "role": role,
                     "loginTime": str(datetime.now())
                 }
             }), 200
