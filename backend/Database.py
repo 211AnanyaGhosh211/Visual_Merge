@@ -1,6 +1,7 @@
 import mysql.connector
 from flask import Flask, request, jsonify, Blueprint
 
+
 class DBUtil:
     def __init__(self, host, user, password, database):
         try:
@@ -15,16 +16,20 @@ class DBUtil:
         except mysql.connector.Error as err:
             print(f"Error: {err}")
 
+
 app = Flask(__name__)
-db_util = DBUtil(host='localhost', user='root', password='12345', database='EmployeeInfo')
+db_util = DBUtil(host='localhost', user='root',
+                 password='12345', database='EmployeeInfo')
 database_bp = Blueprint('database_bp', __name__)
+
 
 def is_valid_int(value):
     try:
         return int(value)
     except (ValueError, TypeError):
         return None
-    
+
+
 @database_bp.route('/del_employee', methods=['DELETE'])
 def del_employee():
     data = request.get_json()
@@ -44,7 +49,7 @@ def del_employee():
         return jsonify({"message": "Employee records deleted successfully"})
     except mysql.connector.Error as err:
         print(f"Error: {err}")
-        return jsonify({"error": str(err)}), 500   
+        return jsonify({"error": str(err)}), 500
 
 
 @database_bp.route('/get_camera', methods=['GET'])
@@ -60,20 +65,24 @@ def get_camera():
     except mysql.connector.Error as err:
         return jsonify({"error": str(err)}), 500
 
+
 @database_bp.route('/set_camera', methods=['POST'])
 def set_camera():
     data = request.get_json()
-    required_fields = ['camera_id','camera_name', 'zone_name', 'ip_address', 'streaming_url', 'playback_url']
+    required_fields = ['camera_id', 'camera_name', 'zone_name',
+                       'ip_address', 'streaming_url', 'playback_url']
     if not all(field in data for field in required_fields):
         return jsonify({"error": "Missing required fields"}), 400
     try:
         query = "INSERT INTO EmployeeInfo.Camera (Camera_id,Camera_name, Zone_name, IP_address, Streaming_URL, Playback_URL) VALUES (%s, %s, %s, %s, %s, %s)"
-        db_util.cursor.execute(query, (data['camera_id'],data['camera_name'], data['zone_name'], data['ip_address'], data['streaming_url'], data['playback_url']))
+        db_util.cursor.execute(query, (data['camera_id'], data['camera_name'], data['zone_name'],
+                               data['ip_address'], data['streaming_url'], data['playback_url']))
         db_util.conn.commit()
         return jsonify({"message": "Camera inserted successfully"})
     except mysql.connector.Error as err:
         return jsonify({"error": str(err)}), 500
-    
+
+
 @database_bp.route('/del_camera', methods=['DELETE'])
 def del_camera():
     data = request.get_json()
@@ -95,6 +104,7 @@ def del_camera():
         print(f"Error: {err}")
         return jsonify({"error": str(err)}), 500
 
+
 @database_bp.route('/get_model', methods=['GET'])
 def get_model():
     model_id = is_valid_int(request.args.get('model_id'))
@@ -108,18 +118,21 @@ def get_model():
     except mysql.connector.Error as err:
         return jsonify({"error": str(err)}), 500
 
+
 @database_bp.route('/set_model', methods=['POST'])
 def set_model():
     data = request.get_json()
-    if not all(field in data for field in ['model_id','model_name', 'model_use']):
+    if not all(field in data for field in ['model_id', 'model_name', 'model_use']):
         return jsonify({"error": "Missing required fields"}), 400
     try:
         query = "INSERT INTO EmployeeInfo.Models (Model_id, Modelname, Model_Use) VALUES (%s, %s, %s)"
-        db_util.cursor.execute(query, (data['model_id'],data['model_name'], data['model_use']))
+        db_util.cursor.execute(
+            query, (data['model_id'], data['model_name'], data['model_use']))
         db_util.conn.commit()
         return jsonify({"message": "Model inserted successfully"})
     except mysql.connector.Error as err:
         return jsonify({"error": str(err)}), 500
+
 
 @database_bp.route('/del_model', methods=['DELETE'])
 def del_model():
@@ -142,6 +155,7 @@ def del_model():
         print(f"Error: {err}")
         return jsonify({"error": str(err)}), 500
 
+
 @database_bp.route('/link_camera_model', methods=['POST'])
 def link_camera_model():
     data = request.get_json()
@@ -158,8 +172,6 @@ def link_camera_model():
         return jsonify({"error": str(err)}), 500
 
 
-
 if __name__ == '__main__':
     app.register_blueprint(database_bp, url_prefix='/api')
     app.run(debug=True)
-
