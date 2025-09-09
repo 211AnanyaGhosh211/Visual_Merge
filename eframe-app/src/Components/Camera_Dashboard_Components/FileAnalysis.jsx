@@ -1,17 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 
 const FileAnalysis = () => {
   const [fileProcessingActive, setFileProcessingActive] = useState(false);
   const [uploadStreamUrl, setUploadStreamUrl] = useState('');
   const [downloadUrl, setDownloadUrl] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [detectionType, setDetectionType] = useState('general');
+  const fileInputRef = useRef(null);
 
   const showAlert = (message, type) => {
     alert(`${type.toUpperCase()}: ${message}`);
   };
 
+  // Complete reset function
+  const resetAllStates = () => {
+    setFileProcessingActive(false);
+    setUploadStreamUrl('');
+    setDownloadUrl('');
+    setIsUploading(false);
+    // Clear the file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Reset processing state when detection type changes
+  const handleDetectionTypeChange = (newType) => {
+    setDetectionType(newType);
+    // Reset all processing-related states
+    resetAllStates();
+    showAlert(`Switched to ${newType === 'general' ? 'General' : 'Zone-based'} detection`, "info");
+  };
+
   const handleFileUpload = async (file) => {
     if (!file) return;
+    
+    // Prevent upload if already processing
+    if (isUploading) {
+      showAlert("Please wait for current processing to complete", "warning");
+      return;
+    }
     
     const formData = new FormData();
     formData.append('file', file);
@@ -20,7 +48,10 @@ const FileAnalysis = () => {
       setIsUploading(true);
       showAlert("Processing your file...", "info");
       
-      const response = await fetch('http://127.0.0.1:5000/demo2', {
+      // Choose API endpoint based on detection type
+      const apiEndpoint = detectionType === 'general' ? 'demo2' : 'demo3';
+      
+      const response = await fetch(`http://127.0.0.1:5000/${apiEndpoint}`, {
         method: 'POST',
         body: formData
       });
@@ -38,9 +69,11 @@ const FileAnalysis = () => {
         showAlert("File processing started successfully", "success");
       } else {
         showAlert(data.error || "File processing failed", "error");
+        resetAllStates();
       }
     } catch (error) {
       showAlert("Error processing file: " + error.message, "error");
+      resetAllStates();
     } finally {
       setIsUploading(false);
     }
@@ -53,8 +86,7 @@ const FileAnalysis = () => {
   };
 
   const stopFileProcessing = () => {
-    setUploadStreamUrl('');
-    setFileProcessingActive(false);
+    resetAllStates();
     showAlert("File processing stopped", "info");
   };
 
@@ -69,9 +101,36 @@ const FileAnalysis = () => {
       </div>
       
       <div className="p-6">
+        <div className="flex flex-wrap gap-4 items-center mb-4">
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+              Detection Type
+            </label>
+            <select 
+              value={detectionType}
+              onChange={(e) => handleDetectionTypeChange(e.target.value)}
+              disabled={isUploading}
+              className="w-full px-3 py-2 border border-neutral-200 dark:border-neutral-600 rounded-lg
+                bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300
+                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <option value="general">General Detection (demo2)</option>
+              <option value="zone">Zone-based Detection (demo3)</option>
+            </select>
+          </div>
+          {fileProcessingActive && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-lg text-sm">
+              <i className="fas fa-circle text-green-500 animate-pulse"></i>
+              <span>Processing with {detectionType === 'general' ? 'General' : 'Zone-based'} Detection</span>
+            </div>
+          )}
+        </div>
+        
         <div className="flex flex-wrap gap-4 items-center">
           <div className="flex-1 min-w-[300px]">
             <input 
+              ref={fileInputRef}
               type="file" 
               accept="video/*,image/*" 
               onChange={(e) => handleFileUpload(e.target.files[0])}
@@ -89,7 +148,7 @@ const FileAnalysis = () => {
             />
           </div>
           <button 
-            onClick={() => document.querySelector('input[type="file"]').click()}
+            onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
             className="px-4 py-2 rounded-lg text-sm font-medium bg-neutral-100 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100 hover:bg-neutral-200 dark:hover:bg-neutral-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
@@ -101,7 +160,6 @@ const FileAnalysis = () => {
         <div className="mt-6 aspect-video bg-neutral-900 rounded-xl flex items-center justify-center max-w-7xl mx-auto">
           {uploadStreamUrl ? (
             <>
-              {console.log('Current uploadStreamUrl:', uploadStreamUrl)}
               {uploadStreamUrl.match(/\.(jpg|jpeg|png|gif|mp4)$/i) ? (
                 <img src={uploadStreamUrl} alt="Processed image" className="w-full h-full object-cover rounded-xl" />
               ) : (
@@ -124,21 +182,35 @@ const FileAnalysis = () => {
           )}
         </div>
 
-        {fileProcessingActive && (
+        {(fileProcessingActive || uploadStreamUrl || downloadUrl) && (
           <div className="flex flex-wrap gap-4 mt-6">
+            {downloadUrl && (
+              <button 
+                onClick={handleDownload}
+                className="flex items-center px-4 py-2 rounded-lg text-sm font-medium bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800"
+              >
+                <i className="fas fa-download mr-2"></i>
+                Download Result
+              </button>
+            )}
+            {fileProcessingActive && (
+              <button 
+                onClick={stopFileProcessing}
+                className="flex items-center px-4 py-2 rounded-lg text-sm font-medium bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800"
+              >
+                <i className="fas fa-stop mr-2"></i>
+                Stop Processing
+              </button>
+            )}
             <button 
-              onClick={handleDownload}
+              onClick={() => {
+                resetAllStates();
+                showAlert("All states cleared", "info");
+              }}
               className="flex items-center px-4 py-2 rounded-lg text-sm font-medium bg-neutral-100 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100 hover:bg-neutral-200 dark:hover:bg-neutral-600"
             >
-              <i className="fas fa-download mr-2"></i>
-              Download Result
-            </button>
-            <button 
-              onClick={stopFileProcessing}
-              className="flex items-center px-4 py-2 rounded-lg text-sm font-medium bg-neutral-100 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-100 hover:bg-neutral-200 dark:hover:bg-neutral-600"
-            >
-              <i className="fas fa-stop mr-2"></i>
-              Stop Processing
+              <i className="fas fa-times mr-2"></i>
+              Clear All
             </button>
           </div>
         )}

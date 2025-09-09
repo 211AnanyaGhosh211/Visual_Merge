@@ -664,3 +664,63 @@ Employee ID: Unknown
 Exception Type: NO_goggles
 Incident Image: face_detect/face_detect_2025-08-04 16:59:53.jpg
 
+Time: 2025-09-08 16:01:37
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_Vest
+Incident Image: face_detect/face_detect_2025-09-08 16:01:37.jpg
+
+Time: 2025-09-08 16:01:45
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_helmet
+Incident Image: face_detect/face_detect_2025-09-08 16:01:45.jpg
+
+Time: 2025-09-08 16:01:52
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_goggles
+Incident Image: face_detect/face_detect_2025-09-08 16:01:52.jpg
+
+Time: 2025-09-08 16:04:40
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_Vest
+Incident Image: face_detect/face_detect_2025-09-08 16:04:40.jpg
+
+Time: 2025-09-08 16:04:48
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_helmet
+Incident Image: face_detect/face_detect_2025-09-08 16:04:48.jpg
+
+Time: 2025-09-08 16:04:54
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_goggles
+Incident Image: face_detect/face_detect_2025-09-08 16:04:54.jpg
+
+Time: 2025-09-08 16:17:54
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_helmet
+Incident Image: face_detect/face_detect_2025-09-08 16:17:54.jpg
+
+Time: 2025-09-08 16:17:59
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_goggles
+Incident Image: face_detect/face_detect_2025-09-08 16:17:59.jpg
+
+Time: 2025-09-08 16:20:04
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_helmet
+Incident Image: face_detect/face_detect_2025-09-08 16:20:04.jpg
+
+Time: 2025-09-08 16:20:11
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_goggles
+Incident Image: face_detect/face_detect_2025-09-08 16:20:11.jpg
+

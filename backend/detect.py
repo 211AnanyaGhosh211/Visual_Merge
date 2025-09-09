@@ -60,11 +60,39 @@ def send_gmail_email(to_email, subject, body_text, image_path):
     msg['To'] = to_email
     msg.set_content(body_text)
 
-    if os.path.exists(image_path):
-        with open(image_path, 'rb') as img_file:
-            img_data = img_file.read()
-            img_name = os.path.basename(image_path)
-            msg.add_attachment(img_data, maintype='image', subtype='jpeg', filename=img_name)
+    # Add image attachment if it exists
+    print(f"🔍 Checking image path: {image_path}")
+    if image_path and os.path.exists(image_path):
+        try:
+            # Get absolute path for better debugging
+            abs_path = os.path.abspath(image_path)
+            print(f"📁 Absolute path: {abs_path}")
+            
+            with open(image_path, 'rb') as img_file:
+                img_data = img_file.read()
+                img_name = os.path.basename(image_path)
+                print(f"📊 Image size: {len(img_data)} bytes")
+                
+                # Determine the correct MIME type based on file extension
+                if img_name.lower().endswith('.jpg') or img_name.lower().endswith('.jpeg'):
+                    msg.add_attachment(img_data, maintype='image', subtype='jpeg', filename=img_name)
+                    print(f"📎 JPEG attachment added: {img_name}")
+                elif img_name.lower().endswith('.png'):
+                    msg.add_attachment(img_data, maintype='image', subtype='png', filename=img_name)
+                    print(f"📎 PNG attachment added: {img_name}")
+                else:
+                    # Default to jpeg if extension is unclear
+                    msg.add_attachment(img_data, maintype='image', subtype='jpeg', filename=img_name)
+                    print(f"📎 Default JPEG attachment added: {img_name}")
+        except Exception as img_error:
+            print(f"❌ Failed to attach image: {img_error}")
+    else:
+        print(f"⚠️ Image file not found: {image_path}")
+        if image_path:
+            print(f"📁 Current working directory: {os.getcwd()}")
+            print(f"📁 Directory contents: {os.listdir('.')}")
+            if os.path.exists('face_detect'):
+                print(f"📁 face_detect directory contents: {os.listdir('face_detect')}")
 
     try:
         with smtplib.SMTP(GMAIL_SMTP_SERVER, GMAIL_SMTP_PORT) as smtp:
@@ -243,7 +271,7 @@ def detectFace(currentClass):
                         to_email="shounakc@icloud.com",  # Replace with actual admin email
                         subject=f"Safety Violation Alert - {currentClass}",
                         body_text=f"Employee {identity} ({roll_no}) was detected without proper safety equipment at {curr_datetime}.\n\nException Type: {currentClass}\nTime: {curr_datetime}\nEmployee ID: {roll_no}",
-                        image_path=image_path
+                        image_path="output.jpg"
                     )
                 except Exception as email_error:
                     print(f"Failed to send email notification: {email_error}")

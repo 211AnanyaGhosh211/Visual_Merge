@@ -461,18 +461,9 @@ def stop_face_capture_route():
         logging.error(f"Error stopping face capture: {e}")
         return jsonify({"status": "error", "message": "Internal server error."}), 500
 
-def is_streamlit_running():
-    """Check if the Streamlit app is already running."""
-    for process in psutil.process_iter(['pid', 'name', 'cmdline']):
-        try:
-            if process.info['cmdline'] and any('dashmain.py' in cmd for cmd in process.info['cmdline']):
-                return True
-        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-            continue
-    return False
 
 
-def start_streamlit():
+
     """Start the Streamlit app if it's not already running."""
     if not is_streamlit_running():
         subprocess.Popen(["streamlit", "run", "dashmain.py"], 
@@ -855,6 +846,227 @@ def generate_processed_frames2(video_path):
         print(f"Streaming error: {str(e)}")
     finally:
         cap.release()
+  ##line based detection
+def generate_processed_frames3(video_path):
+    """Generator function that yields PPE detection processed frames with zone-based analysis"""
+    try:
+        # PPE Detection Configuration
+        CONF_THRES = 0.25
+        IOU_THRES = 0.45
+        
+        # Which PPEs are required by zone:
+        REQUIRED_LEFT = {"L"}
+        REQUIRED_RIGHT = {"helmet", "shoes", "goggles", "safety_vest", "pvc_suit", "no_helmet", "no_safety_shoes", "no_goggles", "no_pvc_suit", "no_safety_vest"}
+        
+        # Class name aliases to normalize to canonical names
+        ALIASES = {
+            "helmet": {"helmet", "hardhat", "safety_helmet", "Helmet"},
+            "shoes": {"shoes", "safety_shoes", "boots", "Safety Shoes"},
+            "goggles": {"goggles", "safety_goggles", "glasses", "eye_protection", "Safety Goggles"},
+            "pvc_suit": {"pvc_suit", "pvc", "chem_suit", "hazmat_suit", "PVC Suit"},
+            "safety_vest": {"vest", "safety_vest", "vest"},
+            "no_safety_vest": {"no_vest", "no_safety_vest", "no_vest"},
+            "no_pvc_suit": {"no_suit", "no_safety_suit", "no_safety_vest"},
+            "no_goggles": {"no_goggles", "no_safety_goggles", "no_eye_protection", "no_safety_goggles"},
+            "no_safety_shoes": {"no_shoes", "no_safety_shoes", "no_boots", "no_safety_shoes"},
+            "no_helmet": {"no_helmet", "no_safety_helmet", "no_hardhat", "no_safety_helmet"}
+        }
+        
+        # Colors
+        CLR_OK = (0, 200, 0)
+        CLR_MISS = (255, 0, 0)  # Blue
+        CLR_LINE = (255, 255, 255)
+        CLR_MISS_TEXT = (255, 255, 255)  # White text
+        CLR_MISS_BG = (255, 0, 0)  # Blue background
+        
+        def canonicalize(name: str) -> str:
+            n = name.lower().replace(" ", "_")
+            for canon, synonyms in ALIASES.items():
+                if n == canon or n in synonyms:
+                    return canon
+            return n  # fallback
+
+        def center_of_box(xyxy):
+            x1, y1, x2, y2 = xyxy
+            return ((x1 + x2) / 2, (y1 + y2) / 2)
+
+        def point_side_of_line(px, py, x1, y1, x2, y2):
+            """Returns sign of cross product for vertical line: >0 = left side, <0 = right side, =0 = on the line"""
+            return (x2 - x1) * (py - y1) - (y2 - y1) * (px - x1)
+
+        def inside_bbox(px, py, xyxy):
+            x1, y1, x2, y2 = xyxy
+            return x1 <= px <= x2 and y1 <= py <= y2
+
+        def draw_label(img, text, x, y, color=(255,255,255), bg=(0,0,0)):
+            (tw, th), base = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+            cv2.rectangle(img, (x, y - th - 6), (x + tw + 6, y + 2), bg, -1)
+            cv2.putText(img, text, (x + 3, y - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1, cv2.LINE_AA)
+
+        cap = cv2.VideoCapture(video_path)
+        if not cap.isOpened():
+            raise ValueError("Could not open video file")
+        
+        # Calculate the video width and height
+        W = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        H = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        
+        # Set vertical divider
+        x_mid = W // 2
+        divider = [x_mid, 0, x_mid, H - 1]
+        zone_names = ("LEFT", "RIGHT")
+        
+        x1, y1, x2, y2 = divider
+        
+        person_class_ids = set()
+        
+        # Class name map
+        model_names = {i: canonicalize(n) for i, n in yolo_model.names.items()}
+        
+        # Detect person class ID(s)
+        for idx, name in yolo_model.names.items():
+            if name.lower() == "person":
+                person_class_ids.add(idx)
+        
+        if not person_class_ids:
+            print("⚠️ Warning: model has no 'person' class.")
+            
+        while True:
+            success, frame = cap.read()
+            if not success:
+                break
+            
+            # Run YOLO detection
+            results = yolo_model.predict(frame, conf=CONF_THRES, iou=IOU_THRES, verbose=False)
+            dets = results[0].boxes
+            
+            # Prepare detections for tracking
+            detections_for_tracker = []
+            persons_detections = []
+            ppe_items = []
+            
+            if dets is not None and dets.shape[0] > 0:
+                for i in range(len(dets)):
+                    xyxy = dets.xyxy[i].cpu().tolist()
+                    cls = int(dets.cls[i].cpu().item())
+                    conf = float(dets.conf[i].cpu().item())
+                    name = yolo_model.names.get(cls, str(cls))
+                    cname = model_names.get(cls, canonicalize(name))
+                    
+                    if cls in person_class_ids or cname == "person":
+                        # Simple tracking format
+                        w = xyxy[2] - xyxy[0]
+                        h = xyxy[3] - xyxy[1]
+                        detections_for_tracker.append(([xyxy[0], xyxy[1], w, h], conf, cname))
+                        persons_detections.append({"bbox": xyxy, "conf": conf})
+                    else:
+                        cx, cy = center_of_box(xyxy)
+                        ppe_items.append({"bbox": xyxy, "center": (cx, cy), "name": cname, "conf": conf})
+            
+            # Simple tracking without DeepSort
+            tracks = []
+            for i, det in enumerate(detections_for_tracker):
+                class SimpleTrack:
+                    def __init__(self, track_id, bbox):
+                        self.track_id = track_id
+                        self.bbox = bbox
+                    
+                    def is_confirmed(self):
+                        return True
+                    
+                    def to_ltrb(self):
+                        return self.bbox
+                
+                bbox, conf, name = det
+                tracks.append(SimpleTrack(i, [bbox[0], bbox[1], bbox[0] + bbox[2], bbox[1] + bbox[3]]))
+            
+            annotated = frame.copy()
+            
+            # Iterate through tracked persons and process PPE
+            for track in tracks:
+                if not track.is_confirmed():
+                    continue
+                
+                track_id = track.track_id
+                ltrb = track.to_ltrb()
+                px1, py1, px2, py2 = ltrb
+                pcx, pcy = center_of_box(ltrb)
+                
+                sign = point_side_of_line(pcx, pcy, x1, y1, x2, y2)
+                zone = zone_names[0] if sign > 0 else zone_names[1] if sign < 0 else "ON_LINE"
+                
+                owned = []
+                for it in ppe_items:
+                    cx, cy = it["center"]
+                    # Check if the PPE item is inside the tracked person's bounding box
+                    if inside_bbox(cx, cy, ltrb):
+                        owned.append(it["name"])
+                
+                owned_set = set(owned)
+                
+                # Zone rules
+                if zone == "LEFT":
+                    required = REQUIRED_LEFT
+                elif zone == "RIGHT":
+                    required = REQUIRED_RIGHT
+                else:
+                    # For simplicity, combining requirements on the line
+                    required = REQUIRED_LEFT.union(REQUIRED_RIGHT)
+                
+                # Identify missing items by checking if any of the "no_" classes are present
+                missing_items = []
+                for required_item in required:
+                    if f"no_{required_item}" in owned_set:
+                        missing_items.append(required_item)
+                
+                color = CLR_OK if not missing_items else CLR_MISS
+                
+                # Draw bbox + label for tracked person
+                cv2.rectangle(annotated, (int(px1), int(py1)), (int(px2), int(py2)), color, 2)
+                label = f"ID:{track_id} {zone} {'OK' if not missing_items else 'MISSING:' + ','.join(missing_items)}"
+                # Use updated colors for missing label
+                text_color = CLR_OK if not missing_items else CLR_MISS_TEXT
+                bg_color = (40, 40, 40) if not missing_items else CLR_MISS_BG
+                
+                # Adjust text position based on zone
+                text_x = int(px1)
+                text_y = int(py1) - 8
+                (tw, th), base = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+                if zone == "RIGHT":
+                    text_x = int(px2) - tw - 6  # Align text to the right of the bounding box
+                
+                draw_label(annotated, label, text_x, text_y, color=text_color, bg=bg_color)
+            
+            # Draw divider line
+            cv2.line(annotated, (int(x1), int(y1)), (int(x2), int(y2)), CLR_LINE, 2)
+            draw_label(annotated, f"AUTO DIVIDER (VERTICAL)", int((x1 + x2) / 2), int((y1 + y2) / 2) - 6,
+                       color=(0,0,0), bg=(255,255,255))
+            
+            # HUD info
+            cv2.putText(annotated, f"Required {zone_names[0]}: {', '.join(sorted(REQUIRED_LEFT))}", (10, 20),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,255), 1, cv2.LINE_AA)
+            cv2.putText(annotated, f"Required {zone_names[1]}: {', '.join(sorted(REQUIRED_RIGHT))}", (10, 45),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,255), 1, cv2.LINE_AA)
+            
+            # Resize for better performance
+            annotated = cv2.resize(annotated, (640, 480))
+            
+            # Encode frame as JPEG
+            _, buffer = cv2.imencode('.jpg', annotated, 
+                                   [int(cv2.IMWRITE_JPEG_QUALITY), 80])  # 80% quality
+            frame_bytes = buffer.tobytes()
+            
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+            
+            # Adjust sleep based on actual processing speed
+            time.sleep(0.033)  # ~30fps
+            
+    except Exception as e:
+        print(f"Streaming error: {str(e)}")
+    finally:
+        cap.release()
+
 
 @app.route('/demo2', methods=['POST'])
 def demo2():
@@ -899,7 +1111,7 @@ def demo2():
 
 @app.route('/video_feed2')
 def video_feed2():
-    """Route for streaming processed video"""
+    """Route for streaming PPE detection processed video with zone-based analysis"""
     video_path = request.args.get('video_path')
     if not video_path or not os.path.exists(video_path):
         return jsonify({"status": "error", "error": "Invalid video path"}), 404
@@ -917,8 +1129,74 @@ def video_feed2():
     except Exception as e:
         return jsonify({"status": "error", "error": str(e)}), 500
 
+@app.route('/demo3', methods=['POST'])
+def demo3():
+    if 'file' not in request.files:
+        return jsonify({"status": "error", "error": "No file part"}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"status": "error", "error": "No selected file"}), 400
+    
+    if not (file and allowed_file(file.filename)):
+        return jsonify({"status": "error", "error": "Invalid file type"}), 400
+
+    try:
+        # Secure filename and create upload directory
+        if file.filename is None:
+            return jsonify({"status": "error", "error": "No filename provided"}), 400
+        filename = secure_filename(file.filename)
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+        sample_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        
+        # Save original file
+        file.save(sample_path)
+        
+        # Create output path (consider adding timestamp for uniqueness)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_filename = f"output_{timestamp}_{filename}"
+        output_path = os.path.join(app.config['UPLOAD_FOLDER'], output_filename)
+        
+        return jsonify({
+            "status": "success",
+            "video_feed_url": url_for('video_feed3', video_path=sample_path),
+            "download_url": url_for('static', filename=f'uploads/{output_filename}'),
+            "message": "File uploaded successfully"
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "error": f"Processing failed: {str(e)}"
+        }), 500
+
+@app.route('/video_feed3')
+def video_feed3():
+    """Route for streaming PPE detection processed video with zone-based analysis"""
+    video_path = request.args.get('video_path')
+    if not video_path or not os.path.exists(video_path):
+        return jsonify({"status": "error", "error": "Invalid video path"}), 404
+        
+    try:
+        return Response(
+            generate_processed_frames3(video_path),
+            mimetype='multipart/x-mixed-replace; boundary=frame',
+            headers={
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            }
+        )
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
 # ======================== MAIN ========================
 
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=5000)
+
+
+
+
+
 
