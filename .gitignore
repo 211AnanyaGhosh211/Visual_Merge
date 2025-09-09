@@ -1,0 +1,51 @@
+# ------------------------------
+# Global Git Ignore
+# ------------------------------
+
+# OS / IDE files
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.db
+
+# Node.js
+node_modules/
+npm-debug.log*
+
+# Environments
+.env
+.venv/
+env/
+venv/
+
+# Large binary files
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.zip
+*.rar
+*.7z
+*.tar
+*.gz
+*.iso
+*.exe
+*.dll
+*.bin
+
+# VSCode / JetBrains
+.vscode/
+.idea/
+
+# Misc
+*.bak
+*.swp
+*.swo
