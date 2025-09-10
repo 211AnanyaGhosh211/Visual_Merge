@@ -515,6 +515,11 @@ def home():
     start_streamlit()
     return render_template('dashboard.html')
 
+@app.route('/login')
+def login_page():
+    """Render the login page."""
+    return render_template('login.html')
+
 
 # Define other routes
 @app.route('/employee_config.html', methods=['GET'])

@@ -63,34 +63,45 @@ const Login = () => {
   };
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-end relative"
-      style={{
-        backgroundImage: "url(/visual_analytics.jpg)",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}
-    >
-      {/* Overlay for better text readability */}
-      <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+    <div className="min-h-screen flex">
+      {/* Left Side - Background Image */}
+      <div className="w-3/5 relative overflow-hidden">
+        <img 
+          src="/vdashboard.jpg" 
+          alt="Industrial Safety Dashboard" 
+          className="w-full h-screen object-cover"
+        />
+        {/* Overlay for better text readability */}
+        <div className="absolute inset-0 bg-black bg-opacity-30"></div>
+        
+        {/* Welcome Text Overlay */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center text-white z-10">
+            <h1 className="text-5xl font-bold mb-4">Welcome to Eframe AI</h1>
+            <p className="text-2xl font-light">Camera Dashboard</p>
+          </div>
+        </div>
+      </div>
 
-      {/* Login Panel - Right Side */}
-      <div className="relative z-10 w-1/3 min-w-[400px] h-screen flex items-center justify-center">
-        <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl p-8 w-full max-w-md mx-8 shadow-2xl">
+      {/* Right Side - Login Form */}
+      <div className="w-2/5 bg-gradient-to-br from-orange-500 to-orange-400 flex items-center justify-center p-8">
+        <div className="bg-gray-100 rounded-2xl p-8 w-full max-w-md shadow-2xl">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* DRIVE360 Logo */}
+            {/* Logo */}
             <div className="text-center mb-8">
-              <div className="text-3xl font-bold">
-                <span className="text-orange-500">VISUAL</span>
-                <span className="text-black"> ANALYTICS</span>
+              <div className="flex items-center justify-center mb-4">
+                <img 
+                  src="/Eframe.ai black.png" 
+                  alt="Eframe.AI logo" 
+                  className="h-12 w-auto object-contain"
+                  style={{ 
+                    background: 'transparent',
+                    mixBlendMode: 'multiply'
+                  }}
+                />
               </div>
+              <h2 className="text-2xl font-bold text-gray-800">Admin Login</h2>
             </div>
-
-            {/* Title */}
-            <h1 className="text-2xl font-bold text-gray-800 text-center mb-8">
-              Admin Login
-            </h1>
 
             {/* Error Message */}
             {error && (
@@ -108,7 +119,7 @@ const Login = () => {
                 value={formData.adminId}
                 onChange={handleChange}
                 disabled={isLoading}
-                className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent placeholder-gray-400 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                className="w-full px-4 py-3 text-gray-700 bg-transparent border-b-2 border-gray-300 focus:border-orange-500 focus:outline-none placeholder-gray-500 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 required
               />
             </div>
@@ -122,7 +133,7 @@ const Login = () => {
                 value={formData.username}
                 onChange={handleChange}
                 disabled={isLoading}
-                className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent placeholder-gray-400 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                className="w-full px-4 py-3 text-gray-700 bg-transparent border-b-2 border-gray-300 focus:border-orange-500 focus:outline-none placeholder-gray-500 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 required
               />
             </div>
@@ -136,7 +147,7 @@ const Login = () => {
                 value={formData.password}
                 onChange={handleChange}
                 disabled={isLoading}
-                className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent placeholder-gray-400 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                className="w-full px-4 py-3 text-gray-700 bg-transparent border-b-2 border-gray-300 focus:border-orange-500 focus:outline-none placeholder-gray-500 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 required
               />
             </div>
@@ -146,34 +157,27 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full px-6 py-3 bg-white border border-gray-300 rounded-lg text-gray-800 font-semibold hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                className="w-full px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-400 text-white font-semibold rounded-lg text-lg hover:from-orange-600 hover:to-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               >
-                {isLoading ? "Logging in..." : "Login"}
+                {isLoading ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Logging in...
+                  </span>
+                ) : (
+                  "Login"
+                )}
               </button>
             </div>
 
             {/* Footer Branding */}
-            <div className="mt-8">
+            <div className="mt-8 text-center">
               <div className="text-sm text-gray-500 mb-2">Powered by:</div>
-              <div className="flex items-center justify-between">
-                <div className="flex flex-col">
-                  <span className="text-sm font-bold text-black">
-                    Eframe Infomedia Pvt Ltd
-                  </span>
-                  <a
-                    href="http://www.eframe.in"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-black underline hover:text-orange-500"
-                  >
-                    www.eframe.in
-                  </a>
-                </div>
-                <img
-                  src="/eframe_logo.jpeg"
-                  alt="eframe logo"
-                  className="w-12 h-12 object-contain"
-                />
+              <div className="flex items-center justify-center">
+                <span className="text-sm font-bold text-gray-800">Eframe Infomedia Pvt Ltd</span>
               </div>
             </div>
           </form>
