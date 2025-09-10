@@ -25,7 +25,11 @@ const SimpleSidebar = ({ children, onSidebarToggle }) => {
     { icon: 'fas fa-cube', label: 'Model Mapping', path: '/model-mapping' },
     { icon: 'fas fa-video', label: 'Camera Management', path: '/camera-management' },
     { icon: 'fas fa-bell', label: 'Notifications', path: '/notifications' },
+<<<<<<< HEAD
     { icon: 'fas fa-cog', label: 'Settings', path: '/settings' },
+=======
+    // { icon: 'fas fa-cog', label: 'Settings', path: '/settings' },
+>>>>>>> 1b3f4c59f6874b5ede756e7016d6acf220c7f29b
   ];
 
   const Logo = ({ collapsed }) => (

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Login - Kartavya Management Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .login-container {
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+        }
+        .form-panel {
+            background: #f8f9fa;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        .input-field {
+            border-bottom: 2px solid #e5e7eb;
+            transition: border-color 0.3s ease;
+        }
+        .input-field:focus {
+            border-bottom-color: #ff6b35;
+            outline: none;
+        }
+        .login-btn {
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+            transition: all 0.3s ease;
+        }
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 107, 53, 0.3);
+        }
+        .logo-icon {
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+        }
+        .logo-img {
+            background: transparent !important;
+            mix-blend-mode: multiply;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex">
+    <!-- Left Side - Background Image -->
+    <div class="w-3/5 relative overflow-hidden">
+        <img src="/vdashboard.jpg" alt="Industrial Safety Dashboard" class="w-full h-screen object-cover">
+        <!-- Overlay for better text readability -->
+        <div class="absolute inset-0 bg-black bg-opacity-30"></div>
+        
+        <!-- Welcome Text Overlay -->
+        <div class="absolute inset-0 flex items-center justify-center">
+            <div class="text-center text-white z-10">
+                <h1 class="text-5xl font-bold mb-4">Welcome to Eframe AI</h1>
+                <p class="text-2xl font-light">Camera Dashboard</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Side - Login Form -->
+    <div class="w-2/5 login-container flex items-center justify-center p-8">
+        <div class="form-panel rounded-2xl p-8 w-full max-w-md">
+            <!-- Logo -->
+            <div class="text-center mb-8">
+                <div class="flex items-center justify-center mb-4">
+                    <img 
+                        src="/Eframe.ai black.png" 
+                        alt="Eframe.AI logo" 
+                        class="h-12 w-auto object-contain logo-img"
+                    />
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800">Admin Login</h2>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="space-y-6">
+                <!-- Error Message -->
+                <div id="errorMessage" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-center">
+                    <!-- Error message will be displayed here -->
+                </div>
+
+                <!-- Admin ID Input -->
+                <div>
+                    <input
+                        type="text"
+                        id="adminId"
+                        name="adminId"
+                        placeholder="Admin ID"
+                        class="w-full px-4 py-3 text-gray-700 bg-transparent input-field placeholder-gray-500 text-lg"
+                        required
+                    />
+                </div>
+
+                <!-- Username Input -->
+                <div>
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        placeholder="Username"
+                        class="w-full px-4 py-3 text-gray-700 bg-transparent input-field placeholder-gray-500 text-lg"
+                        required
+                    />
+                </div>
+
+                <!-- Password Input -->
+                <div>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Password"
+                        class="w-full px-4 py-3 text-gray-700 bg-transparent input-field placeholder-gray-500 text-lg"
+                        required
+                    />
+                </div>
+
+                <!-- Login Button -->
+                <div class="flex justify-center">
+                    <button
+                        type="submit"
+                        id="loginBtn"
+                        class="w-full px-6 py-3 login-btn text-white font-semibold rounded-lg text-lg"
+                    >
+                        Login
+                    </button>
+                </div>
+            </form>
+
+            <!-- Footer -->
+            <div class="mt-8 text-center">
+                <div class="text-sm text-gray-500 mb-2">Powered by:</div>
+                <div class="flex items-center justify-center">
+                    <span class="text-sm font-bold text-gray-800">Eframe Infomedia Pvt Ltd</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const adminId = document.getElementById('adminId').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('errorMessage');
+            const loginBtn = document.getElementById('loginBtn');
+            
+            // Clear previous errors
+            errorDiv.classList.add('hidden');
+            
+            // Validate inputs
+            if (!adminId || !username || !password) {
+                showError('Please enter Admin ID, Username and Password');
+                return;
+            }
+            
+            // Show loading state
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Logging in...';
+            loginBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        adminId: adminId,
+                        username: username,
+                        password: password
+                    }),
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Login successful - redirect to dashboard
+                    window.location.href = '/dashboard.html';
+                } else {
+                    // Login failed - show error message
+                    showError(data.error || 'Login failed. Please check your credentials.');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showError('Network error. Please check if the backend server is running.');
+            } finally {
+                // Reset button state
+                loginBtn.innerHTML = 'Login';
+                loginBtn.disabled = false;
+            }
+        });
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+        }
+        
+        // Clear error when user starts typing
+        document.getElementById('adminId').addEventListener('input', clearError);
+        document.getElementById('username').addEventListener('input', clearError);
+        document.getElementById('password').addEventListener('input', clearError);
+        
+        function clearError() {
+            document.getElementById('errorMessage').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

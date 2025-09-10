@@ -45,7 +45,13 @@ venv/
 .vscode/
 .idea/
 
+# Static files
+static/
+
 # Misc
 *.bak
 *.swp
 *.swo
+
+
+__MACOSX/
