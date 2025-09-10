@@ -15,16 +15,23 @@
 // export default ProfileCard;
 
 // src/components/Profile_Components/ProfileCard.jsx
-import React from "react";
+import React, { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import ProfileHeader from "./ProfileHeader";
 import ProfileDetails from "./ProfileDetails";
+import ChangePasswordModal from "./ChangePasswordModal";
 
 const ProfileCard = ({ user }) => {
   const { logout } = useAuth();
+  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] =
+    useState(false);
 
   const handleLogout = () => {
     logout();
+  };
+
+  const handleChangePassword = () => {
+    setIsChangePasswordModalOpen(true);
   };
 
   return (
@@ -43,7 +50,10 @@ const ProfileCard = ({ user }) => {
             <i className="fas fa-edit"></i>
             Edit Profile
           </button>
-          <button className="px-6 py-3 bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-200 dark:hover:bg-neutral-700 transition-all duration-300 shadow-lg hover:shadow-gray-500/25 flex items-center gap-2">
+          <button
+            onClick={handleChangePassword}
+            className="px-6 py-3 bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-200 dark:hover:bg-neutral-700 transition-all duration-300 shadow-lg hover:shadow-gray-500/25 flex items-center gap-2"
+          >
             <i className="fas fa-key"></i>
             Change Password
           </button>
@@ -51,7 +61,7 @@ const ProfileCard = ({ user }) => {
             <i className="fas fa-history"></i>
             View Activity Log
           </button>
-          <button 
+          <button
             onClick={handleLogout}
             className="px-8 py-3 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-200 dark:hover:bg-red-900/30 transition-all duration-300 shadow-lg hover:shadow-red-500/25 flex items-center gap-2"
           >
@@ -60,6 +70,12 @@ const ProfileCard = ({ user }) => {
           </button>
         </div>
       </div>
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={isChangePasswordModalOpen}
+        onClose={() => setIsChangePasswordModalOpen(false)}
+      />
     </div>
   );
 };
