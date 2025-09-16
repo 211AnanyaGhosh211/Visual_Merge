@@ -7,6 +7,8 @@ import cvzone
 import math
 import pandas as pd
 import torch
+# from deep_sort_realtime.deepsort_tracker import DeepSort
+import json
 from facenet_pytorch import InceptionResnetV1, MTCNN
 from PIL import Image
 from datetime import datetime
@@ -1230,6 +1232,421 @@ def video_feed3():
         )
     except Exception as e:
         return jsonify({"status": "error", "error": str(e)}), 500
+
+
+# ======================== CLASS-BASED DETECTION ========================
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Basic health check route"""
+    return jsonify({
+        "status": "success",
+        "message": "Backend is running",
+        "timestamp": datetime.now().isoformat()
+    })
+
+@app.route('/test_class_detection', methods=['GET'])
+def test_class_detection():
+    """Test route to verify class-based detection is working"""
+    return jsonify({
+        "status": "success",
+        "message": "Class-based detection route is working",
+        "available_classes": ["helmet", "safety_vest", "pvc_suit", "shoes", "goggles"]
+    })
+
+@app.route('/test_video_stream', methods=['GET'])
+def test_video_stream():
+    """Simple test video stream to verify streaming works"""
+    def generate_test_frames():
+        import numpy as np
+        frame_count = 0
+        try:
+            print("DEBUG: Starting test video stream")
+            while frame_count < 300:  # 10 seconds at 30fps
+                # Create a simple test frame
+                frame = np.zeros((480, 640, 3), dtype=np.uint8)
+                
+                # Add animated background
+                color_shift = int(50 + 30 * np.sin(frame_count * 0.1))
+                frame[:] = (color_shift, color_shift, color_shift)
+                
+                # Add text
+                cv2.putText(frame, "Test Video Stream", (50, 100), 
+                           cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+                cv2.putText(frame, f"Frame {frame_count}", (50, 150), 
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+                cv2.putText(frame, "If you see this, streaming works!", (50, 200), 
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                
+                # Add a moving circle
+                center_x = int(320 + 200 * np.sin(frame_count * 0.2))
+                center_y = int(240 + 100 * np.cos(frame_count * 0.2))
+                cv2.circle(frame, (center_x, center_y), 20, (0, 255, 0), -1)
+                
+                # Encode frame
+                success, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+                if not success:
+                    print(f"DEBUG: Failed to encode test frame {frame_count}")
+                    break
+                    
+                frame_bytes = buffer.tobytes()
+                
+                if frame_count % 30 == 0:
+                    print(f"DEBUG: Yielding test frame {frame_count}, size: {len(frame_bytes)} bytes")
+                
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+                
+                frame_count += 1
+                time.sleep(0.033)  # 30 FPS
+                
+            print(f"DEBUG: Finished test stream with {frame_count} frames")
+                
+        except Exception as e:
+            print(f"DEBUG: Error in test video generation: {str(e)}")
+            import traceback
+            traceback.print_exc()
+    
+    return Response(
+        generate_test_frames(),
+        mimetype='multipart/x-mixed-replace; boundary=frame',
+        headers={
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+            'Connection': 'keep-alive',
+            'X-Accel-Buffering': 'no',
+            'Transfer-Encoding': 'chunked'
+        }
+    )
+
+@app.route('/demo4', methods=['POST'])
+def demo4():
+    """Class-based PPE detection route"""
+    print("DEBUG: demo4 route called")
+    
+    if 'file' not in request.files:
+        print("DEBUG: No file part in request")
+        return jsonify({"status": "error", "error": "No file part"}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        print("DEBUG: No selected file")
+        return jsonify({"status": "error", "error": "No selected file"}), 400
+
+    if not (file and allowed_file(file.filename)):
+        print(f"DEBUG: Invalid file type: {file.filename}")
+        return jsonify({"status": "error", "error": "Invalid file type"}), 400
+
+    # Get classes from request
+    classes_json = request.form.get('classes', '["helmet", "shoes", "pvc_suit"]')
+    print(f"DEBUG: Received classes JSON: {classes_json}")
+    try:
+        selected_classes = json.loads(classes_json)
+        print(f"DEBUG: Parsed classes: {selected_classes}")
+    except json.JSONDecodeError as e:
+        print(f"DEBUG: JSON decode error: {e}")
+        selected_classes = ["helmet", "shoes", "pvc_suit"]
+
+    try:
+        # Secure filename and create upload directory
+        if file.filename is None:
+            return jsonify({"status": "error", "error": "No filename provided"}), 400
+        filename = secure_filename(file.filename)
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+        sample_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+
+        # Save original file
+        file.save(sample_path)
+
+        # Create output path
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_filename = f"output_{timestamp}_{filename}"
+        output_path = os.path.join(app.config['UPLOAD_FOLDER'], output_filename)
+
+        # Store the selected classes in the app context
+        app.class_based_classes = selected_classes
+        print(f"DEBUG: Stored classes in app context: {selected_classes}")
+
+        video_feed_url = url_for('video_feed4', video_path=sample_path)
+        print(f"DEBUG: Generated video feed URL: {video_feed_url}")
+        
+        return jsonify({
+            "status": "success",
+            "video_feed_url": video_feed_url,
+            "download_url": url_for('static', filename=f'uploads/{output_filename}'),
+            "message": f"File uploaded successfully with classes: {selected_classes}"
+        })
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "error": f"Processing failed: {str(e)}"
+        }), 500
+
+
+@app.route('/video_feed4')
+def video_feed4():
+    """Route for streaming class-based PPE detection processed video"""
+    video_path = request.args.get('video_path')
+    print(f"DEBUG: video_feed4 called with video_path: {video_path}")
+    
+    if not video_path or not os.path.exists(video_path):
+        print(f"DEBUG: Invalid video path: {video_path}")
+        return jsonify({"status": "error", "error": "Invalid video path"}), 404
+
+    try:
+        print("DEBUG: Starting video feed generation...")
+        return Response(
+            generate_processed_frames4(video_path),
+            mimetype='multipart/x-mixed-replace; boundary=frame',
+            headers={
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0',
+                'Connection': 'keep-alive',
+                'X-Accel-Buffering': 'no',  # Disable nginx buffering
+                'Transfer-Encoding': 'chunked'
+            }
+        )
+    except Exception as e:
+        print(f"DEBUG: Error in video_feed4: {str(e)}")
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+def generate_processed_frames4(video_path):
+    """Generator function for class-based PPE detection"""
+    cap = None
+    try:
+        # Get the selected classes from app context
+        selected_classes = getattr(app, 'class_based_classes', ["helmet", "shoes", "pvc_suit"])
+        print(f"DEBUG: Retrieved classes from app context: {selected_classes}")
+        
+        # Initialize tracker (simplified version without DeepSort for now)
+        # tracker = DeepSort(max_age=70, n_init=3)
+        tracker = None
+        
+        # Class name aliases to normalize names from the model to a standard form
+        ALIASES = {
+            "person": {"person", "Person"},
+            "helmet": {"helmet", "hardhat", "safety_helmet", "Helmet"},
+            "safety_vest": {"vest", "safety_vest", "Safety_Vestr"},
+            "no_helmet": {"no_helmet", "no_safety_helmet", "no_hardhat", "NO_helmet"},
+            "no_safety_vest": {"no_vest", "no_safety_vest", "NO_Vestr"},
+            "pvc_suit": {"pvc_suit", "suit"},
+            "no_pvc_suit": {"no_pvc_suit", "no_suit"},
+            "shoes": {"shoes", "safety_shoes", "boots", "Safety Shoes"},
+            "goggles": {"goggles", "safety_goggles", "glasses", "eye_protection", "Safety Goggles"},
+            "no_safety_shoes": {"no_shoes", "NO_safetyshoes", "no_boots", "no_safety_shoes"},
+            "no_goggles": {"no_goggles", "NO_goggles", "no_eye_protection", "no_safety_goggles"},
+        }
+
+        # Visual Configuration
+        CLR_OK = (0, 200, 0)
+        CLR_MISS = (0, 0, 255)
+
+        def canonicalize(name: str) -> str:
+            """Converts a class name to its canonical form using the ALIASES map."""
+            n = name.lower().replace(" ", "_")
+            for canon, synonyms in ALIASES.items():
+                if n == canon or n in synonyms:
+                    return canon
+            return n
+
+        def center_of_box(xyxy):
+            """Calculates the center point of a bounding box."""
+            x1, y1, x2, y2 = xyxy
+            return (int((x1 + x2) / 2), int((y1 + y2) / 2))
+
+        def inside_bbox(point, bbox):
+            """Checks if a point is inside a bounding box."""
+            px, py = point
+            x1, y1, x2, y2 = bbox
+            return x1 <= px <= x2 and y1 <= py <= y2
+
+
+        # Determine required classes for detection
+        detect_classes_names = set()
+        required_ppe = set()
+
+        if selected_classes:
+            print(f"User specified classes: {selected_classes}")
+            user_ppe_types = set()
+            for cls_name in selected_classes:
+                canon_name = canonicalize(cls_name)
+                if canon_name.startswith("no_"):
+                    user_ppe_types.add(canon_name[3:])
+                else:
+                    user_ppe_types.add(canon_name)
+
+            required_ppe = user_ppe_types
+            print(f"Required PPE for all zones set to: {required_ppe}")
+
+            for ppe_type in required_ppe:
+                detect_classes_names.add(ppe_type)
+                detect_classes_names.add(f"no_{ppe_type}")
+        else:
+            print("No specific classes provided. Using fallback full PPE requirements.")
+            required_ppe = {"helmet", "shoes", "goggles", "safety_vest", "pvc_suit"}
+            for ppe_type in required_ppe:
+                detect_classes_names.add(ppe_type)
+                detect_classes_names.add(f"no_{ppe_type}")
+
+        detect_classes_names.add("person")
+
+        # Get class indices for YOLO
+        detect_class_indices = []
+        model_class_map = {canonicalize(name): idx for idx, name in yolo_model.names.items()}
+        for name in detect_classes_names:
+            if name in model_class_map:
+                detect_class_indices.append(model_class_map[name])
+
+        print(f"Model will detect the following classes: {[yolo_model.names[i] for i in detect_class_indices]}")
+        print(f"DEBUG: Required PPE set: {required_ppe}")
+        print(f"DEBUG: Detect classes names: {detect_classes_names}")
+
+        cap = cv2.VideoCapture(video_path)
+        if not cap.isOpened():
+            raise ValueError("Could not open video file")
+        
+        print("DEBUG: Video opened successfully, starting processing...")
+        
+        frame_count = 0
+        consecutive_errors = 0
+        max_consecutive_errors = 5
+        
+        while True:
+            try:
+                success, frame = cap.read()
+                if not success:
+                    print(f"DEBUG: End of video reached after {frame_count} frames")
+                    break
+                
+                frame_count += 1
+                if frame_count % 30 == 0:  # Print every 30 frames
+                    print(f"DEBUG: Processed {frame_count} frames")
+                
+                consecutive_errors = 0  # Reset error counter on successful frame
+
+                # Process frame with YOLO using selected classes
+                results = yolo_model.predict(frame, conf=0.3, iou=0.5, classes=detect_class_indices, verbose=False)
+
+                dets = results[0].boxes
+                detections_for_tracker = []
+                ppe_items = []
+                
+                if dets is not None and len(dets) > 0:
+                    print(f"DEBUG: Found {len(dets)} detections in frame")
+                    for i in range(len(dets)):
+                        xyxy = dets.xyxy[i].cpu().tolist()
+                        cls_id = int(dets.cls[i].cpu().item())
+                        conf = float(dets.conf[i].cpu().item())
+                        class_name = canonicalize(yolo_model.names.get(cls_id, ""))
+
+                        if class_name == "person":
+                            w, h = xyxy[2] - xyxy[0], xyxy[3] - xyxy[1]
+                            detections_for_tracker.append(([xyxy[0], xyxy[1], w, h], conf, class_name))
+                            print(f"DEBUG: Found person with confidence {conf}")
+                        else:
+                            # Only consider PPE detections above the confidence threshold
+                            if conf >= 0.3:
+                                ppe_items.append({"center": center_of_box(xyxy), "name": class_name})
+                                print(f"DEBUG: Found PPE item: {class_name} with confidence {conf}")
+
+                # Simple detection without tracking for now
+                for i, detection in enumerate(detections_for_tracker):
+                    x1, y1, w, h = detection[0]
+                    conf = detection[1]
+                    class_name = detection[2]
+                    
+                    x2, y2 = x1 + w, y1 + h
+                    px1, py1, px2, py2 = map(int, [x1, y1, x2, y2])
+
+                    # Check for nearby PPE items
+                    owned_ppe = {item["name"] for item in ppe_items if inside_bbox(item["center"], [px1, py1, px2, py2])}
+                    missing_items = set()
+                    present_items = set()
+
+                    # Improved logic for detecting present vs missing items
+                    for required_item in required_ppe:
+                        if required_item in owned_ppe:
+                            present_items.add(required_item)
+                        elif f"no_{required_item}" in owned_ppe:
+                            missing_items.add(required_item)
+                        else:
+                            missing_items.add(required_item)
+
+                    color = CLR_MISS if missing_items else CLR_OK
+                    cv2.rectangle(frame, (px1, py1), (px2, py2), color, 2)
+
+                    # Enhanced visual display with better formatting
+                    x, y = px1, py1 - 10
+                    base_text = f"ID: {i+1} PPE:"
+                    font = cv2.FONT_HERSHEY_SIMPLEX
+                    scale = 0.6        # Increased text size
+                    thickness = 2      # Increased thickness
+
+                    # Compute text size for background
+                    text_size = cv2.getTextSize(base_text, font, scale, thickness)[0]
+                    overlay = frame.copy()
+                    cv2.rectangle(overlay, (x-2, y-16), (x + text_size[0] + 4, y+6), (0,0,0), -1)
+                    alpha = 0.6
+                    frame = cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0)
+
+                    cv2.putText(frame, base_text, (x, y), font, scale, (255,255,255), thickness)
+
+                    offset_x = x + text_size[0] + 10
+
+                    for item in sorted(list(required_ppe)):
+                        if item in present_items:
+                            status = "OK"
+                            text_color = (0, 200, 0)  # Green
+                        else:
+                            status = "MISSING"
+                            text_color = (0, 0, 255)  # Red
+
+                        text = f" {item}:{status}"
+                        tsize = cv2.getTextSize(text, font, scale, thickness)[0]
+                        overlay = frame.copy()
+                        cv2.rectangle(overlay, (offset_x-2, y-16), (offset_x + tsize[0] + 4, y+6), (0,0,0), -1)
+                        frame = cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0)
+
+                        cv2.putText(frame, text, (offset_x, y), font, scale, text_color, thickness)
+                        offset_x += tsize[0] + 10
+
+                # Resize for better performance
+                frame = cv2.resize(frame, (640, 480))
+
+                # Encode frame as JPEG
+                _, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+                frame_bytes = buffer.tobytes()
+
+                if frame_count % 30 == 0:  # Print every 30 frames
+                    print(f"DEBUG: Yielding frame {frame_count}, size: {len(frame_bytes)} bytes")
+
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+
+                # Adjust sleep based on actual processing speed
+                time.sleep(0.033)  # ~30fps
+                
+            except Exception as frame_error:
+                consecutive_errors += 1
+                print(f"DEBUG: Error processing frame {frame_count}: {str(frame_error)}")
+                if consecutive_errors >= max_consecutive_errors:
+                    print(f"DEBUG: Too many consecutive errors ({consecutive_errors}), stopping stream")
+                    break
+                continue
+
+    except Exception as e:
+        print(f"Class-based detection streaming error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+    finally:
+        if cap is not None:
+            cap.release()
+            print("DEBUG: Video capture released")
+
 
 # ======================== MAIN ========================
 
