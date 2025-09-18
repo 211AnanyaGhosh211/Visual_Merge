@@ -251,16 +251,40 @@ known_embeddings = cache_embeddings()
 detection_running = False
 detection_thread = None
 rtsp_url = "rtsp://admin:admin%401966@192.168.100.112:554/cam/realmonitor?channel=4&subtype=0"
+current_camera_source = "laptop"  # 'laptop' or 'rtsp'
+current_camera_id = "0"
+current_camera_name = "Laptop Camera"
+
+# Import camera configuration
+from services.camera_config import CAMERA_CONFIG, DEFAULT_CAMERA_ID, DEFAULT_CAMERA_NAME, DEFAULT_CAMERA_TYPE
 
 
 def generate_detection_frames():
     """Generator function that yields YOLO-processed frames from camera"""
-    global detection_running
+    global detection_running, current_camera_id, current_camera_name
 
-    # Open the default camera
-    cam = cv2.VideoCapture(rtsp_url)
+    # Get camera configuration
+    camera_config = CAMERA_CONFIG.get(current_camera_id, CAMERA_CONFIG["0"])
+    camera_name = camera_config["name"]
+    camera_type = camera_config["type"]
+    camera_url = camera_config["url"]
+    
+    print(f"Using camera: {camera_name} (ID: {current_camera_id}, Type: {camera_type})")
+    
+    # Open camera based on type
+    if camera_type == 'rtsp' and camera_url:
+        print(f"Opening RTSP camera: {camera_url}")
+        cam = cv2.VideoCapture(camera_url)
+    elif camera_type == 'laptop':
+        print(f"Opening laptop camera (index 0)")
+        cam = cv2.VideoCapture(0)
+    else:
+        # For other types, try to use camera_id as index
+        print(f"Opening camera with index: {current_camera_id}")
+        cam = cv2.VideoCapture(int(current_camera_id))
+    
     if not cam.isOpened():
-        # Return empty generator instead of yielding error string
+        print(f"Error: Could not open camera {camera_name}. Type: {camera_type}, URL: {camera_url}")
         return
 
     # Class names for different objects detected by the model
@@ -296,8 +320,8 @@ def generate_detection_frames():
                         if currentClass in ['NO_helmet', 'NO_Vest', 'NO_goggles', 'NO_safetyshoes']:
                             myColor = (0, 0, 255)  # Red
                             cv2.imwrite(
-                                f"captures/output{curr_datetime}.jpg", img)
-                            cv2.imwrite("output.jpg", img)
+                                f"media/face_detect/output{curr_datetime}.jpg", img)
+                            cv2.imwrite("media/face_detect/output.jpg", img)
                         elif currentClass in ['Helmet', 'Safety_Vest', 'Safety_goggles', 'Safety_shoes']:
                             myColor = (0, 255, 0)  # Green
                         else:
@@ -334,6 +358,7 @@ def generate_detection_frames():
 def run_detection():
     global detection_running
     detection_running = True
+    print("Detection thread started - detection_running set to True")
 
     # This function now just sets the flag - streaming is handled by the route below
 
@@ -341,6 +366,7 @@ def run_detection():
 @app.route('/detection_feed')
 def detection_feed():
     """Route for streaming processed camera feed"""
+    print(f"Detection feed requested - detection_running: {detection_running}")
     try:
         return Response(
             generate_detection_frames(),
@@ -352,17 +378,54 @@ def detection_feed():
             }
         )
     except Exception as e:
+        print(f"Error in detection_feed: {e}")
         return jsonify({"status": "error", "error": str(e)}), 500
 
-@app.route('/safetydetection')
+@app.route('/api/cameras', methods=['GET'])
+def get_cameras():
+    """Get list of available cameras"""
+    # Reload camera config to get latest changes
+    from services.camera_config import CAMERA_CONFIG
+    return jsonify({
+        "cameras": CAMERA_CONFIG,
+        "current_camera_id": current_camera_id,
+        "current_camera_name": current_camera_name,
+        "total_cameras": len(CAMERA_CONFIG)
+    })
+
+@app.route('/safetydetection', methods=['GET', 'POST'])
 def safety():
-    global detection_thread, detection_running
+    global detection_thread, detection_running, current_camera_id, current_camera_name, current_camera_source
+    
+    if request.method == 'POST':
+        data = request.get_json()
+        camera_id = data.get('camera_id', '0')
+        
+        # Get camera info from config
+        camera_config = CAMERA_CONFIG.get(camera_id, CAMERA_CONFIG["0"])
+        camera_name = camera_config["name"]
+        camera_type = camera_config["type"]
+        
+        print(f"Starting detection with Camera ID: {camera_id}, Name: {camera_name}, Type: {camera_type}")
+        
+        # Update global variables
+        current_camera_id = camera_id
+        current_camera_name = camera_name
+        current_camera_source = camera_type
+    else:
+        camera_id = current_camera_id
+        camera_name = current_camera_name
+        camera_type = current_camera_source
+    
     if not detection_running:
         detection_thread = threading.Thread(target=run_detection)
         detection_thread.start()
         return jsonify({
-            "message": "Detection started",
-            "stream_url": url_for('detection_feed')
+            "message": f"Detection started using {camera_name}",
+            "stream_url": url_for('detection_feed'),
+            "camera_id": camera_id,
+            "camera_name": camera_name,
+            "camera_type": camera_type
         })
     else:
         return jsonify({"message": "Detection already running"})

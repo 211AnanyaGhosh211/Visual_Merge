@@ -82,7 +82,7 @@ last_logged_exceptions = defaultdict(lambda: datetime.min)
 
 # Function to detect and recognize faces
 def detectFace(currentClass):
-    frame = cv2.imread("output.jpg")
+    frame = cv2.imread("media/face_detect/output.jpg")
     if frame is None:
         print("Error: Received an empty frame.")
         return

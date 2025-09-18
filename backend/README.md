@@ -1,4 +1,4 @@
-# PPE Detection & Face Recognition System
+# PPE Detection & Face Recognition System - Complete Documentation
 
 A comprehensive Personal Protective Equipment (PPE) detection and face recognition system built with Flask, YOLO, and FaceNet. This system monitors workplace safety by detecting PPE violations and identifying employees through face recognition.
 
@@ -20,7 +20,7 @@ backend/
 │   ├── live_cctv_processor.py     # Live CCTV/NVR feed processing
 │   ├── ppe_server_launcher.py     # Main server launcher script
 │   ├── auth.py                    # Authentication service
-│   └── AUTH_README.md             # Authentication documentation
+│   └── camera_config.py           # Camera configuration
 │
 ├── db/                           # Database modules
 │   ├── db.py                     # Centralized database configuration
@@ -231,6 +231,139 @@ db_config = {
 - `POST /auth/register` - User registration
 - `POST /auth/logout` - User logout
 
+## 🎥 Camera Management
+
+### Simple Camera Setup
+
+The system supports multiple cameras with a simple configuration:
+
+1. **Edit Camera Config**: `backend/services/camera_config.py`
+2. **Add Your Cameras**: Define camera details in `CAMERA_CONFIG`
+3. **Frontend Selection**: Users select from dropdown (0-10)
+4. **Automatic Handling**: Backend uses the right camera automatically
+
+### Camera Types Supported
+
+#### **Laptop Camera (type: "laptop")**
+```python
+"0": {
+    "name": "Laptop Camera", 
+    "type": "laptop", 
+    "url": None,
+    "description": "Built-in laptop webcam"
+}
+```
+
+#### **RTSP Camera (type: "rtsp")**
+```python
+"1": {
+    "name": "Network Camera", 
+    "type": "rtsp", 
+    "url": "rtsp://username:password@ip:port/path",
+    "description": "Network camera description"
+}
+```
+
+#### **USB Camera (type: "usb")**
+```python
+"2": {
+    "name": "USB Camera", 
+    "type": "usb", 
+    "url": None,
+    "description": "USB connected camera"
+}
+```
+
+### Camera API Usage
+
+#### **Frontend sends:**
+```javascript
+{
+    "camera_id": "5"  // Just the camera number
+}
+```
+
+#### **Backend responds:**
+```javascript
+{
+    "message": "Detection started using Storage Area",
+    "stream_url": "/detection_feed",
+    "camera_id": "5",
+    "camera_name": "Storage Area",
+    "camera_type": "rtsp"
+}
+```
+
+## 🔐 Authentication System
+
+### API Endpoints
+
+#### **Login**
+- **Endpoint**: `POST /api/login`
+- **Description**: Authenticates users against MySQL database
+- **Request**: `{"employeeId": "7", "password": "plaintext_password"}`
+- **Response**: User details and login status
+
+#### **Logout**
+- **Endpoint**: `POST /api/logout`
+- **Description**: Handles user logout
+- **Response**: Logout confirmation
+
+#### **Token Verification**
+- **Endpoint**: `POST /api/verify-token`
+- **Description**: Token verification for future JWT/session validation
+
+### Security Features
+
+1. **SHA2 Password Hashing**: All passwords hashed using SHA-256
+2. **Input Validation**: Client-side and server-side validation
+3. **SQL Injection Protection**: Parameterized queries
+4. **Error Handling**: Comprehensive error responses
+
+### Database Requirements
+
+```sql
+CREATE TABLE Registered_Employees (
+    EmployeeName VARCHAR(255),
+    EmployeeID VARCHAR(50) PRIMARY KEY,
+    Images VARCHAR(255),
+    Password VARCHAR(255)  -- SHA2 hashed passwords
+);
+```
+
+## 📁 Media Paths Verification
+
+### ✅ All Media Paths Correctly Configured
+
+#### **1. Face Images (`media/faces/`)**
+- ✅ **Code References**: All updated to `media/faces/`
+- ✅ **Database**: Updated to use `media/faces/` paths
+- ✅ **CSV Files**: Updated to use `media/faces/` paths
+- ✅ **Directory Creation**: `os.makedirs('media/faces', exist_ok=True)`
+
+#### **2. Face Detection Images (`media/face_detect/`)**
+- ✅ **Output Images**: `media/face_detect/output.jpg`
+- ✅ **Timestamped Images**: `media/face_detect/output{datetime}.jpg`
+- ✅ **Face Detection Images**: `media/face_detect/face_detect_{datetime}.jpg`
+- ✅ **Directory Creation**: `os.makedirs('media/face_detect', exist_ok=True)`
+
+#### **3. Upload Files (`media/uploads/`)**
+- ✅ **Upload Directory**: `UPLOAD_FOLDER = 'media/uploads'`
+- ✅ **Directory Structure**: Properly configured
+
+#### **4. Model Files (`models/`)**
+- ✅ **YOLO Models**: `models/best700.pt`
+- ✅ **Model References**: All updated to use `models/` directory
+
+#### **5. Data Files (`data/`)**
+- ✅ **CSV Files**: `data/users.csv`
+- ✅ **Data References**: All updated to use `data/` directory
+
+#### **6. Log Files (`log/`)**
+- ✅ **Notification Logs**: `log/notifications.txt`
+- ✅ **Violation Logs**: `log/ppe_violations_log.txt`
+- ✅ **Report Files**: `log/violation_report_{date}.txt`
+
 ## 🛠️ Development
 
 ### Adding New Services
@@ -273,6 +406,23 @@ db_config = {
 3. **Import errors**: Ensure all service modules are in `services/` directory
 4. **File not found**: Check if file paths match new directory structure
 
+### Camera API Troubleshooting
+
+#### **"Error loading camera list" in Frontend**
+- Check if backend is running on port 5000
+- Test API directly: `curl http://127.0.0.1:5000/api/cameras`
+- Check browser console for CORS errors
+- Verify camera config syntax
+
+#### **CORS Issues**
+- Backend CORS configured for `http://127.0.0.1:5173`
+- Ensure frontend runs on port 5173
+- Check backend runs on port 5000
+
+#### **Camera Config Issues**
+- Test config: `python -c "from camera_config import CAMERA_CONFIG; print('Cameras:', len(CAMERA_CONFIG))"`
+- Should show: `Cameras: 12`
+
 ### Debug Mode
 
 Enable debug mode in `app.py`:
@@ -287,11 +437,121 @@ app.run(debug=True, host='0.0.0.0', port=5000)
 - **Caching**: Face embeddings are cached for faster recognition
 - **Optimized Models**: Uses optimized YOLO models for detection
 
+## 📋 Migration Guide
+
+### File Mapping
+
+| Old File | New File | New Location | Purpose |
+|----------|----------|--------------|---------|
+| `newapp3.py` | `app.py` | Root | Main application |
+| `detect.py` | `ppe_kit_detector.py` | `services/` | Main PPE + face detection |
+| `detect2.py` | `ppe_violation_detector.py` | `services/` | Alternative PPE detection |
+| `img.py` | `model_visualizer.py` | `services/` | YOLO visualization utilities |
+| `dashdash.py` | `analytics_api.py` | `services/` | Analytics dashboard API |
+| `cctvconn.py` | `live_cctv_processor.py` | `services/` | Live CCTV processing |
+| `start_server.py` | `ppe_server_launcher.py` | `services/` | Server launcher |
+| `db.py` | `db.py` | `db/` | Database configuration |
+| `Database.py` | `Database.py` | `db/` | Database API endpoints |
+| `users.csv` | `users.csv` | `data/` | Employee data |
+| `ppe_violations.csv` | `ppe_violations.csv` | `data/` | Violations data |
+
+### Path Mapping
+
+| Old Path | New Path | Purpose |
+|----------|----------|---------|
+| `static/faces/` | `media/faces/` | Employee face images |
+| `static/uploads/` | `media/uploads/` | Uploaded files |
+| `face_detect/` | `media/face_detect/` | Face detection outputs |
+| `best700.pt` | `models/best700.pt` | Main YOLO model |
+| `log.txt` | `log/notifications.txt` | System notifications |
+
+### Code Changes Required
+
+#### Import Statements
+```python
+# Before
+import detect
+from detect import detectFace
+import dashdash
+from dashdash import api as dashboard_api
+
+# After
+import services.ppe_kit_detector
+from services.ppe_kit_detector import detectFace
+import services.analytics_api
+from services.analytics_api import api as dashboard_api
+```
+
+#### File Paths
+```python
+# Before
+users_file = 'users.csv'
+model_path = 'best700.pt'
+face_dir = 'static/faces/'
+
+# After
+users_file = 'data/users.csv'
+model_path = 'models/best700.pt'
+face_dir = 'media/faces/'
+```
+
+## 🧪 Testing
+
+### Verification Commands
+
+```bash
+# Test main app
+python app.py
+
+# Test imports
+python -c "import services.ppe_kit_detector; import services.analytics_api; print('All imports working')"
+
+# Test database
+python -c "from db.db import get_db_connection; conn = get_db_connection(); print('DB OK')"
+
+# Test file access
+python -c "import pandas as pd; df = pd.read_csv('data/users.csv'); print('CSV OK')"
+
+# Test camera config
+python -c "from services.camera_config import CAMERA_CONFIG; print('Cameras:', len(CAMERA_CONFIG))"
+```
+
+## 📊 Changelog
+
+### [2.0.0] - 2025-01-18
+
+#### 🏗️ Major Refactoring & Organization
+
+**Added:**
+- Organized directory structure with dedicated folders
+- Centralized database configuration in `db/db.py`
+- Environment variable support for database configuration
+- Comprehensive documentation
+- Service-oriented architecture with modules in `services/` directory
+
+**Changed:**
+- File organization and module renaming for better clarity
+- Path updates throughout the codebase
+- Centralized database configuration
+- Import path consistency
+
+**Fixed:**
+- Database configuration duplication
+- Import path inconsistencies
+- File path references
+- Module naming confusion
+- Directory structure organization
+
+**Removed:**
+- Duplicate files
+- Hardcoded configurations
+- Scattered file locations
+
 ## 🤝 Contributing
 
 1. Follow the established directory structure
 2. Use descriptive names for new modules
-3. Update this README when adding new features
+3. Update this documentation when adding new features
 4. Test all changes before committing
 
 ## 📄 License
@@ -303,3 +563,35 @@ app.run(debug=True, host='0.0.0.0', port=5000)
 **Last Updated**: January 2025  
 **Version**: 2.0 (Refactored)  
 **Maintainer**: [Your Name]
+
+---
+
+## 🎯 Quick Reference
+
+### Essential Commands
+```bash
+# Start backend
+python app.py
+
+# Test camera API
+curl http://127.0.0.1:5000/api/cameras
+
+# Test authentication
+python services/test_login_api.py
+
+# Check media paths
+python -c "import os; print('Media dirs exist:', all(os.path.exists(d) for d in ['media/faces', 'media/uploads', 'media/face_detect', 'models', 'data', 'log']))"
+```
+
+### Key Files
+- **Main App**: `app.py`
+- **Camera Config**: `services/camera_config.py`
+- **Database Config**: `db/db.py`
+- **Authentication**: `services/auth.py`
+- **PPE Detection**: `services/ppe_kit_detector.py`
+
+### Important URLs
+- **Backend**: `http://127.0.0.1:5000`
+- **Frontend**: `http://127.0.0.1:5173`
+- **Camera API**: `http://127.0.0.1:5000/api/cameras`
+- **Login API**: `http://127.0.0.1:5000/api/login`

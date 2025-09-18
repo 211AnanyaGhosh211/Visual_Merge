@@ -175,7 +175,7 @@ last_logged_exceptions = defaultdict(lambda: datetime.min)
 
 # Function to detect and recognize faces
 def detectFace(currentClass):
-    frame = cv2.imread("output.jpg")
+    frame = cv2.imread("media/face_detect/output.jpg")
     if frame is None:
         print("Error: Received an empty frame.")
         return
@@ -261,7 +261,7 @@ def detectFace(currentClass):
                         to_email="shounakc@icloud.com",  # Replace with actual admin email
                         subject=f"Safety Violation Alert - {currentClass}",
                         body_text=f"Employee {identity} ({roll_no}) was detected without proper safety equipment at {curr_datetime}.\n\nException Type: {currentClass}\nTime: {curr_datetime}\nEmployee ID: {roll_no}",
-                        image_path="output.jpg"
+                        image_path="media/face_detect/output.jpg"
                     )
                 except Exception as email_error:
                     print(f"Failed to send email notification: {email_error}")
