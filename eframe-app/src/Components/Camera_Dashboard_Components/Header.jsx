@@ -17,11 +17,6 @@ const Header = ({ title = "Camera Dashboard", subtitle = "Monitor your security 
         </div>
         
         <div className="flex items-center space-x-4">
-          <div className="hidden md:flex items-center space-x-2 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 px-4 py-2 rounded-full">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span className="text-sm font-medium text-black dark:text-black">System Online</span>
-          </div>
-          
           <label className="inline-flex items-center cursor-pointer">
             <input 
               type="checkbox" 
