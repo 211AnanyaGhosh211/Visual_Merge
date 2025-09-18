@@ -1,15 +1,11 @@
 import mysql.connector
 from flask import Flask, request, jsonify, Blueprint
+from .db import db_config
 
 class DBUtil:
-    def __init__(self, host, user, password, database):
+    def __init__(self):
         try:
-            self.conn = mysql.connector.connect(
-                host="localhost",
-                user="root",
-                password="12345",
-                database="EmployeeInfo"
-            )
+            self.conn = mysql.connector.connect(**db_config)
             self.cursor = self.conn.cursor()
             print("Connected to the database")
         except mysql.connector.Error as err:
@@ -17,8 +13,7 @@ class DBUtil:
 
 
 app = Flask(__name__)
-db_util = DBUtil(host='localhost', user='root',
-                 password='12345', database='EmployeeInfo')
+db_util = DBUtil()
 database_bp = Blueprint('database_bp', __name__)
 
 

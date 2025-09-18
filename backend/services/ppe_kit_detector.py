@@ -9,6 +9,99 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 import requests
 
+import smtplib
+from email.message import EmailMessage
+
+# Office365 email credentials
+EMAIL_ADDRESS = 'eframeAI@outlook.com'
+EMAIL_PASSWORD = 'lfmpzajspuopbrrr'
+SMTP_SERVER = 'smtp.office365.com'
+SMTP_PORT = 587
+
+# Gmail email credentials (alternative)
+# GMAIL_ADDRESS = 'commanderlieutenant114@gmail.com'
+# GMAIL_PASSWORD = 'zeru dcjx jois xivx'  # Use App Password, not regular password
+# GMAIL_SMTP_SERVER = 'smtp.gmail.com'
+# GMAIL_SMTP_PORT = 587
+
+GMAIL_ADDRESS = 'eframeinterns@gmail.com'
+GMAIL_PASSWORD = 'neza emsw lwpw gvkf'  
+GMAIL_SMTP_SERVER = 'smtp.gmail.com'
+GMAIL_SMTP_PORT = 587
+
+# Function to send email with image
+def send_o365_email(to_email, subject, body_text, image_path):
+    msg = EmailMessage()
+    msg['Subject'] = subject
+    msg['From'] = EMAIL_ADDRESS
+    msg['To'] = to_email
+    msg.set_content(body_text)
+
+    if os.path.exists(image_path):
+        with open(image_path, 'rb') as img_file:
+            img_data = img_file.read()
+            img_name = os.path.basename(image_path)
+            msg.add_attachment(img_data, maintype='image', subtype='jpeg', filename=img_name)
+
+    try:
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as smtp:
+            smtp.starttls()
+            smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+            smtp.send_message(msg)
+        print(f"✅ O365 Email sent to {to_email}")
+    except Exception as e:
+        print(f"❌ Failed to send O365 email: {e}")
+
+# Function to send email with Gmail
+def send_gmail_email(to_email, subject, body_text, image_path):
+    msg = EmailMessage()
+    msg['Subject'] = subject
+    msg['From'] = GMAIL_ADDRESS
+    msg['To'] = to_email
+    msg.set_content(body_text)
+
+    # Add image attachment if it exists
+    print(f"🔍 Checking image path: {image_path}")
+    if image_path and os.path.exists(image_path):
+        try:
+            # Get absolute path for better debugging
+            abs_path = os.path.abspath(image_path)
+            print(f"📁 Absolute path: {abs_path}")
+            
+            with open(image_path, 'rb') as img_file:
+                img_data = img_file.read()
+                img_name = os.path.basename(image_path)
+                print(f"📊 Image size: {len(img_data)} bytes")
+                
+                # Determine the correct MIME type based on file extension
+                if img_name.lower().endswith('.jpg') or img_name.lower().endswith('.jpeg'):
+                    msg.add_attachment(img_data, maintype='image', subtype='jpeg', filename=img_name)
+                    print(f"📎 JPEG attachment added: {img_name}")
+                elif img_name.lower().endswith('.png'):
+                    msg.add_attachment(img_data, maintype='image', subtype='png', filename=img_name)
+                    print(f"📎 PNG attachment added: {img_name}")
+                else:
+                    # Default to jpeg if extension is unclear
+                    msg.add_attachment(img_data, maintype='image', subtype='jpeg', filename=img_name)
+                    print(f"📎 Default JPEG attachment added: {img_name}")
+        except Exception as img_error:
+            print(f"❌ Failed to attach image: {img_error}")
+    else:
+        print(f"⚠️ Image file not found: {image_path}")
+        if image_path:
+            print(f"📁 Current working directory: {os.getcwd()}")
+            print(f"📁 Directory contents: {os.listdir('.')}")
+            if os.path.exists('media/face_detect'):
+                print(f"📁 face_detect directory contents: {os.listdir('media/face_detect')}")
+
+    try:
+        with smtplib.SMTP(GMAIL_SMTP_SERVER, GMAIL_SMTP_PORT) as smtp:
+            smtp.starttls()
+            smtp.login(GMAIL_ADDRESS, GMAIL_PASSWORD)
+            smtp.send_message(msg)
+        print(f"✅ Gmail sent to {to_email}")
+    except Exception as e:
+        print(f"❌ Failed to send Gmail: {e}")
 
 # Load FaceNet model & MTCNN detector
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -16,19 +109,14 @@ model = InceptionResnetV1(pretrained='vggface2').eval().to(device)
 mtcnn = MTCNN(keep_all=False, device=device)
 
 # Initialize directories
-os.makedirs('static/faces', exist_ok=True)
-os.makedirs('face_detect', exist_ok=True)
+os.makedirs('media/faces', exist_ok=True)
+os.makedirs('media/face_detect', exist_ok=True)
 
-# MySQL connection details
-db_config = {
-    "host": "localhost",
-    "user": "root",
-    "password": "12345",
-    "database": "EmployeeInfo"
-}
+# Import database configuration from db.py
+from db.db import db_config
 
 # Allowed classes for SQL insertion
-allowed_classes = {'NO-Hardhat', 'NO-Mask', 'NO-Safety Vest'}
+allowed_classes = {'NO_helmet', 'NO_Vest','NO_goggles','NO_safetyshoes'}
 
 # Cache face embeddings from MySQL database
 def cache_embeddings_from_db():
@@ -137,7 +225,7 @@ def detectFace(currentClass):
 
     # Save the frame (with or without face detection)
     curr_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    image_path = f"face_detect/face_detect_{curr_datetime}.jpg"
+    image_path = f"media/face_detect/face_detect_{curr_datetime}.jpg"
     cv2.imwrite(image_path, frame)
 
     # Check if we should log this violation
@@ -153,12 +241,7 @@ def detectFace(currentClass):
         last_logged_exceptions[last_logged_key] = current_time
 
         try:
-            connection = mysql.connector.connect(
-                host="localhost",
-                user="root",
-                password="12345",
-                database="EmployeeInfo"
-            )
+            connection = mysql.connector.connect(**db_config)
             cursor = connection.cursor()
 
             query = """INSERT INTO Exception_Logs 
@@ -171,6 +254,17 @@ def detectFace(currentClass):
 
             if cursor.rowcount > 0:
                 print("Record inserted successfully.")
+                
+                # Send email notification after successful database insertion
+                try:
+                    send_gmail_email(
+                        to_email="shounakc@icloud.com",  # Replace with actual admin email
+                        subject=f"Safety Violation Alert - {currentClass}",
+                        body_text=f"Employee {identity} ({roll_no}) was detected without proper safety equipment at {curr_datetime}.\n\nException Type: {currentClass}\nTime: {curr_datetime}\nEmployee ID: {roll_no}",
+                        image_path="output.jpg"
+                    )
+                except Exception as email_error:
+                    print(f"Failed to send email notification: {email_error}")
             else:
                 print("No records inserted.")
 
@@ -181,7 +275,7 @@ def detectFace(currentClass):
             print(f"Database error: {db_error}")
 
         # Log to notifications.txt
-        with open("notifications.txt", "a") as log_file:
+        with open("log/notifications.txt", "a") as log_file:
             log_file.write(f"Time: {curr_datetime}\n")
             log_file.write(f"Username: {identity}\n")
             log_file.write(f"Employee ID: {roll_no}\n")

@@ -14,13 +14,13 @@ from PIL import Image
 from datetime import datetime
 from flask import Flask, request, render_template, redirect, url_for, jsonify, send_file, Response, jsonify, request
 from flask_cors import CORS
-import detect
-from detect import detectFace
-import Database
-from Database import database_bp
-from Database import db_util
-import auth
-from auth import auth_bp
+import services.ppe_kit_detector
+from services.ppe_kit_detector import detectFace
+import db.Database
+from db.Database import database_bp
+from db.Database import db_util
+import services.auth
+from services.auth import auth_bp
 import sys
 import threading
 import cv2
@@ -37,9 +37,9 @@ from datetime import timedelta
 import base64
 from collections import namedtuple
 
-# Import dashdash.py functionality
-import dashdash
-from dashdash import api as dashboard_api
+# Import analytics_api.py functionality
+import services.analytics_api
+from services.analytics_api import api as dashboard_api
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
@@ -49,7 +49,7 @@ app = Flask(__name__)  # Initialize the Flask app
 # Configure CORS with specific settings
 CORS(app,
      # Allow frontend origins
-     origins=["http://localhost:5174", "http://127.0.0.1:5174"],
+     origins=["http://localhost:5173", "http://127.0.0.1:5173"],
      # Allow all necessary methods
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
      # Allow necessary headers
@@ -63,12 +63,8 @@ app.register_blueprint(auth_bp, url_prefix='/api')
 
 
 # MySQL Connection Configuration (as a dictionary)
-db_config = {
-    "host": "localhost",
-    "user": "root",
-    "password": "12345",
-    "database": "EmployeeInfo"
-}
+# Import database configuration from db.py
+from db.db import db_config
 
 def get_db_connection():
     """Function to get a database connection."""
@@ -82,15 +78,15 @@ def get_db_connection():
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 model = InceptionResnetV1(pretrained='vggface2').eval().to(device)
 mtcnn = MTCNN(keep_all=False, device=device)
-# yolo_model = YOLO("ppe.pt")
-yolo_model = YOLO("best700.pt")
+# yolo_model = YOLO("model/ppe.pt")
+yolo_model = YOLO("models/best700.pt")
 
 
-# Ensure static directory exists
-os.makedirs('static/faces', exist_ok=True)
+# Ensure media/faces directory exists
+os.makedirs('media/faces', exist_ok=True)
 
 # CSV file to store registered users
-users_file = 'users.csv'
+users_file = 'data/users.csv'
 if not os.path.exists(users_file):
     pd.DataFrame(columns=['Name', 'Roll No', 'Image Path']
                  ).to_csv(users_file, index=False)
@@ -187,7 +183,7 @@ def start_face_capture(employee_id, employee_name):
     # Reset capture state
     face_capture_count = 0
     face_capture_target = 20
-    face_capture_user_dir = f'static/faces/{employee_id}_{employee_name.strip()}'
+    face_capture_user_dir = f'media/faces/{employee_id}_{employee_name.strip()}'
     os.makedirs(face_capture_user_dir, exist_ok=True)
     # Initialize camera
     face_capture_cap = cv2.VideoCapture(0)
@@ -223,7 +219,7 @@ def capture_faces(employee_id, employee_name):
     """Legacy function - kept for backward compatibility"""
     success, message = start_face_capture(employee_id, employee_name)
     if success:
-        return f'static/faces/{employee_id}_{employee_name.strip()}'
+        return f'media/faces/{employee_id}_{employee_name.strip()}'
     else:
         return None
 
@@ -755,7 +751,7 @@ def stop_detection():
 @app.route('/report')
 def get_report():
     today_date = datetime.now().strftime("%Y-%m-%d")
-    report_filename = f"violation_report_{today_date}.txt"
+    report_filename = f"log/violation_report_{today_date}.txt"
 
     # Connect to MySQL
     conn = mysql.connector.connect(**db_config)
@@ -832,7 +828,7 @@ Violations per Type:
 
 
 # Configure upload folder
-UPLOAD_FOLDER = 'static/uploads'
+UPLOAD_FOLDER = 'media/uploads'
 ALLOWED_EXTENSIONS = {'mp4', 'avi', 'mov', 'mkv', 'jpg', 'jpeg', 'png'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -845,7 +841,7 @@ def display_video(video_path):
     cap = cv2.VideoCapture(video_path)
 
 
-yolo_model2 = YOLO("best700.pt")
+yolo_model2 = YOLO("models/best700.pt")
 
 
 def generate_processed_frames2(video_path):

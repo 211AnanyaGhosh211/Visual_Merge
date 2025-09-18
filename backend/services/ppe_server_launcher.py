@@ -34,7 +34,7 @@ try:
     
     # Try to import the main app
     try:
-        from newapp3 import app
+        from app import app
         print("✓ Main app imported successfully")
     except Exception as e:
         print(f"✗ Failed to import main app: {e}")

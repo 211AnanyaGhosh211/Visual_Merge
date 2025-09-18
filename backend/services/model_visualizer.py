@@ -358,7 +358,7 @@ def draw_yolo_detections(img, boxes, confidences, class_ids, class_names, colors
     
     return img
 
-def process_video_with_clean_labels(video_path, model_path='yolov8n.pt', 
+def process_video_with_clean_labels(video_path, model_path='models/yolov8n.pt', 
                                    label_method='smart_positioning',
                                    output_path=None, conf_threshold=0.25,
                                    show_fps=True, resize_factor=1.0,
@@ -551,7 +551,7 @@ def process_video_with_clean_labels(video_path, model_path='yolov8n.pt',
         import traceback
         traceback.print_exc()
 
-def process_webcam_with_clean_labels(model_path='yolov8n.pt', 
+def process_webcam_with_clean_labels(model_path='models/yolov8n.pt', 
                                     label_method='smart_positioning',
                                     conf_threshold=0.25, camera_id=0):
     """

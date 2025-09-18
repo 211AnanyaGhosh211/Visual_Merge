@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 class CCTVProcessor:
-    def __init__(self, model_path="best (3).pt", conf_threshold=0.45):
+    def __init__(self, model_path="models/best (3).pt", conf_threshold=0.45):
         """
         Initialize CCTV processor with YOLO model
         
@@ -320,8 +320,8 @@ def main():
                        help='NVR connection string (e.g., rtsp://ip:port/stream, http://ip:port/stream)')
     parser.add_argument('--type', '-t', default='rtsp', choices=['rtsp', 'http', 'ip'],
                        help='Connection type (default: rtsp)')
-    parser.add_argument('--model', '-m', default='best (3).pt',
-                       help='Path to YOLO model file (default: best (3).pt)')
+    parser.add_argument('--model', '-m', default='models/best (3).pt',
+                       help='Path to YOLO model file (default: models/best (3).pt)')
     parser.add_argument('--conf', default=0.45, type=float,
                        help='Confidence threshold (default: 0.45)')
     parser.add_argument('--save', '-s', action='store_true',
@@ -349,7 +349,7 @@ if __name__ == "__main__":
     # Example usage without command line arguments
     # Uncomment and modify the following lines for direct usage
     
-    # processor = CCTVProcessor(model_path="best (3).pt", conf_threshold=0.45)
+    # processor = CCTVProcessor(model_path="models/best (3).pt", conf_threshold=0.45)
     # 
     # # Example connection strings - modify these for your NVR
     # # RTSP: rtsp://username:password@ip:port/stream

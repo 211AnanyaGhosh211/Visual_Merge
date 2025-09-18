@@ -112,7 +112,7 @@ CREATE TABLE Registered_Employees (
 1. **Start the Flask server:**
 
    ```bash
-   python newapp3.py
+   python app.py
    ```
 
 2. **Test the API:**
