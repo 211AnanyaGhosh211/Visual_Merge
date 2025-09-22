@@ -1,0 +1,99 @@
+{
+  "summary": {
+    "NO_Vest": 18
+  },
+  "total_violations": 18,
+  "detailed_log": [
+    {
+      "timestamp": "2025-09-22 17:54:00",
+      "violation_type": "NO_Vest",
+      "count": 1
+    },
+    {
+      "timestamp": "2025-09-22 17:54:00",
+      "violation_type": "NO_Vest",
+      "count": 2
+    },
+    {
+      "timestamp": "2025-09-22 17:54:08",
+      "violation_type": "NO_Vest",
+      "count": 3
+    },
+    {
+      "timestamp": "2025-09-22 17:54:08",
+      "violation_type": "NO_Vest",
+      "count": 4
+    },
+    {
+      "timestamp": "2025-09-22 17:54:10",
+      "violation_type": "NO_Vest",
+      "count": 5
+    },
+    {
+      "timestamp": "2025-09-22 17:54:10",
+      "violation_type": "NO_Vest",
+      "count": 6
+    },
+    {
+      "timestamp": "2025-09-22 17:54:10",
+      "violation_type": "NO_Vest",
+      "count": 7
+    },
+    {
+      "timestamp": "2025-09-22 17:54:10",
+      "violation_type": "NO_Vest",
+      "count": 8
+    },
+    {
+      "timestamp": "2025-09-22 17:54:11",
+      "violation_type": "NO_Vest",
+      "count": 9
+    },
+    {
+      "timestamp": "2025-09-22 17:54:11",
+      "violation_type": "NO_Vest",
+      "count": 10
+    },
+    {
+      "timestamp": "2025-09-22 17:54:11",
+      "violation_type": "NO_Vest",
+      "count": 11
+    },
+    {
+      "timestamp": "2025-09-22 17:54:11",
+      "violation_type": "NO_Vest",
+      "count": 12
+    },
+    {
+      "timestamp": "2025-09-22 17:54:12",
+      "violation_type": "NO_Vest",
+      "count": 13
+    },
+    {
+      "timestamp": "2025-09-22 17:54:12",
+      "violation_type": "NO_Vest",
+      "count": 14
+    },
+    {
+      "timestamp": "2025-09-22 17:54:12",
+      "violation_type": "NO_Vest",
+      "count": 15
+    },
+    {
+      "timestamp": "2025-09-22 17:54:13",
+      "violation_type": "NO_Vest",
+      "count": 16
+    },
+    {
+      "timestamp": "2025-09-22 17:54:14",
+      "violation_type": "NO_Vest",
+      "count": 17
+    },
+    {
+      "timestamp": "2025-09-22 17:54:14",
+      "violation_type": "NO_Vest",
+      "count": 18
+    }
+  ],
+  "last_updated": "2025-09-22 17:54:18"
+}

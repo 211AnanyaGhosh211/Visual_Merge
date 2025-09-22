@@ -1048,3 +1048,9 @@ Employee ID: Unknown
 Exception Type: NO_Vest
 Incident Image: media/face_detect/face_detect_2025-09-22 12:47:32.jpg
 
+Time: 2025-09-22 17:54:00
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_Vest
+Incident Image: media/face_detect/face_detect_2025-09-22 17:54:00.jpg
+
