@@ -1,3 +1,5 @@
+from services.violation_count import get_violation_counts, count_violation
+from db.db import db_config
 import os
 import mysql.connector
 import cv2
@@ -12,6 +14,7 @@ import requests
 import smtplib
 from email.message import EmailMessage
 
+from services.violation_count import get_violation_counts
 
 # Reciver email address
 # MY_EMAIL = 'shounakc@icloud.com';
@@ -30,11 +33,13 @@ SMTP_PORT = 587
 # GMAIL_SMTP_PORT = 587
 
 GMAIL_ADDRESS = 'eframeinterns@gmail.com'
-GMAIL_PASSWORD = 'neza emsw lwpw gvkf'  
+GMAIL_PASSWORD = 'neza emsw lwpw gvkf'
 GMAIL_SMTP_SERVER = 'smtp.gmail.com'
 GMAIL_SMTP_PORT = 587
 
 # Function to send email with image
+
+
 def send_o365_email(to_email, subject, body_text, image_path):
     msg = EmailMessage()
     msg['Subject'] = subject
@@ -46,7 +51,8 @@ def send_o365_email(to_email, subject, body_text, image_path):
         with open(image_path, 'rb') as img_file:
             img_data = img_file.read()
             img_name = os.path.basename(image_path)
-            msg.add_attachment(img_data, maintype='image', subtype='jpeg', filename=img_name)
+            msg.add_attachment(img_data, maintype='image',
+                               subtype='jpeg', filename=img_name)
 
     try:
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as smtp:
@@ -58,6 +64,8 @@ def send_o365_email(to_email, subject, body_text, image_path):
         print(f"❌ Failed to send O365 email: {e}")
 
 # Function to send email with Gmail
+
+
 def send_gmail_email(to_email, subject, body_text, image_path):
     msg = EmailMessage()
     msg['Subject'] = subject
@@ -72,22 +80,25 @@ def send_gmail_email(to_email, subject, body_text, image_path):
             # Get absolute path for better debugging
             abs_path = os.path.abspath(image_path)
             print(f"📁 Absolute path: {abs_path}")
-            
+
             with open(image_path, 'rb') as img_file:
                 img_data = img_file.read()
                 img_name = os.path.basename(image_path)
                 print(f"📊 Image size: {len(img_data)} bytes")
-                
+
                 # Determine the correct MIME type based on file extension
                 if img_name.lower().endswith('.jpg') or img_name.lower().endswith('.jpeg'):
-                    msg.add_attachment(img_data, maintype='image', subtype='jpeg', filename=img_name)
+                    msg.add_attachment(
+                        img_data, maintype='image', subtype='jpeg', filename=img_name)
                     print(f"📎 JPEG attachment added: {img_name}")
                 elif img_name.lower().endswith('.png'):
-                    msg.add_attachment(img_data, maintype='image', subtype='png', filename=img_name)
+                    msg.add_attachment(
+                        img_data, maintype='image', subtype='png', filename=img_name)
                     print(f"📎 PNG attachment added: {img_name}")
                 else:
                     # Default to jpeg if extension is unclear
-                    msg.add_attachment(img_data, maintype='image', subtype='jpeg', filename=img_name)
+                    msg.add_attachment(
+                        img_data, maintype='image', subtype='jpeg', filename=img_name)
                     print(f"📎 Default JPEG attachment added: {img_name}")
         except Exception as img_error:
             print(f"❌ Failed to attach image: {img_error}")
@@ -97,7 +108,8 @@ def send_gmail_email(to_email, subject, body_text, image_path):
             print(f"📁 Current working directory: {os.getcwd()}")
             print(f"📁 Directory contents: {os.listdir('.')}")
             if os.path.exists('media/face_detect'):
-                print(f"📁 face_detect directory contents: {os.listdir('media/face_detect')}")
+                print(
+                    f"📁 face_detect directory contents: {os.listdir('media/face_detect')}")
 
     try:
         with smtplib.SMTP(GMAIL_SMTP_SERVER, GMAIL_SMTP_PORT) as smtp:
@@ -108,6 +120,7 @@ def send_gmail_email(to_email, subject, body_text, image_path):
     except Exception as e:
         print(f"❌ Failed to send Gmail: {e}")
 
+
 # Load FaceNet model & MTCNN detector
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 model = InceptionResnetV1(pretrained='vggface2').eval().to(device)
@@ -117,13 +130,13 @@ mtcnn = MTCNN(keep_all=False, device=device)
 os.makedirs('media/faces', exist_ok=True)
 os.makedirs('media/face_detect', exist_ok=True)
 
-# Import database configuration from db.py
-from db.db import db_config
 
 # Allowed classes for SQL insertion
-allowed_classes = {'NO_helmet', 'NO_Vest','NO_goggles','NO_safetyshoes'}
+allowed_classes = {'NO_helmet', 'NO_Vest', 'NO_goggles', 'NO_safetyshoes'}
 
 # Cache face embeddings from MySQL database
+
+
 def cache_embeddings_from_db():
     embeddings = []
 
@@ -154,7 +167,8 @@ def cache_embeddings_from_db():
                             if face is not None:
                                 face = face.unsqueeze(0).to(device)
                                 embedding = model(face)
-                                embeddings.append((embedding[0].cpu(), name, roll_no))
+                                embeddings.append(
+                                    (embedding[0].cpu(), name, roll_no))
                     except Exception as e:
                         print(f"Error processing {image_path}: {e}")
             except Exception as e:
@@ -168,6 +182,7 @@ def cache_embeddings_from_db():
 
     return embeddings
 
+
 # Initialize known embeddings from MySQL
 try:
     known_embeddings = cache_embeddings_from_db()
@@ -179,6 +194,8 @@ except Exception as e:
 last_logged_exceptions = defaultdict(lambda: datetime.min)
 
 # Function to detect and recognize faces
+
+
 def detectFace(currentClass):
     frame = cv2.imread("media/face_detect/output.jpg")
     if frame is None:
@@ -222,7 +239,8 @@ def detectFace(currentClass):
 
                         cv2.putText(frame, f"{identity} ({roll_no})", (x1, y1 - 10),
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
-                        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                        cv2.rectangle(frame, (x1, y1),
+                                      (x2, y2), (0, 255, 0), 2)
                         face_detected = True
 
             except Exception as e:
@@ -235,6 +253,9 @@ def detectFace(currentClass):
 
     # Check if we should log this violation
     if currentClass in allowed_classes:
+        # Count the violation
+        count_violation(currentClass)
+
         # Check if the same exception has been logged within the last 10 minutes
         last_logged_key = (identity, currentClass)
         current_time = datetime.now()
@@ -252,21 +273,45 @@ def detectFace(currentClass):
             query = """INSERT INTO Exception_Logs 
                        (time_occurred, Username, Employee_id, Exception_Type, Incident_image) 
                        VALUES (%s, %s, %s, %s, %s)"""
-            values = (curr_datetime, identity, roll_no, currentClass, image_path)
+            values = (curr_datetime, identity, roll_no,
+                      currentClass, image_path)
 
             cursor.execute(query, values)
             connection.commit()
 
             if cursor.rowcount > 0:
                 print("Record inserted successfully.")
-                
+
                 # Send email notification after successful database insertion
                 try:
+                    # Get current violation counts
+                    violation_counts = get_violation_counts()
+
+                    # Build violation summary for email
+                    violation_summary = []
+                    if violation_counts.get('NO_helmet', 0) > 0:
+                        violation_summary.append(
+                            f"NO_HELMET - {violation_counts['NO_helmet']} people")
+                    if violation_counts.get('NO_Vest', 0) > 0:
+                        violation_summary.append(
+                            f"NO_VEST - {violation_counts['NO_Vest']} people")
+                    if violation_counts.get('NO_goggles', 0) > 0:
+                        violation_summary.append(
+                            f"NO_GOGGLES - {violation_counts['NO_goggles']} people")
+                    if violation_counts.get('NO_safetyshoes', 0) > 0:
+                        violation_summary.append(
+                            f"NO_SAFETYSHOES - {violation_counts['NO_safetyshoes']} people")
+
+                    # Create email body with violation summary
+                    violation_text = "\n".join(
+                        violation_summary) if violation_summary else "No violations detected"
+                    body_text = f"Employee {identity} ({roll_no}) was detected without proper safety equipment at {curr_datetime}.\n\nException Type: {currentClass}\nTime: {curr_datetime}\nEmployee ID: {roll_no}\n\nCurrent Violation Summary:\n{violation_text}"
+
                     send_gmail_email(
-                        #------- to_email # Replace 
+                        # ------- to_email # Replace
                         to_email=f"{MY_EMAIL}",
                         subject=f"Safety Violation Alert - {currentClass}",
-                        body_text=f"Employee {identity} ({roll_no}) was detected without proper safety equipment at {curr_datetime}.\n\nException Type: {currentClass}\nTime: {curr_datetime}\nEmployee ID: {roll_no}",
+                        body_text=body_text,
                         image_path="media/face_detect/output.jpg"
                     )
                 except Exception as email_error:
@@ -288,34 +333,32 @@ def detectFace(currentClass):
             log_file.write(f"Exception Type: {currentClass}\n")
             log_file.write(f"Incident Image: {image_path}\n")
             log_file.write("\n")
-            
-        
-        
+
         url = "https://backend.aisensy.com/campaign/t1/api/v2"  # Replace with actual URL
 
         payload = {
-                   
-                        "apiKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3Y2U4YzRkMjkzOGM1MDM4ZmQ0YTYzMyIsIm5hbWUiOiJZb3V0aCBDb21wdXRlciBUcmFpbmluZyBDZW50cmUgIiwiYXBwTmFtZSI6IkFpU2Vuc3kiLCJjbGllbnRJZCI6IjY3Y2U4YzRkMjkzOGM1MDM4ZmQ0YTYyZCIsImFjdGl2ZVBsYW4iOiJGUkVFX0ZPUkVWRVIiLCJpYXQiOjE3NDE1ODk1ODF9.RTXa7AU_8M9JGkEBoptS9mSH6Izxdg8fADZ9NW_rADM",
-                        "campaignName": "Visual Analytics",
-                        "destination": "917003840021",
-                        "userName": "Youth Computer Training Centre ",
+
+            "apiKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3Y2U4YzRkMjkzOGM1MDM4ZmQ0YTYzMyIsIm5hbWUiOiJZb3V0aCBDb21wdXRlciBUcmFpbmluZyBDZW50cmUgIiwiYXBwTmFtZSI6IkFpU2Vuc3kiLCJjbGllbnRJZCI6IjY3Y2U4YzRkMjkzOGM1MDM4ZmQ0YTYyZCIsImFjdGl2ZVBsYW4iOiJGUkVFX0ZPUkVWRVIiLCJpYXQiOjE3NDE1ODk1ODF9.RTXa7AU_8M9JGkEBoptS9mSH6Izxdg8fADZ9NW_rADM",
+            "campaignName": "Visual Analytics",
+            "destination": "917003840021",
+            "userName": "Youth Computer Training Centre ",
                         "templateParams": [
                             f"{identity}",
                             f"{roll_no}",
                             f"{currentClass}",
                             f"{curr_datetime}"
                         ],
-                        "source": "new-landing-page form",
-                        "media": {},
-                        "buttons": [],
-                        "carouselCards": [],
-                        "location": {},
-                        "attributes": {},
-                        "paramsFallbackValue": {
+            "source": "new-landing-page form",
+            "media": {},
+            "buttons": [],
+            "carouselCards": [],
+            "location": {},
+            "attributes": {},
+            "paramsFallbackValue": {
                             "FirstName": "user"
                         }
-                    
-                }
+
+        }
 
         headers = {
             "Content-Type": "application/json"
@@ -325,5 +368,3 @@ def detectFace(currentClass):
 
         print(response.status_code)
         print(response.text)
-                    
-                
