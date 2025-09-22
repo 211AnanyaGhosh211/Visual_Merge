@@ -66,20 +66,20 @@ const Login = () => {
     <div
       className="min-h-screen flex items-center justify-end relative"
       style={{
-        backgroundImage: "url(/visual_analytics.jpg)",
+        backgroundImage: "url(/visual_analytics2.jpeg)",
         backgroundSize: "cover",
-        backgroundPosition: "center",
+        backgroundPosition: "center 30%",
         backgroundRepeat: "no-repeat",
       }}
     >
       {/* Overlay for better text readability */}
-      <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+      <div className="absolute inset-0  bg-opacity-10"></div>
 
       {/* Login Panel - Right Side */}
       <div className="relative z-10 w-1/3 min-w-[400px] h-screen flex items-center justify-center">
         <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl p-8 w-full max-w-md mx-8 shadow-2xl">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* DRIVE360 Logo */}
+            {/* Visual Analytics Logo */}
             <div className="text-center mb-8">
               <div className="text-3xl font-bold">
                 <span className="text-orange-500">VISUAL</span>
@@ -146,7 +146,8 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full px-6 py-3 bg-white border border-gray-300 rounded-lg text-gray-800 font-semibold hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                className="w-[100px] px-3 py-2 bg-white border-gray-300 rounded-[8px] text-gray-950 font-semibold hover:bg-gray-50 focus:outline-none focus:ring-0 focus:border-transparent transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm
+                hover:bg-gradient-to-r from-orange-500 to-yellow-100 hover:text-black hover:box-shadow-md hover:shadow-lg hover:shadow-gray-400"
               >
                 {isLoading ? "Logging in..." : "Login"}
               </button>
@@ -170,9 +171,9 @@ const Login = () => {
                   </a>
                 </div>
                 <img
-                  src="/eframe_logo.jpeg"
+                  src="/eframe_logo_final_dark.png"
                   alt="eframe logo"
-                  className="w-12 h-12 object-contain"
+                  className="w-auto h-12 object-contain"
                 />
               </div>
             </div>
