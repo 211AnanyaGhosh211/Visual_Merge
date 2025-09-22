@@ -1,0 +1,1544 @@
+{
+  "summary": {
+    "NO_Vest": 307
+  },
+  "total_violations": 307,
+  "detailed_log": [
+    {
+      "timestamp": "2025-09-22 11:38:01",
+      "violation_type": "NO_Vest",
+      "count": 1
+    },
+    {
+      "timestamp": "2025-09-22 11:38:12",
+      "violation_type": "NO_Vest",
+      "count": 2
+    },
+    {
+      "timestamp": "2025-09-22 11:38:13",
+      "violation_type": "NO_Vest",
+      "count": 3
+    },
+    {
+      "timestamp": "2025-09-22 11:38:13",
+      "violation_type": "NO_Vest",
+      "count": 4
+    },
+    {
+      "timestamp": "2025-09-22 11:38:16",
+      "violation_type": "NO_Vest",
+      "count": 5
+    },
+    {
+      "timestamp": "2025-09-22 11:38:17",
+      "violation_type": "NO_Vest",
+      "count": 6
+    },
+    {
+      "timestamp": "2025-09-22 11:38:19",
+      "violation_type": "NO_Vest",
+      "count": 7
+    },
+    {
+      "timestamp": "2025-09-22 11:38:20",
+      "violation_type": "NO_Vest",
+      "count": 8
+    },
+    {
+      "timestamp": "2025-09-22 11:38:23",
+      "violation_type": "NO_Vest",
+      "count": 9
+    },
+    {
+      "timestamp": "2025-09-22 11:38:24",
+      "violation_type": "NO_Vest",
+      "count": 10
+    },
+    {
+      "timestamp": "2025-09-22 11:38:25",
+      "violation_type": "NO_Vest",
+      "count": 11
+    },
+    {
+      "timestamp": "2025-09-22 11:38:26",
+      "violation_type": "NO_Vest",
+      "count": 12
+    },
+    {
+      "timestamp": "2025-09-22 11:38:27",
+      "violation_type": "NO_Vest",
+      "count": 13
+    },
+    {
+      "timestamp": "2025-09-22 11:38:29",
+      "violation_type": "NO_Vest",
+      "count": 14
+    },
+    {
+      "timestamp": "2025-09-22 11:38:30",
+      "violation_type": "NO_Vest",
+      "count": 15
+    },
+    {
+      "timestamp": "2025-09-22 11:38:30",
+      "violation_type": "NO_Vest",
+      "count": 16
+    },
+    {
+      "timestamp": "2025-09-22 11:38:31",
+      "violation_type": "NO_Vest",
+      "count": 17
+    },
+    {
+      "timestamp": "2025-09-22 11:38:32",
+      "violation_type": "NO_Vest",
+      "count": 18
+    },
+    {
+      "timestamp": "2025-09-22 11:38:34",
+      "violation_type": "NO_Vest",
+      "count": 19
+    },
+    {
+      "timestamp": "2025-09-22 11:38:35",
+      "violation_type": "NO_Vest",
+      "count": 20
+    },
+    {
+      "timestamp": "2025-09-22 11:38:36",
+      "violation_type": "NO_Vest",
+      "count": 21
+    },
+    {
+      "timestamp": "2025-09-22 11:38:37",
+      "violation_type": "NO_Vest",
+      "count": 22
+    },
+    {
+      "timestamp": "2025-09-22 11:38:38",
+      "violation_type": "NO_Vest",
+      "count": 23
+    },
+    {
+      "timestamp": "2025-09-22 11:38:39",
+      "violation_type": "NO_Vest",
+      "count": 24
+    },
+    {
+      "timestamp": "2025-09-22 11:38:40",
+      "violation_type": "NO_Vest",
+      "count": 25
+    },
+    {
+      "timestamp": "2025-09-22 11:38:42",
+      "violation_type": "NO_Vest",
+      "count": 26
+    },
+    {
+      "timestamp": "2025-09-22 11:38:43",
+      "violation_type": "NO_Vest",
+      "count": 27
+    },
+    {
+      "timestamp": "2025-09-22 11:38:44",
+      "violation_type": "NO_Vest",
+      "count": 28
+    },
+    {
+      "timestamp": "2025-09-22 11:38:45",
+      "violation_type": "NO_Vest",
+      "count": 29
+    },
+    {
+      "timestamp": "2025-09-22 11:38:46",
+      "violation_type": "NO_Vest",
+      "count": 30
+    },
+    {
+      "timestamp": "2025-09-22 11:38:47",
+      "violation_type": "NO_Vest",
+      "count": 31
+    },
+    {
+      "timestamp": "2025-09-22 11:38:48",
+      "violation_type": "NO_Vest",
+      "count": 32
+    },
+    {
+      "timestamp": "2025-09-22 11:38:49",
+      "violation_type": "NO_Vest",
+      "count": 33
+    },
+    {
+      "timestamp": "2025-09-22 11:38:50",
+      "violation_type": "NO_Vest",
+      "count": 34
+    },
+    {
+      "timestamp": "2025-09-22 11:38:51",
+      "violation_type": "NO_Vest",
+      "count": 35
+    },
+    {
+      "timestamp": "2025-09-22 11:38:52",
+      "violation_type": "NO_Vest",
+      "count": 36
+    },
+    {
+      "timestamp": "2025-09-22 11:38:53",
+      "violation_type": "NO_Vest",
+      "count": 37
+    },
+    {
+      "timestamp": "2025-09-22 11:38:55",
+      "violation_type": "NO_Vest",
+      "count": 38
+    },
+    {
+      "timestamp": "2025-09-22 11:38:56",
+      "violation_type": "NO_Vest",
+      "count": 39
+    },
+    {
+      "timestamp": "2025-09-22 11:38:57",
+      "violation_type": "NO_Vest",
+      "count": 40
+    },
+    {
+      "timestamp": "2025-09-22 11:38:58",
+      "violation_type": "NO_Vest",
+      "count": 41
+    },
+    {
+      "timestamp": "2025-09-22 11:38:58",
+      "violation_type": "NO_Vest",
+      "count": 42
+    },
+    {
+      "timestamp": "2025-09-22 11:38:59",
+      "violation_type": "NO_Vest",
+      "count": 43
+    },
+    {
+      "timestamp": "2025-09-22 11:39:00",
+      "violation_type": "NO_Vest",
+      "count": 44
+    },
+    {
+      "timestamp": "2025-09-22 11:39:01",
+      "violation_type": "NO_Vest",
+      "count": 45
+    },
+    {
+      "timestamp": "2025-09-22 11:39:02",
+      "violation_type": "NO_Vest",
+      "count": 46
+    },
+    {
+      "timestamp": "2025-09-22 11:39:02",
+      "violation_type": "NO_Vest",
+      "count": 47
+    },
+    {
+      "timestamp": "2025-09-22 11:39:03",
+      "violation_type": "NO_Vest",
+      "count": 48
+    },
+    {
+      "timestamp": "2025-09-22 11:39:04",
+      "violation_type": "NO_Vest",
+      "count": 49
+    },
+    {
+      "timestamp": "2025-09-22 11:39:05",
+      "violation_type": "NO_Vest",
+      "count": 50
+    },
+    {
+      "timestamp": "2025-09-22 11:39:06",
+      "violation_type": "NO_Vest",
+      "count": 51
+    },
+    {
+      "timestamp": "2025-09-22 11:39:06",
+      "violation_type": "NO_Vest",
+      "count": 52
+    },
+    {
+      "timestamp": "2025-09-22 11:39:17",
+      "violation_type": "NO_Vest",
+      "count": 53
+    },
+    {
+      "timestamp": "2025-09-22 11:39:18",
+      "violation_type": "NO_Vest",
+      "count": 54
+    },
+    {
+      "timestamp": "2025-09-22 11:39:19",
+      "violation_type": "NO_Vest",
+      "count": 55
+    },
+    {
+      "timestamp": "2025-09-22 11:39:20",
+      "violation_type": "NO_Vest",
+      "count": 56
+    },
+    {
+      "timestamp": "2025-09-22 11:39:21",
+      "violation_type": "NO_Vest",
+      "count": 57
+    },
+    {
+      "timestamp": "2025-09-22 11:39:22",
+      "violation_type": "NO_Vest",
+      "count": 58
+    },
+    {
+      "timestamp": "2025-09-22 11:39:22",
+      "violation_type": "NO_Vest",
+      "count": 59
+    },
+    {
+      "timestamp": "2025-09-22 11:39:23",
+      "violation_type": "NO_Vest",
+      "count": 60
+    },
+    {
+      "timestamp": "2025-09-22 11:39:24",
+      "violation_type": "NO_Vest",
+      "count": 61
+    },
+    {
+      "timestamp": "2025-09-22 11:39:25",
+      "violation_type": "NO_Vest",
+      "count": 62
+    },
+    {
+      "timestamp": "2025-09-22 11:39:26",
+      "violation_type": "NO_Vest",
+      "count": 63
+    },
+    {
+      "timestamp": "2025-09-22 11:39:26",
+      "violation_type": "NO_Vest",
+      "count": 64
+    },
+    {
+      "timestamp": "2025-09-22 11:39:27",
+      "violation_type": "NO_Vest",
+      "count": 65
+    },
+    {
+      "timestamp": "2025-09-22 11:39:29",
+      "violation_type": "NO_Vest",
+      "count": 66
+    },
+    {
+      "timestamp": "2025-09-22 11:39:30",
+      "violation_type": "NO_Vest",
+      "count": 67
+    },
+    {
+      "timestamp": "2025-09-22 11:39:31",
+      "violation_type": "NO_Vest",
+      "count": 68
+    },
+    {
+      "timestamp": "2025-09-22 11:39:32",
+      "violation_type": "NO_Vest",
+      "count": 69
+    },
+    {
+      "timestamp": "2025-09-22 11:39:33",
+      "violation_type": "NO_Vest",
+      "count": 70
+    },
+    {
+      "timestamp": "2025-09-22 11:39:34",
+      "violation_type": "NO_Vest",
+      "count": 71
+    },
+    {
+      "timestamp": "2025-09-22 11:39:35",
+      "violation_type": "NO_Vest",
+      "count": 72
+    },
+    {
+      "timestamp": "2025-09-22 11:39:36",
+      "violation_type": "NO_Vest",
+      "count": 73
+    },
+    {
+      "timestamp": "2025-09-22 11:39:37",
+      "violation_type": "NO_Vest",
+      "count": 74
+    },
+    {
+      "timestamp": "2025-09-22 11:39:38",
+      "violation_type": "NO_Vest",
+      "count": 75
+    },
+    {
+      "timestamp": "2025-09-22 11:39:39",
+      "violation_type": "NO_Vest",
+      "count": 76
+    },
+    {
+      "timestamp": "2025-09-22 11:39:40",
+      "violation_type": "NO_Vest",
+      "count": 77
+    },
+    {
+      "timestamp": "2025-09-22 11:39:41",
+      "violation_type": "NO_Vest",
+      "count": 78
+    },
+    {
+      "timestamp": "2025-09-22 11:39:42",
+      "violation_type": "NO_Vest",
+      "count": 79
+    },
+    {
+      "timestamp": "2025-09-22 11:39:43",
+      "violation_type": "NO_Vest",
+      "count": 80
+    },
+    {
+      "timestamp": "2025-09-22 11:39:44",
+      "violation_type": "NO_Vest",
+      "count": 81
+    },
+    {
+      "timestamp": "2025-09-22 11:39:45",
+      "violation_type": "NO_Vest",
+      "count": 82
+    },
+    {
+      "timestamp": "2025-09-22 11:39:46",
+      "violation_type": "NO_Vest",
+      "count": 83
+    },
+    {
+      "timestamp": "2025-09-22 11:39:47",
+      "violation_type": "NO_Vest",
+      "count": 84
+    },
+    {
+      "timestamp": "2025-09-22 11:39:48",
+      "violation_type": "NO_Vest",
+      "count": 85
+    },
+    {
+      "timestamp": "2025-09-22 11:39:50",
+      "violation_type": "NO_Vest",
+      "count": 86
+    },
+    {
+      "timestamp": "2025-09-22 11:39:51",
+      "violation_type": "NO_Vest",
+      "count": 87
+    },
+    {
+      "timestamp": "2025-09-22 11:39:52",
+      "violation_type": "NO_Vest",
+      "count": 88
+    },
+    {
+      "timestamp": "2025-09-22 11:39:53",
+      "violation_type": "NO_Vest",
+      "count": 89
+    },
+    {
+      "timestamp": "2025-09-22 11:39:55",
+      "violation_type": "NO_Vest",
+      "count": 90
+    },
+    {
+      "timestamp": "2025-09-22 11:39:56",
+      "violation_type": "NO_Vest",
+      "count": 91
+    },
+    {
+      "timestamp": "2025-09-22 11:39:57",
+      "violation_type": "NO_Vest",
+      "count": 92
+    },
+    {
+      "timestamp": "2025-09-22 11:39:58",
+      "violation_type": "NO_Vest",
+      "count": 93
+    },
+    {
+      "timestamp": "2025-09-22 11:39:59",
+      "violation_type": "NO_Vest",
+      "count": 94
+    },
+    {
+      "timestamp": "2025-09-22 11:40:00",
+      "violation_type": "NO_Vest",
+      "count": 95
+    },
+    {
+      "timestamp": "2025-09-22 11:40:01",
+      "violation_type": "NO_Vest",
+      "count": 96
+    },
+    {
+      "timestamp": "2025-09-22 11:40:02",
+      "violation_type": "NO_Vest",
+      "count": 97
+    },
+    {
+      "timestamp": "2025-09-22 11:40:04",
+      "violation_type": "NO_Vest",
+      "count": 98
+    },
+    {
+      "timestamp": "2025-09-22 11:40:05",
+      "violation_type": "NO_Vest",
+      "count": 99
+    },
+    {
+      "timestamp": "2025-09-22 11:40:06",
+      "violation_type": "NO_Vest",
+      "count": 100
+    },
+    {
+      "timestamp": "2025-09-22 11:40:07",
+      "violation_type": "NO_Vest",
+      "count": 101
+    },
+    {
+      "timestamp": "2025-09-22 11:40:08",
+      "violation_type": "NO_Vest",
+      "count": 102
+    },
+    {
+      "timestamp": "2025-09-22 11:40:09",
+      "violation_type": "NO_Vest",
+      "count": 103
+    },
+    {
+      "timestamp": "2025-09-22 11:40:11",
+      "violation_type": "NO_Vest",
+      "count": 104
+    },
+    {
+      "timestamp": "2025-09-22 11:40:12",
+      "violation_type": "NO_Vest",
+      "count": 105
+    },
+    {
+      "timestamp": "2025-09-22 11:40:13",
+      "violation_type": "NO_Vest",
+      "count": 106
+    },
+    {
+      "timestamp": "2025-09-22 11:40:14",
+      "violation_type": "NO_Vest",
+      "count": 107
+    },
+    {
+      "timestamp": "2025-09-22 11:40:15",
+      "violation_type": "NO_Vest",
+      "count": 108
+    },
+    {
+      "timestamp": "2025-09-22 11:40:23",
+      "violation_type": "NO_Vest",
+      "count": 109
+    },
+    {
+      "timestamp": "2025-09-22 11:40:24",
+      "violation_type": "NO_Vest",
+      "count": 110
+    },
+    {
+      "timestamp": "2025-09-22 11:40:25",
+      "violation_type": "NO_Vest",
+      "count": 111
+    },
+    {
+      "timestamp": "2025-09-22 11:40:26",
+      "violation_type": "NO_Vest",
+      "count": 112
+    },
+    {
+      "timestamp": "2025-09-22 11:40:27",
+      "violation_type": "NO_Vest",
+      "count": 113
+    },
+    {
+      "timestamp": "2025-09-22 11:40:28",
+      "violation_type": "NO_Vest",
+      "count": 114
+    },
+    {
+      "timestamp": "2025-09-22 11:40:29",
+      "violation_type": "NO_Vest",
+      "count": 115
+    },
+    {
+      "timestamp": "2025-09-22 11:40:31",
+      "violation_type": "NO_Vest",
+      "count": 116
+    },
+    {
+      "timestamp": "2025-09-22 11:40:32",
+      "violation_type": "NO_Vest",
+      "count": 117
+    },
+    {
+      "timestamp": "2025-09-22 11:40:34",
+      "violation_type": "NO_Vest",
+      "count": 118
+    },
+    {
+      "timestamp": "2025-09-22 11:40:35",
+      "violation_type": "NO_Vest",
+      "count": 119
+    },
+    {
+      "timestamp": "2025-09-22 11:40:36",
+      "violation_type": "NO_Vest",
+      "count": 120
+    },
+    {
+      "timestamp": "2025-09-22 11:40:37",
+      "violation_type": "NO_Vest",
+      "count": 121
+    },
+    {
+      "timestamp": "2025-09-22 11:40:38",
+      "violation_type": "NO_Vest",
+      "count": 122
+    },
+    {
+      "timestamp": "2025-09-22 11:40:40",
+      "violation_type": "NO_Vest",
+      "count": 123
+    },
+    {
+      "timestamp": "2025-09-22 11:40:41",
+      "violation_type": "NO_Vest",
+      "count": 124
+    },
+    {
+      "timestamp": "2025-09-22 11:40:42",
+      "violation_type": "NO_Vest",
+      "count": 125
+    },
+    {
+      "timestamp": "2025-09-22 11:40:43",
+      "violation_type": "NO_Vest",
+      "count": 126
+    },
+    {
+      "timestamp": "2025-09-22 11:40:44",
+      "violation_type": "NO_Vest",
+      "count": 127
+    },
+    {
+      "timestamp": "2025-09-22 11:40:45",
+      "violation_type": "NO_Vest",
+      "count": 128
+    },
+    {
+      "timestamp": "2025-09-22 11:40:46",
+      "violation_type": "NO_Vest",
+      "count": 129
+    },
+    {
+      "timestamp": "2025-09-22 11:40:47",
+      "violation_type": "NO_Vest",
+      "count": 130
+    },
+    {
+      "timestamp": "2025-09-22 11:40:48",
+      "violation_type": "NO_Vest",
+      "count": 131
+    },
+    {
+      "timestamp": "2025-09-22 11:40:49",
+      "violation_type": "NO_Vest",
+      "count": 132
+    },
+    {
+      "timestamp": "2025-09-22 11:40:50",
+      "violation_type": "NO_Vest",
+      "count": 133
+    },
+    {
+      "timestamp": "2025-09-22 11:40:51",
+      "violation_type": "NO_Vest",
+      "count": 134
+    },
+    {
+      "timestamp": "2025-09-22 11:40:52",
+      "violation_type": "NO_Vest",
+      "count": 135
+    },
+    {
+      "timestamp": "2025-09-22 11:40:53",
+      "violation_type": "NO_Vest",
+      "count": 136
+    },
+    {
+      "timestamp": "2025-09-22 11:40:55",
+      "violation_type": "NO_Vest",
+      "count": 137
+    },
+    {
+      "timestamp": "2025-09-22 11:40:56",
+      "violation_type": "NO_Vest",
+      "count": 138
+    },
+    {
+      "timestamp": "2025-09-22 11:40:57",
+      "violation_type": "NO_Vest",
+      "count": 139
+    },
+    {
+      "timestamp": "2025-09-22 11:40:58",
+      "violation_type": "NO_Vest",
+      "count": 140
+    },
+    {
+      "timestamp": "2025-09-22 11:40:59",
+      "violation_type": "NO_Vest",
+      "count": 141
+    },
+    {
+      "timestamp": "2025-09-22 11:41:00",
+      "violation_type": "NO_Vest",
+      "count": 142
+    },
+    {
+      "timestamp": "2025-09-22 11:41:01",
+      "violation_type": "NO_Vest",
+      "count": 143
+    },
+    {
+      "timestamp": "2025-09-22 11:41:02",
+      "violation_type": "NO_Vest",
+      "count": 144
+    },
+    {
+      "timestamp": "2025-09-22 11:41:13",
+      "violation_type": "NO_Vest",
+      "count": 145
+    },
+    {
+      "timestamp": "2025-09-22 11:41:13",
+      "violation_type": "NO_Vest",
+      "count": 146
+    },
+    {
+      "timestamp": "2025-09-22 11:41:14",
+      "violation_type": "NO_Vest",
+      "count": 147
+    },
+    {
+      "timestamp": "2025-09-22 11:41:15",
+      "violation_type": "NO_Vest",
+      "count": 148
+    },
+    {
+      "timestamp": "2025-09-22 11:41:16",
+      "violation_type": "NO_Vest",
+      "count": 149
+    },
+    {
+      "timestamp": "2025-09-22 11:41:16",
+      "violation_type": "NO_Vest",
+      "count": 150
+    },
+    {
+      "timestamp": "2025-09-22 11:41:17",
+      "violation_type": "NO_Vest",
+      "count": 151
+    },
+    {
+      "timestamp": "2025-09-22 11:41:18",
+      "violation_type": "NO_Vest",
+      "count": 152
+    },
+    {
+      "timestamp": "2025-09-22 11:41:18",
+      "violation_type": "NO_Vest",
+      "count": 153
+    },
+    {
+      "timestamp": "2025-09-22 11:41:19",
+      "violation_type": "NO_Vest",
+      "count": 154
+    },
+    {
+      "timestamp": "2025-09-22 11:41:20",
+      "violation_type": "NO_Vest",
+      "count": 155
+    },
+    {
+      "timestamp": "2025-09-22 11:41:21",
+      "violation_type": "NO_Vest",
+      "count": 156
+    },
+    {
+      "timestamp": "2025-09-22 11:41:22",
+      "violation_type": "NO_Vest",
+      "count": 157
+    },
+    {
+      "timestamp": "2025-09-22 11:41:23",
+      "violation_type": "NO_Vest",
+      "count": 158
+    },
+    {
+      "timestamp": "2025-09-22 11:41:23",
+      "violation_type": "NO_Vest",
+      "count": 159
+    },
+    {
+      "timestamp": "2025-09-22 11:41:24",
+      "violation_type": "NO_Vest",
+      "count": 160
+    },
+    {
+      "timestamp": "2025-09-22 11:41:25",
+      "violation_type": "NO_Vest",
+      "count": 161
+    },
+    {
+      "timestamp": "2025-09-22 11:41:26",
+      "violation_type": "NO_Vest",
+      "count": 162
+    },
+    {
+      "timestamp": "2025-09-22 11:41:27",
+      "violation_type": "NO_Vest",
+      "count": 163
+    },
+    {
+      "timestamp": "2025-09-22 11:41:27",
+      "violation_type": "NO_Vest",
+      "count": 164
+    },
+    {
+      "timestamp": "2025-09-22 11:41:28",
+      "violation_type": "NO_Vest",
+      "count": 165
+    },
+    {
+      "timestamp": "2025-09-22 11:41:29",
+      "violation_type": "NO_Vest",
+      "count": 166
+    },
+    {
+      "timestamp": "2025-09-22 11:41:29",
+      "violation_type": "NO_Vest",
+      "count": 167
+    },
+    {
+      "timestamp": "2025-09-22 11:41:30",
+      "violation_type": "NO_Vest",
+      "count": 168
+    },
+    {
+      "timestamp": "2025-09-22 11:41:31",
+      "violation_type": "NO_Vest",
+      "count": 169
+    },
+    {
+      "timestamp": "2025-09-22 11:41:33",
+      "violation_type": "NO_Vest",
+      "count": 170
+    },
+    {
+      "timestamp": "2025-09-22 11:41:34",
+      "violation_type": "NO_Vest",
+      "count": 171
+    },
+    {
+      "timestamp": "2025-09-22 11:41:35",
+      "violation_type": "NO_Vest",
+      "count": 172
+    },
+    {
+      "timestamp": "2025-09-22 11:41:37",
+      "violation_type": "NO_Vest",
+      "count": 173
+    },
+    {
+      "timestamp": "2025-09-22 11:41:37",
+      "violation_type": "NO_Vest",
+      "count": 174
+    },
+    {
+      "timestamp": "2025-09-22 11:41:38",
+      "violation_type": "NO_Vest",
+      "count": 175
+    },
+    {
+      "timestamp": "2025-09-22 11:41:39",
+      "violation_type": "NO_Vest",
+      "count": 176
+    },
+    {
+      "timestamp": "2025-09-22 11:41:40",
+      "violation_type": "NO_Vest",
+      "count": 177
+    },
+    {
+      "timestamp": "2025-09-22 11:41:41",
+      "violation_type": "NO_Vest",
+      "count": 178
+    },
+    {
+      "timestamp": "2025-09-22 11:41:42",
+      "violation_type": "NO_Vest",
+      "count": 179
+    },
+    {
+      "timestamp": "2025-09-22 11:41:43",
+      "violation_type": "NO_Vest",
+      "count": 180
+    },
+    {
+      "timestamp": "2025-09-22 11:41:44",
+      "violation_type": "NO_Vest",
+      "count": 181
+    },
+    {
+      "timestamp": "2025-09-22 11:41:45",
+      "violation_type": "NO_Vest",
+      "count": 182
+    },
+    {
+      "timestamp": "2025-09-22 11:41:45",
+      "violation_type": "NO_Vest",
+      "count": 183
+    },
+    {
+      "timestamp": "2025-09-22 11:41:56",
+      "violation_type": "NO_Vest",
+      "count": 184
+    },
+    {
+      "timestamp": "2025-09-22 11:41:56",
+      "violation_type": "NO_Vest",
+      "count": 185
+    },
+    {
+      "timestamp": "2025-09-22 11:41:58",
+      "violation_type": "NO_Vest",
+      "count": 186
+    },
+    {
+      "timestamp": "2025-09-22 11:41:58",
+      "violation_type": "NO_Vest",
+      "count": 187
+    },
+    {
+      "timestamp": "2025-09-22 11:41:59",
+      "violation_type": "NO_Vest",
+      "count": 188
+    },
+    {
+      "timestamp": "2025-09-22 11:42:00",
+      "violation_type": "NO_Vest",
+      "count": 189
+    },
+    {
+      "timestamp": "2025-09-22 11:42:00",
+      "violation_type": "NO_Vest",
+      "count": 190
+    },
+    {
+      "timestamp": "2025-09-22 11:42:02",
+      "violation_type": "NO_Vest",
+      "count": 191
+    },
+    {
+      "timestamp": "2025-09-22 11:42:02",
+      "violation_type": "NO_Vest",
+      "count": 192
+    },
+    {
+      "timestamp": "2025-09-22 11:42:07",
+      "violation_type": "NO_Vest",
+      "count": 193
+    },
+    {
+      "timestamp": "2025-09-22 11:42:09",
+      "violation_type": "NO_Vest",
+      "count": 194
+    },
+    {
+      "timestamp": "2025-09-22 11:42:12",
+      "violation_type": "NO_Vest",
+      "count": 195
+    },
+    {
+      "timestamp": "2025-09-22 11:42:13",
+      "violation_type": "NO_Vest",
+      "count": 196
+    },
+    {
+      "timestamp": "2025-09-22 11:42:14",
+      "violation_type": "NO_Vest",
+      "count": 197
+    },
+    {
+      "timestamp": "2025-09-22 11:42:15",
+      "violation_type": "NO_Vest",
+      "count": 198
+    },
+    {
+      "timestamp": "2025-09-22 11:42:16",
+      "violation_type": "NO_Vest",
+      "count": 199
+    },
+    {
+      "timestamp": "2025-09-22 11:42:17",
+      "violation_type": "NO_Vest",
+      "count": 200
+    },
+    {
+      "timestamp": "2025-09-22 11:42:18",
+      "violation_type": "NO_Vest",
+      "count": 201
+    },
+    {
+      "timestamp": "2025-09-22 11:42:19",
+      "violation_type": "NO_Vest",
+      "count": 202
+    },
+    {
+      "timestamp": "2025-09-22 11:42:20",
+      "violation_type": "NO_Vest",
+      "count": 203
+    },
+    {
+      "timestamp": "2025-09-22 11:42:21",
+      "violation_type": "NO_Vest",
+      "count": 204
+    },
+    {
+      "timestamp": "2025-09-22 11:42:22",
+      "violation_type": "NO_Vest",
+      "count": 205
+    },
+    {
+      "timestamp": "2025-09-22 11:42:22",
+      "violation_type": "NO_Vest",
+      "count": 206
+    },
+    {
+      "timestamp": "2025-09-22 11:42:27",
+      "violation_type": "NO_Vest",
+      "count": 207
+    },
+    {
+      "timestamp": "2025-09-22 11:42:29",
+      "violation_type": "NO_Vest",
+      "count": 208
+    },
+    {
+      "timestamp": "2025-09-22 11:42:31",
+      "violation_type": "NO_Vest",
+      "count": 209
+    },
+    {
+      "timestamp": "2025-09-22 11:42:32",
+      "violation_type": "NO_Vest",
+      "count": 210
+    },
+    {
+      "timestamp": "2025-09-22 11:42:34",
+      "violation_type": "NO_Vest",
+      "count": 211
+    },
+    {
+      "timestamp": "2025-09-22 11:42:35",
+      "violation_type": "NO_Vest",
+      "count": 212
+    },
+    {
+      "timestamp": "2025-09-22 11:42:36",
+      "violation_type": "NO_Vest",
+      "count": 213
+    },
+    {
+      "timestamp": "2025-09-22 11:42:36",
+      "violation_type": "NO_Vest",
+      "count": 214
+    },
+    {
+      "timestamp": "2025-09-22 11:42:37",
+      "violation_type": "NO_Vest",
+      "count": 215
+    },
+    {
+      "timestamp": "2025-09-22 11:42:38",
+      "violation_type": "NO_Vest",
+      "count": 216
+    },
+    {
+      "timestamp": "2025-09-22 11:42:38",
+      "violation_type": "NO_Vest",
+      "count": 217
+    },
+    {
+      "timestamp": "2025-09-22 11:42:39",
+      "violation_type": "NO_Vest",
+      "count": 218
+    },
+    {
+      "timestamp": "2025-09-22 11:42:40",
+      "violation_type": "NO_Vest",
+      "count": 219
+    },
+    {
+      "timestamp": "2025-09-22 11:42:40",
+      "violation_type": "NO_Vest",
+      "count": 220
+    },
+    {
+      "timestamp": "2025-09-22 11:42:41",
+      "violation_type": "NO_Vest",
+      "count": 221
+    },
+    {
+      "timestamp": "2025-09-22 11:42:41",
+      "violation_type": "NO_Vest",
+      "count": 222
+    },
+    {
+      "timestamp": "2025-09-22 11:42:43",
+      "violation_type": "NO_Vest",
+      "count": 223
+    },
+    {
+      "timestamp": "2025-09-22 11:42:43",
+      "violation_type": "NO_Vest",
+      "count": 224
+    },
+    {
+      "timestamp": "2025-09-22 11:42:44",
+      "violation_type": "NO_Vest",
+      "count": 225
+    },
+    {
+      "timestamp": "2025-09-22 11:42:45",
+      "violation_type": "NO_Vest",
+      "count": 226
+    },
+    {
+      "timestamp": "2025-09-22 11:42:46",
+      "violation_type": "NO_Vest",
+      "count": 227
+    },
+    {
+      "timestamp": "2025-09-22 11:42:46",
+      "violation_type": "NO_Vest",
+      "count": 228
+    },
+    {
+      "timestamp": "2025-09-22 11:42:47",
+      "violation_type": "NO_Vest",
+      "count": 229
+    },
+    {
+      "timestamp": "2025-09-22 11:42:48",
+      "violation_type": "NO_Vest",
+      "count": 230
+    },
+    {
+      "timestamp": "2025-09-22 11:42:49",
+      "violation_type": "NO_Vest",
+      "count": 231
+    },
+    {
+      "timestamp": "2025-09-22 11:42:50",
+      "violation_type": "NO_Vest",
+      "count": 232
+    },
+    {
+      "timestamp": "2025-09-22 11:42:50",
+      "violation_type": "NO_Vest",
+      "count": 233
+    },
+    {
+      "timestamp": "2025-09-22 11:42:51",
+      "violation_type": "NO_Vest",
+      "count": 234
+    },
+    {
+      "timestamp": "2025-09-22 11:42:52",
+      "violation_type": "NO_Vest",
+      "count": 235
+    },
+    {
+      "timestamp": "2025-09-22 11:42:53",
+      "violation_type": "NO_Vest",
+      "count": 236
+    },
+    {
+      "timestamp": "2025-09-22 11:42:54",
+      "violation_type": "NO_Vest",
+      "count": 237
+    },
+    {
+      "timestamp": "2025-09-22 11:42:54",
+      "violation_type": "NO_Vest",
+      "count": 238
+    },
+    {
+      "timestamp": "2025-09-22 11:42:55",
+      "violation_type": "NO_Vest",
+      "count": 239
+    },
+    {
+      "timestamp": "2025-09-22 11:42:56",
+      "violation_type": "NO_Vest",
+      "count": 240
+    },
+    {
+      "timestamp": "2025-09-22 11:42:56",
+      "violation_type": "NO_Vest",
+      "count": 241
+    },
+    {
+      "timestamp": "2025-09-22 11:42:57",
+      "violation_type": "NO_Vest",
+      "count": 242
+    },
+    {
+      "timestamp": "2025-09-22 11:42:57",
+      "violation_type": "NO_Vest",
+      "count": 243
+    },
+    {
+      "timestamp": "2025-09-22 11:42:58",
+      "violation_type": "NO_Vest",
+      "count": 244
+    },
+    {
+      "timestamp": "2025-09-22 11:42:59",
+      "violation_type": "NO_Vest",
+      "count": 245
+    },
+    {
+      "timestamp": "2025-09-22 11:43:00",
+      "violation_type": "NO_Vest",
+      "count": 246
+    },
+    {
+      "timestamp": "2025-09-22 11:43:01",
+      "violation_type": "NO_Vest",
+      "count": 247
+    },
+    {
+      "timestamp": "2025-09-22 11:43:01",
+      "violation_type": "NO_Vest",
+      "count": 248
+    },
+    {
+      "timestamp": "2025-09-22 11:43:02",
+      "violation_type": "NO_Vest",
+      "count": 249
+    },
+    {
+      "timestamp": "2025-09-22 11:43:03",
+      "violation_type": "NO_Vest",
+      "count": 250
+    },
+    {
+      "timestamp": "2025-09-22 11:43:04",
+      "violation_type": "NO_Vest",
+      "count": 251
+    },
+    {
+      "timestamp": "2025-09-22 11:43:04",
+      "violation_type": "NO_Vest",
+      "count": 252
+    },
+    {
+      "timestamp": "2025-09-22 11:43:05",
+      "violation_type": "NO_Vest",
+      "count": 253
+    },
+    {
+      "timestamp": "2025-09-22 11:43:06",
+      "violation_type": "NO_Vest",
+      "count": 254
+    },
+    {
+      "timestamp": "2025-09-22 11:43:06",
+      "violation_type": "NO_Vest",
+      "count": 255
+    },
+    {
+      "timestamp": "2025-09-22 11:43:07",
+      "violation_type": "NO_Vest",
+      "count": 256
+    },
+    {
+      "timestamp": "2025-09-22 11:43:08",
+      "violation_type": "NO_Vest",
+      "count": 257
+    },
+    {
+      "timestamp": "2025-09-22 11:43:17",
+      "violation_type": "NO_Vest",
+      "count": 258
+    },
+    {
+      "timestamp": "2025-09-22 11:43:18",
+      "violation_type": "NO_Vest",
+      "count": 259
+    },
+    {
+      "timestamp": "2025-09-22 11:43:18",
+      "violation_type": "NO_Vest",
+      "count": 260
+    },
+    {
+      "timestamp": "2025-09-22 11:43:19",
+      "violation_type": "NO_Vest",
+      "count": 261
+    },
+    {
+      "timestamp": "2025-09-22 11:43:20",
+      "violation_type": "NO_Vest",
+      "count": 262
+    },
+    {
+      "timestamp": "2025-09-22 11:43:21",
+      "violation_type": "NO_Vest",
+      "count": 263
+    },
+    {
+      "timestamp": "2025-09-22 11:43:22",
+      "violation_type": "NO_Vest",
+      "count": 264
+    },
+    {
+      "timestamp": "2025-09-22 11:43:23",
+      "violation_type": "NO_Vest",
+      "count": 265
+    },
+    {
+      "timestamp": "2025-09-22 11:43:24",
+      "violation_type": "NO_Vest",
+      "count": 266
+    },
+    {
+      "timestamp": "2025-09-22 11:43:25",
+      "violation_type": "NO_Vest",
+      "count": 267
+    },
+    {
+      "timestamp": "2025-09-22 11:43:26",
+      "violation_type": "NO_Vest",
+      "count": 268
+    },
+    {
+      "timestamp": "2025-09-22 11:43:27",
+      "violation_type": "NO_Vest",
+      "count": 269
+    },
+    {
+      "timestamp": "2025-09-22 11:43:28",
+      "violation_type": "NO_Vest",
+      "count": 270
+    },
+    {
+      "timestamp": "2025-09-22 11:43:29",
+      "violation_type": "NO_Vest",
+      "count": 271
+    },
+    {
+      "timestamp": "2025-09-22 11:43:30",
+      "violation_type": "NO_Vest",
+      "count": 272
+    },
+    {
+      "timestamp": "2025-09-22 11:43:30",
+      "violation_type": "NO_Vest",
+      "count": 273
+    },
+    {
+      "timestamp": "2025-09-22 11:43:31",
+      "violation_type": "NO_Vest",
+      "count": 274
+    },
+    {
+      "timestamp": "2025-09-22 11:43:33",
+      "violation_type": "NO_Vest",
+      "count": 275
+    },
+    {
+      "timestamp": "2025-09-22 11:43:33",
+      "violation_type": "NO_Vest",
+      "count": 276
+    },
+    {
+      "timestamp": "2025-09-22 11:43:35",
+      "violation_type": "NO_Vest",
+      "count": 277
+    },
+    {
+      "timestamp": "2025-09-22 11:43:36",
+      "violation_type": "NO_Vest",
+      "count": 278
+    },
+    {
+      "timestamp": "2025-09-22 11:43:37",
+      "violation_type": "NO_Vest",
+      "count": 279
+    },
+    {
+      "timestamp": "2025-09-22 11:43:38",
+      "violation_type": "NO_Vest",
+      "count": 280
+    },
+    {
+      "timestamp": "2025-09-22 11:43:39",
+      "violation_type": "NO_Vest",
+      "count": 281
+    },
+    {
+      "timestamp": "2025-09-22 11:43:39",
+      "violation_type": "NO_Vest",
+      "count": 282
+    },
+    {
+      "timestamp": "2025-09-22 11:43:40",
+      "violation_type": "NO_Vest",
+      "count": 283
+    },
+    {
+      "timestamp": "2025-09-22 11:43:42",
+      "violation_type": "NO_Vest",
+      "count": 284
+    },
+    {
+      "timestamp": "2025-09-22 11:43:43",
+      "violation_type": "NO_Vest",
+      "count": 285
+    },
+    {
+      "timestamp": "2025-09-22 11:43:43",
+      "violation_type": "NO_Vest",
+      "count": 286
+    },
+    {
+      "timestamp": "2025-09-22 11:43:44",
+      "violation_type": "NO_Vest",
+      "count": 287
+    },
+    {
+      "timestamp": "2025-09-22 11:43:47",
+      "violation_type": "NO_Vest",
+      "count": 288
+    },
+    {
+      "timestamp": "2025-09-22 11:43:48",
+      "violation_type": "NO_Vest",
+      "count": 289
+    },
+    {
+      "timestamp": "2025-09-22 11:43:49",
+      "violation_type": "NO_Vest",
+      "count": 290
+    },
+    {
+      "timestamp": "2025-09-22 11:43:50",
+      "violation_type": "NO_Vest",
+      "count": 291
+    },
+    {
+      "timestamp": "2025-09-22 11:43:51",
+      "violation_type": "NO_Vest",
+      "count": 292
+    },
+    {
+      "timestamp": "2025-09-22 11:43:52",
+      "violation_type": "NO_Vest",
+      "count": 293
+    },
+    {
+      "timestamp": "2025-09-22 11:43:52",
+      "violation_type": "NO_Vest",
+      "count": 294
+    },
+    {
+      "timestamp": "2025-09-22 11:43:54",
+      "violation_type": "NO_Vest",
+      "count": 295
+    },
+    {
+      "timestamp": "2025-09-22 11:43:55",
+      "violation_type": "NO_Vest",
+      "count": 296
+    },
+    {
+      "timestamp": "2025-09-22 11:43:59",
+      "violation_type": "NO_Vest",
+      "count": 297
+    },
+    {
+      "timestamp": "2025-09-22 11:44:00",
+      "violation_type": "NO_Vest",
+      "count": 298
+    },
+    {
+      "timestamp": "2025-09-22 11:44:01",
+      "violation_type": "NO_Vest",
+      "count": 299
+    },
+    {
+      "timestamp": "2025-09-22 11:44:02",
+      "violation_type": "NO_Vest",
+      "count": 300
+    },
+    {
+      "timestamp": "2025-09-22 11:44:03",
+      "violation_type": "NO_Vest",
+      "count": 301
+    },
+    {
+      "timestamp": "2025-09-22 11:44:15",
+      "violation_type": "NO_Vest",
+      "count": 302
+    },
+    {
+      "timestamp": "2025-09-22 11:44:16",
+      "violation_type": "NO_Vest",
+      "count": 303
+    },
+    {
+      "timestamp": "2025-09-22 11:44:17",
+      "violation_type": "NO_Vest",
+      "count": 304
+    },
+    {
+      "timestamp": "2025-09-22 11:44:17",
+      "violation_type": "NO_Vest",
+      "count": 305
+    },
+    {
+      "timestamp": "2025-09-22 11:44:18",
+      "violation_type": "NO_Vest",
+      "count": 306
+    },
+    {
+      "timestamp": "2025-09-22 11:44:19",
+      "violation_type": "NO_Vest",
+      "count": 307
+    }
+  ],
+  "last_updated": "2025-09-22 11:44:53"
+}

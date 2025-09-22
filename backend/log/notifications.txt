@@ -1024,3 +1024,33 @@ Employee ID: Unknown
 Exception Type: NO_Vest
 Incident Image: media/face_detect/face_detect_2025-09-22 10:33:19.jpg
 
+Time: 2025-09-22 10:50:18
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_Vest
+Incident Image: media/face_detect/face_detect_2025-09-22 10:50:18.jpg
+
+Time: 2025-09-22 10:53:20
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_Vest
+Incident Image: media/face_detect/face_detect_2025-09-22 10:53:20.jpg
+
+Time: 2025-09-22 11:38:02
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_Vest
+Incident Image: media/face_detect/face_detect_2025-09-22 11:38:02.jpg
+
+Time: 2025-09-22 11:41:03
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_Vest
+Incident Image: media/face_detect/face_detect_2025-09-22 11:41:03.jpg
+
+Time: 2025-09-22 11:44:04
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_Vest
+Incident Image: media/face_detect/face_detect_2025-09-22 11:44:04.jpg
+

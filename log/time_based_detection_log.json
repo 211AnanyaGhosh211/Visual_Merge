@@ -1,0 +1,75 @@
+{
+  "session_info": {
+    "start_time": "2025-09-22 11:04:28",
+    "end_time": "2025-09-22 11:04:47",
+    "duration_seconds": 19.639004,
+    "log_interval_seconds": 5,
+    "total_frames": 180,
+    "total_detections": 548
+  },
+  "time_logs": [
+    {
+      "timestamp": "2025-09-22 11:04:33",
+      "elapsed_seconds": 5.02,
+      "frame_number": 47,
+      "frame_counts": {
+        "Person": 2
+      },
+      "cumulative_counts": {
+        "Person": 56,
+        "Safety_goggles": 2,
+        "Safety_Vest": 1
+      },
+      "total_detections": 59
+    },
+    {
+      "timestamp": "2025-09-22 11:04:38",
+      "elapsed_seconds": 10.03,
+      "frame_number": 93,
+      "frame_counts": {
+        "Person": 2,
+        "Helmet": 1,
+        "Safety_Vest": 1,
+        "Safety_goggles": 1
+      },
+      "cumulative_counts": {
+        "Person": 190,
+        "Safety_goggles": 6,
+        "Safety_Vest": 5,
+        "NO_helmet": 3,
+        "Helmet": 5
+      },
+      "total_detections": 209
+    },
+    {
+      "timestamp": "2025-09-22 11:04:43",
+      "elapsed_seconds": 15.05,
+      "frame_number": 139,
+      "frame_counts": {
+        "Person": 2,
+        "NO_helmet": 1,
+        "NO_Vest": 1,
+        "Safety_shoes": 1
+      },
+      "cumulative_counts": {
+        "Person": 282,
+        "Safety_goggles": 34,
+        "Safety_Vest": 32,
+        "NO_helmet": 22,
+        "Helmet": 32,
+        "NO_Vest": 19,
+        "Safety_shoes": 19
+      },
+      "total_detections": 440
+    }
+  ],
+  "final_counts": {
+    "Person": 324,
+    "Safety_goggles": 34,
+    "Safety_Vest": 33,
+    "NO_helmet": 44,
+    "Helmet": 33,
+    "NO_Vest": 40,
+    "Safety_shoes": 40
+  }
+}
