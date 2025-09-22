@@ -15,7 +15,7 @@ from email.message import EmailMessage
 
 # Reciver email address
 # MY_EMAIL = 'shounakc@icloud.com';
-MY_EMAIL = 'koushik.eframe@gmail.com';
+MY_EMAIL = 'ananya.eframe@gmail.com';
 
 # Office365 email credentials
 EMAIL_ADDRESS = 'eframeAI@outlook.com'

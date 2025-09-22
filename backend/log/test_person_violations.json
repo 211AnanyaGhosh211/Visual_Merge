@@ -1,0 +1,51 @@
+{
+  "person_violations": {
+    "John_Doe_001": {
+      "NO_helmet": 1,
+      "NO_Vest": 1,
+      "NO_goggles": 1
+    },
+    "Jane_Smith_002": {
+      "NO_helmet": 1,
+      "NO_safetyshoes": 1,
+      "NO_Vest": 1
+    },
+    "Unknown_003": {
+      "NO_helmet": 1,
+      "NO_goggles": 1
+    }
+  },
+  "violation_timestamps": {
+    "John_Doe_001": {
+      "NO_helmet": [
+        "2025-09-22T11:25:53.280863"
+      ],
+      "NO_Vest": [
+        "2025-09-22T11:25:53.280863"
+      ],
+      "NO_goggles": [
+        "2025-09-22T11:25:53.280863"
+      ]
+    },
+    "Jane_Smith_002": {
+      "NO_helmet": [
+        "2025-09-22T11:25:53.280863"
+      ],
+      "NO_safetyshoes": [
+        "2025-09-22T11:25:53.280863"
+      ],
+      "NO_Vest": [
+        "2025-09-22T11:25:53.280863"
+      ]
+    },
+    "Unknown_003": {
+      "NO_helmet": [
+        "2025-09-22T11:25:53.280863"
+      ],
+      "NO_goggles": [
+        "2025-09-22T11:25:53.280863"
+      ]
+    }
+  },
+  "last_updated": "2025-09-22T11:25:54.303835"
+}
