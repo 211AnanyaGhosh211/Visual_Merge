@@ -12,6 +12,11 @@ import requests
 import smtplib
 from email.message import EmailMessage
 
+
+# Reciver email address
+# MY_EMAIL = 'shounakc@icloud.com';
+MY_EMAIL = 'koushik.eframe@gmail.com';
+
 # Office365 email credentials
 EMAIL_ADDRESS = 'eframeAI@outlook.com'
 EMAIL_PASSWORD = 'lfmpzajspuopbrrr'
@@ -258,7 +263,8 @@ def detectFace(currentClass):
                 # Send email notification after successful database insertion
                 try:
                     send_gmail_email(
-                        to_email="shounakc@icloud.com",  # Replace with actual admin email
+                        #------- to_email # Replace 
+                        to_email=f"{MY_EMAIL}",
                         subject=f"Safety Violation Alert - {currentClass}",
                         body_text=f"Employee {identity} ({roll_no}) was detected without proper safety equipment at {curr_datetime}.\n\nException Type: {currentClass}\nTime: {curr_datetime}\nEmployee ID: {roll_no}",
                         image_path="media/face_detect/output.jpg"

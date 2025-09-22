@@ -907,41 +907,180 @@ def display_video(video_path):
 yolo_model2 = YOLO("models/best700.pt")
 
 
+# def generate_processed_frames2(video_path):
+#     """Generator function that yields YOLO-processed frames"""
+#     try:
+#         cap = cv2.VideoCapture(video_path)
+#         if not cap.isOpened():
+#             raise ValueError("Could not open video file")
+#         while True:
+#             success, frame = cap.read()
+#             if not success:
+#                 break
+
+#             # Process frame with YOLO (auto-draws boxes)
+#             results = yolo_model(frame)
+#             annotated_frame = results[0].plot()
+
+#             # Resize for better performance
+#             annotated_frame = cv2.resize(annotated_frame, (640, 480))
+
+#             # Encode frame as JPEG
+#             _, buffer = cv2.imencode('.jpg', annotated_frame,
+#                                      # 80% quality
+#                                      [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+#             frame_bytes = buffer.tobytes()
+
+#             yield (b'--frame\r\n'
+#                    b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+
+#             # Adjust sleep based on actual processing speed
+#             time.sleep(0.033)  # ~30fps
+
+#     except Exception as e:
+#         print(f"Streaming error: {str(e)}")
+#     finally:
+#         cap.release()
+  # line based detection
+
 def generate_processed_frames2(video_path):
-    """Generator function that yields YOLO-processed frames"""
+    """Generator function that yields YOLO-processed frames from a video file"""
+    print(f"Processing video file: {video_path}")
+    
+    # Import violation counting functions
+    from services.violation_count import count_violation, print_violation_summary, reset_violation_counts, save_violation_log
+    
+    # Reset violation counts at start
+    reset_violation_counts()
+    
+    # Open video file
+    cap = cv2.VideoCapture(video_path)
+    if not cap.isOpened():
+        print(f"Error: Could not open video file: {video_path}")
+        return
+
+    # Class names for different objects detected by the model
+    '''classNames = ['Hardhat', 'Mask', 'NO-Hardhat', 'NO-Mask', 'NO-Safety Vest', 'Person', 'Safety Cone', 'Safety Vest', 'machinery', 'vehicle']'''
+    classNames = [
+                    'Helmet', 
+                    'Safety_Vest', 
+                    'Safety_goggles', 
+                    'Safety_shoes', 
+                    'NO_helmet', 
+                    'NO_Vest', 
+                    'NO_goggles', 
+                    'NO_safetyshoes', 
+                    'Person'
+                ]
+
+
+
     try:
-        cap = cv2.VideoCapture(video_path)
-        if not cap.isOpened():
-            raise ValueError("Could not open video file")
         while True:
-            success, frame = cap.read()
+            success, img = cap.read()
             if not success:
                 break
 
-            # Process frame with YOLO (auto-draws boxes)
-            results = yolo_model(frame)
-            annotated_frame = results[0].plot()
+            curr_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            # Perform object detection
+            results = yolo_model(img, stream=True)
+
+            for r in results:
+                boxes = r.boxes
+                for box in boxes:
+                    x1, y1, x2, y2 = box.xyxy[0]
+                    x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+
+                    # Calculate confidence and class index
+                    conf = math.ceil((box.conf[0] * 100)) / 100
+                    cls = int(box.cls[0])
+                    currentClass = classNames[cls]
+
+                    # Set color based on the class
+                    if conf > 0.5:
+                        if currentClass in ['NO_helmet', 'NO_Vest', 'NO_goggles', 'NO_safetyshoes']:
+                            myColor = (0, 0, 255)  # Red
+                            cv2.imwrite(
+                                f"media/face_detect/output{curr_datetime}.jpg", img)
+                            cv2.imwrite("media/face_detect/output.jpg", img)
+                            
+                            # Count violation for specific classes
+                            if currentClass in ['NO_helmet', 'NO_Vest', 'NO_goggles']:
+                                count_violation(currentClass)
+                                
+                        elif currentClass in ['Helmet', 'Safety_Vest', 'Safety_goggles', 'Safety_shoes']:
+                            myColor = (0, 255, 0)  # Green
+                        else:
+                            myColor = (255, 0, 0)  # Blue
+
+                        # Display the class name and confidence
+                        cvzone.putTextRect(img, f'{classNames[cls]} {conf}',
+                                           (max(0, x1), max(35, y1)), scale=1, thickness=1,
+                                           colorB=myColor, colorT=(255, 255, 255),
+                                           colorR=myColor, offset=5)
+
+                        # Draw bounding box
+                        cv2.rectangle(img, (x1, y1), (x2, y2), myColor, 3)
+
+                        # Detect faces
+                        detectFace(currentClass)
 
             # Resize for better performance
-            annotated_frame = cv2.resize(annotated_frame, (640, 480))
+            img = cv2.resize(img, (640, 480))
 
             # Encode frame as JPEG
-            _, buffer = cv2.imencode('.jpg', annotated_frame,
-                                     # 80% quality
-                                     [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+            _, buffer = cv2.imencode(
+                '.jpg', img, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
             frame_bytes = buffer.tobytes()
 
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
 
-            # Adjust sleep based on actual processing speed
-            time.sleep(0.033)  # ~30fps
-
     except Exception as e:
         print(f"Streaming error: {str(e)}")
     finally:
+        # Print final violation summary and save log
+        print_violation_summary()
+        save_violation_log()
         cap.release()
-  # line based detection
+
+
+@app.route('/api/violation-counts', methods=['GET'])
+def get_violation_counts_api():
+    """API endpoint to get current violation counts"""
+    try:
+        from services.violation_count import get_violation_counts, get_total_violations
+        
+        counts = get_violation_counts()
+        total = get_total_violations()
+        
+        return jsonify({
+            'success': True,
+            'violation_counts': counts,
+            'total_violations': total
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/reset-violations', methods=['POST'])
+def reset_violations_api():
+    """API endpoint to reset violation counts"""
+    try:
+        from services.violation_count import reset_violation_counts
+        reset_violation_counts()
+        return jsonify({
+            'success': True,
+            'message': 'Violation counts reset successfully'
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 
 def generate_processed_frames3(video_path):
@@ -969,12 +1108,14 @@ def generate_processed_frames3(video_path):
             "no_safety_shoes": {"no_shoes", "no_safety_shoes", "no_boots", "no_safety_shoes"},
             "no_helmet": {"no_helmet", "no_safety_helmet", "no_hardhat", "no_safety_helmet"}
         }
+
         # Colors
         CLR_OK = (0, 200, 0)
         CLR_MISS = (255, 0, 0)  # Blue
         CLR_LINE = (255, 255, 255)
         CLR_MISS_TEXT = (255, 255, 255)  # White text
         CLR_MISS_BG = (255, 0, 0)  # Blue background
+
         def canonicalize(name: str) -> str:
             n = name.lower().replace(" ", "_")
             for canon, synonyms in ALIASES.items():
@@ -1043,13 +1184,17 @@ def generate_processed_frames3(video_path):
             detections_for_tracker = []
             persons_detections = []
             ppe_items = []
+
             if dets is not None and dets.shape[0] > 0:
                 for i in range(len(dets)):
                     xyxy = dets.xyxy[i].cpu().tolist()
                     cls = int(dets.cls[i].cpu().item())
+                    cls2 = int(dets.cls[i])
+                    currentClass = classNames[cls2]
                     conf = float(dets.conf[i].cpu().item())
                     name = yolo_model.names.get(cls, str(cls))
                     cname = model_names.get(cls, canonicalize(name))
+
                     if cls in person_class_ids or cname == "person":
                         # Simple tracking format
                         w = xyxy[2] - xyxy[0]
@@ -1061,6 +1206,9 @@ def generate_processed_frames3(video_path):
                         cx, cy = center_of_box(xyxy)
                         ppe_items.append({"bbox": xyxy, "center": (
                             cx, cy), "name": cname, "conf": conf})
+                    
+                    # Detect faces
+                    detectFace(currentClass)
 
             # Simple tracking without DeepSort
             tracks = []
@@ -1086,6 +1234,7 @@ def generate_processed_frames3(video_path):
             for track in tracks:
                 if not track.is_confirmed():
                     continue
+
                 track_id = track.track_id
                 ltrb = track.to_ltrb()
                 px1, py1, px2, py2 = ltrb
@@ -1111,6 +1260,7 @@ def generate_processed_frames3(video_path):
                 else:
                     # For simplicity, combining requirements on the line
                     required = REQUIRED_LEFT.union(REQUIRED_RIGHT)
+
                 # Identify missing items by checking if any of the "no_" classes are present
                 missing_items = []
                 for required_item in required:
