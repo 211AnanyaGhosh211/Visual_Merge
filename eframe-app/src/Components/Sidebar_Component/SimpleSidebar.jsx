@@ -62,7 +62,7 @@ const SimpleSidebar = ({ children, onSidebarToggle }) => {
           {/* Logo and Navigation */}
           <div className="flex flex-1 flex-col overflow-x-hidden overflow-y-auto">
             {/* Logo */}
-            <div className="mb-8 flex items-center justify-between">
+            <div className="mb-8 ml-6 flex items-center justify-between">
               <Logo collapsed={!isExpanded} />
               {/* Close button for mobile */}
               {sidebarOpen && (
@@ -97,24 +97,7 @@ const SimpleSidebar = ({ children, onSidebarToggle }) => {
             </div>
           </div>
 
-          {/* User Profile */}
-          <div className="group relative mt-auto">
-            <Link to="/profile" className={`flex items-center ${!isExpanded ? 'justify-center' : 'justify-start'} w-full py-2 px-5 rounded-lg transition-colors duration-300 text-black dark:text-black hover:text-black dark:hover:text-black`}>
-              <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
-                <img
-                  src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
-                  className="w-8 h-8 rounded-full"
-                  width={32}
-                  height={32}
-                  alt="Avatar" 
-                />
-              </div>
-              <span className={`ml-2 text-sm whitespace-nowrap transition-all duration-300
-                ${isExpanded ? 'opacity-100 w-auto' : 'lg:w-0 lg:opacity-0 lg:overflow-hidden'}`}>
-                Super Admin
-              </span>
-            </Link>
-          </div>
+          
         </div>
       </div>
 

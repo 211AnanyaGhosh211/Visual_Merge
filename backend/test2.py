@@ -8,7 +8,7 @@ from ultralytics import YOLO
 # ----------------------------
 # CONFIG
 # ----------------------------
-MODEL_PATH = r"C:\Users\LENOVO\Desktop\Visual_Merge\backend\best700.pt"   # <- your YOLOv8/9/11 PPE model path
+MODEL_PATH = r"C:\Users\LENOVO\Desktop\Visual_Merge\backend\models\best700.pt"   # <- your YOLOv8/9/11 PPE model path
 VIDEO_PATH = r"C:\Users\LENOVO\Downloads\WhatsApp Video 2025-09-08 at 15.24.23.mp4"
 # Optional: Define VideoWriter to save output
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # type: ignore
@@ -48,7 +48,7 @@ CLR_MISS_BG = (255, 0, 0) # Blue background
 
 # Logging
 WRITE_LOG = True
-LOG_PATH = "ppe_violations_log.txt"
+LOG_PATH = "log/ppe_violations_log.txt"
 OUTPUT_VIDEO_PATH = "output_video.mp4"
 
 # ----------------------------
