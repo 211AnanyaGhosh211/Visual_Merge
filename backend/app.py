@@ -1,3 +1,5 @@
+from services.camera_config import CAMERA_CONFIG, DEFAULT_CAMERA_ID, DEFAULT_CAMERA_NAME, DEFAULT_CAMERA_TYPE
+from db.db import db_config
 from threading import Thread
 import os
 from turtle import color
@@ -64,7 +66,7 @@ app.register_blueprint(auth_bp, url_prefix='/api')
 
 # MySQL Connection Configuration (as a dictionary)
 # Import database configuration from db.py
-from db.db import db_config
+
 
 def get_db_connection():
     """Function to get a database connection."""
@@ -215,6 +217,7 @@ def get_face_capture_progress():
         "percentage": (face_capture_count / face_capture_target) * 100 if face_capture_target > 0 else 0
     }
 
+
 def capture_faces(employee_id, employee_name):
     """Legacy function - kept for backward compatibility"""
     success, message = start_face_capture(employee_id, employee_name)
@@ -246,6 +249,7 @@ def cache_embeddings():
                 logging.error(f"Error processing image {image_path}: {e}")
     return embeddings
 
+
 known_embeddings = cache_embeddings()
 
 detection_running = False
@@ -256,7 +260,6 @@ current_camera_id = "0"
 current_camera_name = "Laptop Camera"
 
 # Import camera configuration
-from services.camera_config import CAMERA_CONFIG, DEFAULT_CAMERA_ID, DEFAULT_CAMERA_NAME, DEFAULT_CAMERA_TYPE
 
 
 def generate_detection_frames():
@@ -268,9 +271,10 @@ def generate_detection_frames():
     camera_name = camera_config["name"]
     camera_type = camera_config["type"]
     camera_url = camera_config["url"]
-    
-    print(f"Using camera: {camera_name} (ID: {current_camera_id}, Type: {camera_type})")
-    
+
+    print(
+        f"Using camera: {camera_name} (ID: {current_camera_id}, Type: {camera_type})")
+
     # Open camera based on type
     if camera_type == 'rtsp' and camera_url:
         print(f"Opening RTSP camera: {camera_url}")
@@ -282,9 +286,10 @@ def generate_detection_frames():
         # For other types, try to use camera_id as index
         print(f"Opening camera with index: {current_camera_id}")
         cam = cv2.VideoCapture(int(current_camera_id))
-    
+
     if not cam.isOpened():
-        print(f"Error: Could not open camera {camera_name}. Type: {camera_type}, URL: {camera_url}")
+        print(
+            f"Error: Could not open camera {camera_name}. Type: {camera_type}, URL: {camera_url}")
         return
 
     # Class names for different objects detected by the model
@@ -381,6 +386,7 @@ def detection_feed():
         print(f"Error in detection_feed: {e}")
         return jsonify({"status": "error", "error": str(e)}), 500
 
+
 @app.route('/api/cameras', methods=['GET'])
 def get_cameras():
     """Get list of available cameras"""
@@ -393,21 +399,23 @@ def get_cameras():
         "total_cameras": len(CAMERA_CONFIG)
     })
 
+
 @app.route('/safetydetection', methods=['GET', 'POST'])
 def safety():
     global detection_thread, detection_running, current_camera_id, current_camera_name, current_camera_source
-    
+
     if request.method == 'POST':
         data = request.get_json()
         camera_id = data.get('camera_id', '0')
-        
+
         # Get camera info from config
         camera_config = CAMERA_CONFIG.get(camera_id, CAMERA_CONFIG["0"])
         camera_name = camera_config["name"]
         camera_type = camera_config["type"]
-        
-        print(f"Starting detection with Camera ID: {camera_id}, Name: {camera_name}, Type: {camera_type}")
-        
+
+        print(
+            f"Starting detection with Camera ID: {camera_id}, Name: {camera_name}, Type: {camera_type}")
+
         # Update global variables
         current_camera_id = camera_id
         current_camera_name = camera_name
@@ -416,7 +424,7 @@ def safety():
         camera_id = current_camera_id
         camera_name = current_camera_name
         camera_type = current_camera_source
-    
+
     if not detection_running:
         detection_thread = threading.Thread(target=run_detection)
         detection_thread.start()
@@ -429,6 +437,7 @@ def safety():
         })
     else:
         return jsonify({"message": "Detection already running"})
+
 
 @app.route('/capture_faces', methods=['POST'])
 def register():
@@ -475,6 +484,7 @@ def register():
         logging.error(f"An error occurred: {e}")
         return jsonify({"status": "error", "message": "Internal server error."}), 500
 
+
 @app.route('/start_face_capture', methods=['POST'])
 def start_face_capture_route():
     """Start face capture process with streaming"""
@@ -504,6 +514,7 @@ def start_face_capture_route():
         logging.error(f"Error starting face capture: {e}")
         return jsonify({"status": "error", "message": "Internal server error."}), 500
 
+
 @app.route('/face_capture_feed')
 def face_capture_feed():
     """Route for streaming face capture feed"""
@@ -520,6 +531,7 @@ def face_capture_feed():
     except Exception as e:
         return jsonify({"status": "error", "error": str(e)}), 500
 
+
 @app.route('/face_capture_progress')
 def face_capture_progress():
     """Get current face capture progress"""
@@ -529,6 +541,7 @@ def face_capture_progress():
     except Exception as e:
         logging.error(f"Error getting face capture progress: {e}")
         return jsonify({"error": "Internal server error"}), 500
+
 
 @app.route('/stop_face_capture', methods=['POST'])
 def stop_face_capture_route():
@@ -565,6 +578,7 @@ def home():
     start_streamlit()
     return render_template('dashboard.html')
 
+
 @app.route('/login')
 def login_page():
     """Render the login page."""
@@ -588,6 +602,7 @@ def employee_config():
             cursor.close()
             conn.close()
     return render_template('employee_config.html', employees=employees)
+
 
 @app.route('/api/employees', methods=['GET'])
 def get_employees():
@@ -627,6 +642,7 @@ def get_employees():
         logging.error(f"Unexpected error: {e}")
         return jsonify({"error": "Internal server error"}), 500
 
+
 @app.route('/model_management.html', methods=['GET'])
 def model_management():
     """Display model configuration."""
@@ -643,6 +659,7 @@ def model_management():
             cursor.close()
             conn.close()
     return render_template('model_management.html', models=models)
+
 
 @app.route('/api/models', methods=['GET'])
 def get_models():
@@ -665,9 +682,11 @@ def get_models():
         logging.error(f"Unexpected error: {e}")
         return jsonify({"error": "Internal server error"}), 500
 
+
 @app.route('/model_mapping.html', methods=['GET'])
 def model_mapping():
     return render_template('model_mapping.html')
+
 
 @app.route('/camera_management.html', methods=['GET'])
 def camera_management():
@@ -685,6 +704,7 @@ def camera_management():
             cursor.close()
             conn.close()
     return render_template('camera_management2.html', cams=cams)
+
 
 @app.route('/api/cameras', methods=['GET'])
 def cameras():
@@ -706,6 +726,7 @@ def cameras():
     except Exception as e:
         logging.error(f"Unexpected error: {e}")
         return jsonify({"error": "Internal server error"}), 500
+
 
 def get_notifications():
     try:
@@ -763,6 +784,7 @@ def get_notifications():
             cursor.close()
             connection.close()
 
+
 @app.route('/api/notifications', methods=['GET'])
 def get_notifications_api():
     try:
@@ -772,9 +794,11 @@ def get_notifications_api():
         logging.error(f"Error in notifications route: {e}")
         return jsonify({"error": str(e)}), 500
 
+
 @app.route('/camera_dashboard.html', methods=['GET'])
 def camera_dashboard():
     return render_template('camera_dashboard.html')
+
 
 @app.route('/notifications.html', methods=['GET'])
 def notifications():
@@ -790,14 +814,17 @@ def notifications():
 def settings():
     return render_template('settings.html')
 
+
 @app.route('/profile.html', methods=['GET'])
 def profile():
     return render_template('profile.html')
+
 
 @app.route('/dashboard.html', methods=['GET'])
 def dash():
     start_streamlit()
     return render_template('dashboard.html')
+
 
 @app.route('/stopdetection', methods=['POST'])
 def stop_detection():
@@ -895,9 +922,11 @@ UPLOAD_FOLDER = 'media/uploads'
 ALLOWED_EXTENSIONS = {'mp4', 'avi', 'mov', 'mkv', 'jpg', 'jpeg', 'png'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 def display_video(video_path):
     """Function to run in separate process for displaying video"""
@@ -941,18 +970,18 @@ yolo_model2 = YOLO("models/best700.pt")
 #         print(f"Streaming error: {str(e)}")
 #     finally:
 #         cap.release()
-  # line based detection
+# line based detection
 
 def generate_processed_frames2(video_path):
     """Generator function that yields YOLO-processed frames from a video file"""
     print(f"Processing video file: {video_path}")
-    
+
     # Import violation counting functions
     from services.violation_count import count_violation, print_violation_summary, reset_violation_counts, save_violation_log
-    
+
     # Reset violation counts at start
     reset_violation_counts()
-    
+
     # Open video file
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
@@ -962,18 +991,16 @@ def generate_processed_frames2(video_path):
     # Class names for different objects detected by the model
     '''classNames = ['Hardhat', 'Mask', 'NO-Hardhat', 'NO-Mask', 'NO-Safety Vest', 'Person', 'Safety Cone', 'Safety Vest', 'machinery', 'vehicle']'''
     classNames = [
-                    'Helmet', 
-                    'Safety_Vest', 
-                    'Safety_goggles', 
-                    'Safety_shoes', 
-                    'NO_helmet', 
-                    'NO_Vest', 
-                    'NO_goggles', 
-                    'NO_safetyshoes', 
-                    'Person'
-                ]
-
-
+        'Helmet',
+        'Safety_Vest',
+        'Safety_goggles',
+        'Safety_shoes',
+        'NO_helmet',
+        'NO_Vest',
+        'NO_goggles',
+        'NO_safetyshoes',
+        'Person'
+    ]
 
     try:
         while True:
@@ -1000,14 +1027,13 @@ def generate_processed_frames2(video_path):
                     if conf > 0.5:
                         if currentClass in ['NO_helmet', 'NO_Vest', 'NO_goggles', 'NO_safetyshoes']:
                             myColor = (0, 0, 255)  # Red
-                            cv2.imwrite(
-                                f"media/face_detect/output{curr_datetime}.jpg", img)
+                            cv2.imwrite(f"media/face_detect/output{curr_datetime}.jpg", img)
                             cv2.imwrite("media/face_detect/output.jpg", img)
-                            
+
                             # Count violation for specific classes
                             if currentClass in ['NO_helmet', 'NO_Vest', 'NO_goggles']:
                                 count_violation(currentClass)
-                                
+
                         elif currentClass in ['Helmet', 'Safety_Vest', 'Safety_goggles', 'Safety_shoes']:
                             myColor = (0, 255, 0)  # Green
                         else:
@@ -1016,7 +1042,8 @@ def generate_processed_frames2(video_path):
                         # Display the class name and confidence
                         cvzone.putTextRect(img, f'{classNames[cls]} {conf}',
                                            (max(0, x1), max(35, y1)), scale=1, thickness=1,
-                                           colorB=myColor, colorT=(255, 255, 255),
+                                           colorB=myColor, colorT=(
+                                               255, 255, 255),
                                            colorR=myColor, offset=5)
 
                         # Draw bounding box
@@ -1050,10 +1077,10 @@ def get_violation_counts_api():
     """API endpoint to get current violation counts"""
     try:
         from services.violation_count import get_violation_counts, get_total_violations
-        
+
         counts = get_violation_counts()
         total = get_total_violations()
-        
+
         return jsonify({
             'success': True,
             'violation_counts': counts,
@@ -1089,6 +1116,10 @@ def generate_processed_frames3(video_path):
         # PPE Detection Configuration
         CONF_THRES = 0.25
         IOU_THRES = 0.45
+
+        # Class names for different objects detected by the model
+        classNames = ['Helmet', 'Safety_Vest', 'Safety_goggles', 'Safety_shoes', 'NO_helmet', 'NO_Vest',
+                      'NO_goggles', 'NO_safetyshoes', 'Person']
 
         # Which PPEs are required by zone:
         REQUIRED_LEFT = {"L"}
@@ -1206,7 +1237,7 @@ def generate_processed_frames3(video_path):
                         cx, cy = center_of_box(xyxy)
                         ppe_items.append({"bbox": xyxy, "center": (
                             cx, cy), "name": cname, "conf": conf})
-                    
+
                     # Detect faces
                     detectFace(currentClass)
 
@@ -1266,6 +1297,17 @@ def generate_processed_frames3(video_path):
                 for required_item in required:
                     if f"no_{required_item}" in owned_set:
                         missing_items.append(required_item)
+
+                    if missing_items:
+                        curr_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                        # Save a timestamped violation frame
+                        cv2.imwrite(
+                            f"media/zone_based/output_{curr_datetime}.jpg", annotated)
+                        # Save a fixed latest violation frame
+                        cv2.imwrite("media/zone_based/output.jpg", annotated)
+                        # Trigger face detection for each missing item
+                        for item in missing_items:
+                            detectFace(item)
 
                 color = CLR_OK if not missing_items else CLR_MISS
 
@@ -1363,6 +1405,7 @@ def demo2():
             "error": f"Processing failed: {str(e)}"
         }), 500
 
+
 @app.route('/video_feed2')
 def video_feed2():
     """Route for streaming PPE detection processed video with zone-based analysis"""
@@ -1381,6 +1424,7 @@ def video_feed2():
         )
     except Exception as e:
         return jsonify({"status": "error", "error": str(e)}), 500
+
 
 @app.route('/demo3', methods=['POST'])
 def demo3():
@@ -1423,6 +1467,7 @@ def demo3():
             "error": f"Processing failed: {str(e)}"
         }), 500
 
+
 @app.route('/video_feed3')
 def video_feed3():
     """Route for streaming PPE detection processed video with zone-based analysis"""
@@ -1454,6 +1499,7 @@ def health_check():
         "timestamp": datetime.now().isoformat()
     })
 
+
 @app.route('/test_class_detection', methods=['GET'])
 def test_class_detection():
     """Test route to verify class-based detection is working"""
@@ -1462,6 +1508,7 @@ def test_class_detection():
         "message": "Class-based detection route is working",
         "available_classes": ["helmet", "safety_vest", "pvc_suit", "shoes", "goggles"]
     })
+
 
 @app.route('/test_video_stream', methods=['GET'])
 def test_video_stream():
@@ -1474,48 +1521,50 @@ def test_video_stream():
             while frame_count < 300:  # 10 seconds at 30fps
                 # Create a simple test frame
                 frame = np.zeros((480, 640, 3), dtype=np.uint8)
-                
+
                 # Add animated background
                 color_shift = int(50 + 30 * np.sin(frame_count * 0.1))
                 frame[:] = (color_shift, color_shift, color_shift)
-                
+
                 # Add text
-                cv2.putText(frame, "Test Video Stream", (50, 100), 
-                           cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-                cv2.putText(frame, f"Frame {frame_count}", (50, 150), 
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
-                cv2.putText(frame, "If you see this, streaming works!", (50, 200), 
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-                
+                cv2.putText(frame, "Test Video Stream", (50, 100),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+                cv2.putText(frame, f"Frame {frame_count}", (50, 150),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+                cv2.putText(frame, "If you see this, streaming works!", (50, 200),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+
                 # Add a moving circle
                 center_x = int(320 + 200 * np.sin(frame_count * 0.2))
                 center_y = int(240 + 100 * np.cos(frame_count * 0.2))
                 cv2.circle(frame, (center_x, center_y), 20, (0, 255, 0), -1)
-                
+
                 # Encode frame
-                success, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+                success, buffer = cv2.imencode(
+                    '.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
                 if not success:
                     print(f"DEBUG: Failed to encode test frame {frame_count}")
                     break
-                    
+
                 frame_bytes = buffer.tobytes()
-                
+
                 if frame_count % 30 == 0:
-                    print(f"DEBUG: Yielding test frame {frame_count}, size: {len(frame_bytes)} bytes")
-                
+                    print(
+                        f"DEBUG: Yielding test frame {frame_count}, size: {len(frame_bytes)} bytes")
+
                 yield (b'--frame\r\n'
                        b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-                
+
                 frame_count += 1
                 time.sleep(0.033)  # 30 FPS
-                
+
             print(f"DEBUG: Finished test stream with {frame_count} frames")
-                
+
         except Exception as e:
             print(f"DEBUG: Error in test video generation: {str(e)}")
             import traceback
             traceback.print_exc()
-    
+
     return Response(
         generate_test_frames(),
         mimetype='multipart/x-mixed-replace; boundary=frame',
@@ -1529,11 +1578,12 @@ def test_video_stream():
         }
     )
 
+
 @app.route('/demo4', methods=['POST'])
 def demo4():
     """Class-based PPE detection route"""
     print("DEBUG: demo4 route called")
-    
+
     if 'file' not in request.files:
         print("DEBUG: No file part in request")
         return jsonify({"status": "error", "error": "No file part"}), 400
@@ -1548,7 +1598,8 @@ def demo4():
         return jsonify({"status": "error", "error": "Invalid file type"}), 400
 
     # Get classes from request
-    classes_json = request.form.get('classes', '["helmet", "shoes", "pvc_suit"]')
+    classes_json = request.form.get(
+        'classes', '["helmet", "shoes", "pvc_suit"]')
     print(f"DEBUG: Received classes JSON: {classes_json}")
     try:
         selected_classes = json.loads(classes_json)
@@ -1571,7 +1622,8 @@ def demo4():
         # Create output path
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         output_filename = f"output_{timestamp}_{filename}"
-        output_path = os.path.join(app.config['UPLOAD_FOLDER'], output_filename)
+        output_path = os.path.join(
+            app.config['UPLOAD_FOLDER'], output_filename)
 
         # Store the selected classes in the app context
         app.class_based_classes = selected_classes
@@ -1579,7 +1631,7 @@ def demo4():
 
         video_feed_url = url_for('video_feed4', video_path=sample_path)
         print(f"DEBUG: Generated video feed URL: {video_feed_url}")
-        
+
         return jsonify({
             "status": "success",
             "video_feed_url": video_feed_url,
@@ -1599,7 +1651,7 @@ def video_feed4():
     """Route for streaming class-based PPE detection processed video"""
     video_path = request.args.get('video_path')
     print(f"DEBUG: video_feed4 called with video_path: {video_path}")
-    
+
     if not video_path or not os.path.exists(video_path):
         print(f"DEBUG: Invalid video path: {video_path}")
         return jsonify({"status": "error", "error": "Invalid video path"}), 404
@@ -1628,13 +1680,14 @@ def generate_processed_frames4(video_path):
     cap = None
     try:
         # Get the selected classes from app context
-        selected_classes = getattr(app, 'class_based_classes', ["helmet", "shoes", "pvc_suit"])
+        selected_classes = getattr(app, 'class_based_classes', [
+                                   "helmet", "shoes", "pvc_suit"])
         print(f"DEBUG: Retrieved classes from app context: {selected_classes}")
-        
+
         # Initialize tracker (simplified version without DeepSort for now)
         # tracker = DeepSort(max_age=70, n_init=3)
         tracker = None
-        
+
         # Class name aliases to normalize names from the model to a standard form
         ALIASES = {
             "person": {"person", "Person"},
@@ -1673,7 +1726,6 @@ def generate_processed_frames4(video_path):
             x1, y1, x2, y2 = bbox
             return x1 <= px <= x2 and y1 <= py <= y2
 
-
         # Determine required classes for detection
         detect_classes_names = set()
         required_ppe = set()
@@ -1696,7 +1748,8 @@ def generate_processed_frames4(video_path):
                 detect_classes_names.add(f"no_{ppe_type}")
         else:
             print("No specific classes provided. Using fallback full PPE requirements.")
-            required_ppe = {"helmet", "shoes", "goggles", "safety_vest", "pvc_suit"}
+            required_ppe = {"helmet", "shoes",
+                            "goggles", "safety_vest", "pvc_suit"}
             for ppe_type in required_ppe:
                 detect_classes_names.add(ppe_type)
                 detect_classes_names.add(f"no_{ppe_type}")
@@ -1705,74 +1758,84 @@ def generate_processed_frames4(video_path):
 
         # Get class indices for YOLO
         detect_class_indices = []
-        model_class_map = {canonicalize(name): idx for idx, name in yolo_model.names.items()}
+        model_class_map = {canonicalize(
+            name): idx for idx, name in yolo_model.names.items()}
         for name in detect_classes_names:
             if name in model_class_map:
                 detect_class_indices.append(model_class_map[name])
 
-        print(f"Model will detect the following classes: {[yolo_model.names[i] for i in detect_class_indices]}")
+        print(
+            f"Model will detect the following classes: {[yolo_model.names[i] for i in detect_class_indices]}")
         print(f"DEBUG: Required PPE set: {required_ppe}")
         print(f"DEBUG: Detect classes names: {detect_classes_names}")
 
         cap = cv2.VideoCapture(video_path)
         if not cap.isOpened():
             raise ValueError("Could not open video file")
-        
+
         print("DEBUG: Video opened successfully, starting processing...")
-        
+
         frame_count = 0
         consecutive_errors = 0
         max_consecutive_errors = 5
-        
+
         while True:
             try:
                 success, frame = cap.read()
                 if not success:
-                    print(f"DEBUG: End of video reached after {frame_count} frames")
+                    print(
+                        f"DEBUG: End of video reached after {frame_count} frames")
                     break
-                
+
                 frame_count += 1
                 if frame_count % 30 == 0:  # Print every 30 frames
                     print(f"DEBUG: Processed {frame_count} frames")
-                
+
                 consecutive_errors = 0  # Reset error counter on successful frame
 
                 # Process frame with YOLO using selected classes
-                results = yolo_model.predict(frame, conf=0.3, iou=0.5, classes=detect_class_indices, verbose=False)
+                results = yolo_model.predict(
+                    frame, conf=0.3, iou=0.5, classes=detect_class_indices, verbose=False)
 
                 dets = results[0].boxes
                 detections_for_tracker = []
                 ppe_items = []
-                
+
                 if dets is not None and len(dets) > 0:
                     print(f"DEBUG: Found {len(dets)} detections in frame")
                     for i in range(len(dets)):
                         xyxy = dets.xyxy[i].cpu().tolist()
                         cls_id = int(dets.cls[i].cpu().item())
                         conf = float(dets.conf[i].cpu().item())
-                        class_name = canonicalize(yolo_model.names.get(cls_id, ""))
+                        class_name = canonicalize(
+                            yolo_model.names.get(cls_id, ""))
 
                         if class_name == "person":
                             w, h = xyxy[2] - xyxy[0], xyxy[3] - xyxy[1]
-                            detections_for_tracker.append(([xyxy[0], xyxy[1], w, h], conf, class_name))
-                            print(f"DEBUG: Found person with confidence {conf}")
+                            detections_for_tracker.append(
+                                ([xyxy[0], xyxy[1], w, h], conf, class_name))
+                            print(
+                                f"DEBUG: Found person with confidence {conf}")
                         else:
                             # Only consider PPE detections above the confidence threshold
                             if conf >= 0.3:
-                                ppe_items.append({"center": center_of_box(xyxy), "name": class_name})
-                                print(f"DEBUG: Found PPE item: {class_name} with confidence {conf}")
+                                ppe_items.append(
+                                    {"center": center_of_box(xyxy), "name": class_name})
+                                print(
+                                    f"DEBUG: Found PPE item: {class_name} with confidence {conf}")
 
                 # Simple detection without tracking for now
                 for i, detection in enumerate(detections_for_tracker):
                     x1, y1, w, h = detection[0]
                     conf = detection[1]
                     class_name = detection[2]
-                    
+
                     x2, y2 = x1 + w, y1 + h
                     px1, py1, px2, py2 = map(int, [x1, y1, x2, y2])
 
                     # Check for nearby PPE items
-                    owned_ppe = {item["name"] for item in ppe_items if inside_bbox(item["center"], [px1, py1, px2, py2])}
+                    owned_ppe = {item["name"] for item in ppe_items if inside_bbox(
+                        item["center"], [px1, py1, px2, py2])}
                     missing_items = set()
                     present_items = set()
 
@@ -1796,13 +1859,17 @@ def generate_processed_frames4(video_path):
                     thickness = 2      # Increased thickness
 
                     # Compute text size for background
-                    text_size = cv2.getTextSize(base_text, font, scale, thickness)[0]
+                    text_size = cv2.getTextSize(
+                        base_text, font, scale, thickness)[0]
                     overlay = frame.copy()
-                    cv2.rectangle(overlay, (x-2, y-16), (x + text_size[0] + 4, y+6), (0,0,0), -1)
+                    cv2.rectangle(overlay, (x-2, y-16),
+                                  (x + text_size[0] + 4, y+6), (0, 0, 0), -1)
                     alpha = 0.6
-                    frame = cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0)
+                    frame = cv2.addWeighted(
+                        overlay, alpha, frame, 1 - alpha, 0)
 
-                    cv2.putText(frame, base_text, (x, y), font, scale, (255,255,255), thickness)
+                    cv2.putText(frame, base_text, (x, y), font,
+                                scale, (255, 255, 255), thickness)
 
                     offset_x = x + text_size[0] + 10
 
@@ -1815,35 +1882,43 @@ def generate_processed_frames4(video_path):
                             text_color = (0, 0, 255)  # Red
 
                         text = f" {item}:{status}"
-                        tsize = cv2.getTextSize(text, font, scale, thickness)[0]
+                        tsize = cv2.getTextSize(
+                            text, font, scale, thickness)[0]
                         overlay = frame.copy()
-                        cv2.rectangle(overlay, (offset_x-2, y-16), (offset_x + tsize[0] + 4, y+6), (0,0,0), -1)
-                        frame = cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0)
+                        cv2.rectangle(overlay, (offset_x-2, y-16),
+                                      (offset_x + tsize[0] + 4, y+6), (0, 0, 0), -1)
+                        frame = cv2.addWeighted(
+                            overlay, alpha, frame, 1 - alpha, 0)
 
-                        cv2.putText(frame, text, (offset_x, y), font, scale, text_color, thickness)
+                        cv2.putText(frame, text, (offset_x, y),
+                                    font, scale, text_color, thickness)
                         offset_x += tsize[0] + 10
 
                 # Resize for better performance
                 frame = cv2.resize(frame, (640, 480))
 
                 # Encode frame as JPEG
-                _, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+                _, buffer = cv2.imencode(
+                    '.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
                 frame_bytes = buffer.tobytes()
 
                 if frame_count % 30 == 0:  # Print every 30 frames
-                    print(f"DEBUG: Yielding frame {frame_count}, size: {len(frame_bytes)} bytes")
+                    print(
+                        f"DEBUG: Yielding frame {frame_count}, size: {len(frame_bytes)} bytes")
 
                 yield (b'--frame\r\n'
                        b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
 
                 # Adjust sleep based on actual processing speed
                 time.sleep(0.033)  # ~30fps
-                
+
             except Exception as frame_error:
                 consecutive_errors += 1
-                print(f"DEBUG: Error processing frame {frame_count}: {str(frame_error)}")
+                print(
+                    f"DEBUG: Error processing frame {frame_count}: {str(frame_error)}")
                 if consecutive_errors >= max_consecutive_errors:
-                    print(f"DEBUG: Too many consecutive errors ({consecutive_errors}), stopping stream")
+                    print(
+                        f"DEBUG: Too many consecutive errors ({consecutive_errors}), stopping stream")
                     break
                 continue
 
