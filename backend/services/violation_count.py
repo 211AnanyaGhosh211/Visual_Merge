@@ -11,7 +11,6 @@ class ViolationCounter:
         """Count a specific violation type (only if it's an allowed violation)"""
         if violation_type in ALLOWED_VIOLATIONS:
             self.violation_counts[violation_type] += 1
-            print(f"🚨 VIOLATION DETECTED: {violation_type} - Count: {self.violation_counts[violation_type]}")
         
     def get_counts(self):
         """Get current violation counts"""
