@@ -32,7 +32,7 @@ class AuthDBUtil:
 
 # Initialize database connection for authentication
 auth_db = AuthDBUtil(host='localhost', user='root',
-                     password='12345', database='EmployeeInfo')
+                     password='Mysqlroot^7siuuu', database='EmployeeInfo')
 
 
 @auth_bp.route('/login', methods=['POST', 'OPTIONS'])
