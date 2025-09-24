@@ -18,7 +18,7 @@ from services.violation_count import get_violation_counts
 
 # Reciver email address
 # RECEIVER_EMAIL = 'shounakc@icloud.com';
-RECEIVER_EMAIL = 'avijit.eframe@gmail.com'
+RECEIVER_EMAIL = 'koushik.eframe@gmail.com'
 
 # Office365 email credentials
 EMAIL_ADDRESS = 'eframeAI@outlook.com'
