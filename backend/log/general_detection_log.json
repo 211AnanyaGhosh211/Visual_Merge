@@ -1,0 +1,104 @@
+{
+  "session_info": {
+    "start_time": "2025-09-22 10:56:53",
+    "duration": "0:00:00.004997",
+    "total_detections": 12
+  },
+  "class_counts": {
+    "Person": 4,
+    "Helmet": 2,
+    "Safety_Vest": 1,
+    "NO_helmet": 1,
+    "Safety_goggles": 1,
+    "NO_Vest": 1,
+    "Safety_shoes": 1,
+    "NO_goggles": 1
+  },
+  "detailed_log": [
+    {
+      "timestamp": "2025-09-22 10:56:53",
+      "class_name": "Person",
+      "confidence": 0.85,
+      "count": 1,
+      "total_detections": 1
+    },
+    {
+      "timestamp": "2025-09-22 10:56:53",
+      "class_name": "Helmet",
+      "confidence": 0.92,
+      "count": 1,
+      "total_detections": 2
+    },
+    {
+      "timestamp": "2025-09-22 10:56:53",
+      "class_name": "Safety_Vest",
+      "confidence": 0.78,
+      "count": 1,
+      "total_detections": 3
+    },
+    {
+      "timestamp": "2025-09-22 10:56:53",
+      "class_name": "NO_helmet",
+      "confidence": 0.65,
+      "count": 1,
+      "total_detections": 4
+    },
+    {
+      "timestamp": "2025-09-22 10:56:53",
+      "class_name": "Person",
+      "confidence": 0.88,
+      "count": 2,
+      "total_detections": 5
+    },
+    {
+      "timestamp": "2025-09-22 10:56:53",
+      "class_name": "Safety_goggles",
+      "confidence": 0.71,
+      "count": 1,
+      "total_detections": 6
+    },
+    {
+      "timestamp": "2025-09-22 10:56:53",
+      "class_name": "NO_Vest",
+      "confidence": 0.58,
+      "count": 1,
+      "total_detections": 7
+    },
+    {
+      "timestamp": "2025-09-22 10:56:53",
+      "class_name": "Person",
+      "confidence": 0.91,
+      "count": 3,
+      "total_detections": 8
+    },
+    {
+      "timestamp": "2025-09-22 10:56:53",
+      "class_name": "Helmet",
+      "confidence": 0.89,
+      "count": 2,
+      "total_detections": 9
+    },
+    {
+      "timestamp": "2025-09-22 10:56:53",
+      "class_name": "Safety_shoes",
+      "confidence": 0.76,
+      "count": 1,
+      "total_detections": 10
+    },
+    {
+      "timestamp": "2025-09-22 10:56:53",
+      "class_name": "NO_goggles",
+      "confidence": 0.62,
+      "count": 1,
+      "total_detections": 11
+    },
+    {
+      "timestamp": "2025-09-22 10:56:53",
+      "class_name": "Person",
+      "confidence": 0.87,
+      "count": 4,
+      "total_detections": 12
+    }
+  ],
+  "last_updated": "2025-09-22 10:56:53"
+}

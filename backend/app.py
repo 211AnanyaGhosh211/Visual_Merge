@@ -100,6 +100,12 @@ face_capture_target = 20
 face_capture_user_dir = None
 face_capture_cap = None
 
+# Global variables for video processing
+video_processing_active = False
+current_processing_type = None
+current_processing_video_path = None
+video_processing_stop_requested = False
+
 
 def generate_face_capture_frames():
     """Generator function that yields frames during face capture with face detection overlay"""
@@ -228,6 +234,24 @@ def get_face_capture_progress():
     }
 
 
+def start_streamlit():
+    """Start the Streamlit app if it's not already running."""
+    def is_streamlit_running():
+        """Check if Streamlit is already running"""
+        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+            try:
+                if 'streamlit' in proc.info['name'].lower():
+                    return True
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+        return False
+    
+    if not is_streamlit_running():
+        subprocess.Popen(["streamlit", "run", "dashmain.py"],
+                         stdout=subprocess.DEVNULL,
+                         stderr=subprocess.DEVNULL)
+
+
 def capture_faces(employee_id, employee_name):
     """Legacy function - kept for backward compatibility"""
     success, message = start_face_capture(employee_id, employee_name)
@@ -316,10 +340,16 @@ def generate_detection_frames():
                 break
 
             curr_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            # Perform object detection
+            
+            # Use YOLO's default detection with built-in visualization
             results = yolo_model(img, stream=True)
-
+            
+            # Process results and use YOLO's default plotting
             for r in results:
+                # Use YOLO's built-in plot method for default visualization
+                annotated_img = r.plot()
+                
+                # Check for violations and save images if needed
                 boxes = r.boxes
                 for box in boxes:
                     x1, y1, x2, y2 = box.xyxy[0]
@@ -858,6 +888,48 @@ def stop_detection():
         return jsonify({"message": "Failed to stop detection", "error": str(e)}), 500
 
 
+@app.route('/stop_video_processing', methods=['POST'])
+def stop_video_processing():
+    """Stop video processing and reset global state"""
+    global video_processing_active, current_processing_type, current_processing_video_path, video_processing_stop_requested
+    
+    try:
+        # Set stop flag to signal processing functions to stop
+        video_processing_stop_requested = True
+        
+        # Reset global processing state
+        video_processing_active = False
+        current_processing_type = None
+        current_processing_video_path = None
+        
+        logging.info("Video processing stopped by user request")
+        
+        return jsonify({
+            "status": "success",
+            "message": "Video processing stopped successfully"
+        })
+    except Exception as e:
+        logging.error(f"Error stopping video processing: {e}")
+        return jsonify({
+            "status": "error", 
+            "message": "Failed to stop video processing",
+            "error": str(e)
+        }), 500
+
+
+@app.route('/video_processing_status', methods=['GET'])
+def get_video_processing_status():
+    """Get current video processing status"""
+    global video_processing_active, current_processing_type, current_processing_video_path, video_processing_stop_requested
+    
+    return jsonify({
+        "processing_active": video_processing_active,
+        "processing_type": current_processing_type,
+        "video_path": current_processing_video_path,
+        "stop_requested": video_processing_stop_requested
+    })
+
+
 @app.route('/report')
 def get_report():
     today_date = datetime.now().strftime("%Y-%m-%d")
@@ -991,6 +1063,8 @@ def display_video(video_path):
 
 def generate_processed_frames2(video_path):
     """Generator function that yields YOLO-processed frames from a video file"""
+    global video_processing_stop_requested
+    
     print(f"Processing video file: {video_path}")
 
     # Import violation counting functions
@@ -1031,6 +1105,11 @@ def generate_processed_frames2(video_path):
     try:
         frame_counter = 0
         while True:
+            # Check if stop was requested
+            if video_processing_stop_requested:
+                print("Video processing stop requested, breaking loop")
+                break
+            
             try:
                 success, img = cap.read()
                 if not success:
@@ -1167,6 +1246,8 @@ def generate_processed_frames2(video_path):
         print(f"Streaming error: {str(e)}")
     finally:
         cap.release()
+        # Reset stop flag when processing completes
+        video_processing_stop_requested = False
 
 
 @app.route('/api/violation-counts', methods=['GET'])
@@ -1207,66 +1288,12 @@ def reset_violations_api():
 
 def generate_processed_frames3(video_path):
     """Generator function that yields PPE detection processed frames with zone-based analysis"""
+    global video_processing_stop_requested
+    
     try:
         # PPE Detection Configuration
         CONF_THRES = 0.25
         IOU_THRES = 0.45
-
-        # Class names for different objects detected by the model
-        classNames = ['Helmet', 'Safety_Vest', 'Safety_goggles', 'Safety_shoes', 'NO_helmet', 'NO_Vest',
-                      'NO_goggles', 'NO_safetyshoes', 'Person']
-
-        # Which PPEs are required by zone:
-        REQUIRED_LEFT = {"L"}
-        REQUIRED_RIGHT = {"helmet", "shoes", "goggles", "safety_vest", "pvc_suit",
-                          "no_helmet", "no_safety_shoes", "no_goggles", "no_pvc_suit", "no_safety_vest"}
-
-        # Class name aliases to normalize to canonical names
-        ALIASES = {
-            "helmet": {"helmet", "hardhat", "safety_helmet", "Helmet"},
-            "shoes": {"shoes", "safety_shoes", "boots", "Safety Shoes"},
-            "goggles": {"goggles", "safety_goggles", "glasses", "eye_protection", "Safety Goggles"},
-            "pvc_suit": {"pvc_suit", "pvc", "chem_suit", "hazmat_suit", "PVC Suit"},
-            "safety_vest": {"vest", "safety_vest", "vest"},
-            "no_safety_vest": {"no_vest", "no_safety_vest", "no_vest"},
-            "no_pvc_suit": {"no_suit", "no_safety_suit", "no_safety_vest"},
-            "no_goggles": {"no_goggles", "no_safety_goggles", "no_eye_protection", "no_safety_goggles"},
-            "no_safety_shoes": {"no_shoes", "no_safety_shoes", "no_boots", "no_safety_shoes"},
-            "no_helmet": {"no_helmet", "no_safety_helmet", "no_hardhat", "no_safety_helmet"}
-        }
-
-        # Colors
-        CLR_OK = (0, 200, 0)
-        CLR_MISS = (255, 0, 0)  # Blue
-        CLR_LINE = (255, 255, 255)
-        CLR_MISS_TEXT = (255, 255, 255)  # White text
-        CLR_MISS_BG = (255, 0, 0)  # Blue background
-
-        def canonicalize(name: str) -> str:
-            n = name.lower().replace(" ", "_")
-            for canon, synonyms in ALIASES.items():
-                if n == canon or n in synonyms:
-                    return canon
-            return n  # fallback
-
-        def center_of_box(xyxy):
-            x1, y1, x2, y2 = xyxy
-            return ((x1 + x2) / 2, (y1 + y2) / 2)
-
-        def point_side_of_line(px, py, x1, y1, x2, y2):
-            """Returns sign of cross product for vertical line: >0 = left side, <0 = right side, =0 = on the line"""
-            return (x2 - x1) * (py - y1) - (y2 - y1) * (px - x1)
-
-        def inside_bbox(px, py, xyxy):
-            x1, y1, x2, y2 = xyxy
-            return x1 <= px <= x2 and y1 <= py <= y2
-
-        def draw_label(img, text, x, y, color=(255, 255, 255), bg=(0, 0, 0)):
-            (tw, th), base = cv2.getTextSize(
-                text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
-            cv2.rectangle(img, (x, y - th - 6), (x + tw + 6, y + 2), bg, -1)
-            cv2.putText(img, text, (x + 3, y - 6),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1, cv2.LINE_AA)
 
         cap = cv2.VideoCapture(video_path)
         if not cap.isOpened():
@@ -1280,151 +1307,71 @@ def generate_processed_frames3(video_path):
         x_mid = W // 2
         divider = [x_mid, 0, x_mid, H - 1]
         zone_names = ("LEFT", "RIGHT")
-
         x1, y1, x2, y2 = divider
 
-        person_class_ids = set()
+        # Colors for zone visualization
+        CLR_LINE = (255, 255, 255)
 
-        # Class name map
-        model_names = {i: canonicalize(n) for i, n in yolo_model.names.items()}
+        def point_side_of_line(px, py, x1, y1, x2, y2):
+            """Returns sign of cross product for vertical line: >0 = left side, <0 = right side, =0 = on the line"""
+            return (x2 - x1) * (py - y1) - (y2 - y1) * (px - x1)
 
-        # Detect person class ID(s)
-        for idx, name in yolo_model.names.items():
-            if name.lower() == "person":
-                person_class_ids.add(idx)
-
-        if not person_class_ids:
-            print("⚠️ Warning: model has no 'person' class.")
+        def draw_label(img, text, x, y, color=(255, 255, 255), bg=(0, 0, 0)):
+            (tw, th), base = cv2.getTextSize(
+                text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+            cv2.rectangle(img, (x, y - th - 6), (x + tw + 6, y + 2), bg, -1)
+            cv2.putText(img, text, (x + 3, y - 6),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1, cv2.LINE_AA)
 
         while True:
+            # Check if stop was requested
+            if video_processing_stop_requested:
+                print("Video processing stop requested, breaking loop")
+                break
+                
             success, frame = cap.read()
             if not success:
                 break
 
-            # Run YOLO detection
+            # Run YOLO detection with default visualization
             results = yolo_model.predict(
                 frame, conf=CONF_THRES, iou=IOU_THRES, verbose=False)
+            
+            # Use YOLO's default plotting for detection visualization
+            annotated = results[0].plot()
+            
+            # Add zone-based analysis overlay
             dets = results[0].boxes
-
-            # Prepare detections for tracking
-            detections_for_tracker = []
-            persons_detections = []
-            ppe_items = []
-
             if dets is not None and dets.shape[0] > 0:
                 for i in range(len(dets)):
                     xyxy = dets.xyxy[i].cpu().tolist()
                     cls = int(dets.cls[i].cpu().item())
-                    cls2 = int(dets.cls[i])
-                    currentClass = classNames[cls2]
                     conf = float(dets.conf[i].cpu().item())
-                    name = yolo_model.names.get(cls, str(cls))
-                    cname = model_names.get(cls, canonicalize(name))
-
-                    if cls in person_class_ids or cname == "person":
-                        # Simple tracking format
-                        w = xyxy[2] - xyxy[0]
-                        h = xyxy[3] - xyxy[1]
-                        detections_for_tracker.append(
-                            ([xyxy[0], xyxy[1], w, h], conf, cname))
-                        persons_detections.append({"bbox": xyxy, "conf": conf})
-                    else:
-                        cx, cy = center_of_box(xyxy)
-                        ppe_items.append({"bbox": xyxy, "center": (
-                            cx, cy), "name": cname, "conf": conf})
-
-                    # Detect faces
-                    detectFace(currentClass)
-
-            # Simple tracking without DeepSort
-            tracks = []
-            for i, det in enumerate(detections_for_tracker):
-                class SimpleTrack:
-                    def __init__(self, track_id, bbox):
-                        self.track_id = track_id
-                        self.bbox = bbox
-
-                    def is_confirmed(self):
-                        return True
-
-                    def to_ltrb(self):
-                        return self.bbox
-
-                bbox, conf, name = det
-                tracks.append(SimpleTrack(
-                    i, [bbox[0], bbox[1], bbox[0] + bbox[2], bbox[1] + bbox[3]]))
-
-            annotated = frame.copy()
-
-            # Iterate through tracked persons and process PPE
-            for track in tracks:
-                if not track.is_confirmed():
-                    continue
-
-                track_id = track.track_id
-                ltrb = track.to_ltrb()
-                px1, py1, px2, py2 = ltrb
-                pcx, pcy = center_of_box(ltrb)
-
-                sign = point_side_of_line(pcx, pcy, x1, y1, x2, y2)
-                zone = zone_names[0] if sign > 0 else zone_names[1] if sign < 0 else "ON_LINE"
-
-                owned = []
-                for it in ppe_items:
-                    cx, cy = it["center"]
-                    # Check if the PPE item is inside the tracked person's bounding box
-                    if inside_bbox(cx, cy, ltrb):
-                        owned.append(it["name"])
-
-                owned_set = set(owned)
-
-                # Zone rules
-                if zone == "LEFT":
-                    required = REQUIRED_LEFT
-                elif zone == "RIGHT":
-                    required = REQUIRED_RIGHT
-                else:
-                    # For simplicity, combining requirements on the line
-                    required = REQUIRED_LEFT.union(REQUIRED_RIGHT)
-
-                # Identify missing items by checking if any of the "no_" classes are present
-                missing_items = []
-                for required_item in required:
-                    if f"no_{required_item}" in owned_set:
-                        missing_items.append(required_item)
-
-                    if missing_items:
+                    class_name = yolo_model.names.get(cls, str(cls))
+                    
+                    # Check if it's a person for zone analysis
+                    if class_name.lower() == "person":
+                        # Calculate person center
+                        px1, py1, px2, py2 = xyxy
+                        pcx, pcy = (px1 + px2) / 2, (py1 + py2) / 2
+                        
+                        # Determine which zone the person is in
+                        sign = point_side_of_line(pcx, pcy, x1, y1, x2, y2)
+                        zone = zone_names[0] if sign > 0 else zone_names[1] if sign < 0 else "ON_LINE"
+                        
+                        # Add zone information overlay
+                        label = f"Zone: {zone}"
+                        draw_label(annotated, label, int(px1), int(py1) - 20,
+                                   color=(255, 255, 255), bg=(0, 0, 0))
+                    
+                    # Detect faces for violations
+                    detectFace(class_name)
+                    
+                    # Save violation images for specific classes
+                    if conf > 0.5 and class_name in ['NO_helmet', 'NO_Vest', 'NO_goggles', 'NO_safetyshoes']:
                         curr_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-                        # Save a timestamped violation frame
-                        cv2.imwrite(
-                            f"media/zone_based/output_{curr_datetime}.jpg", annotated)
-                        # Save a fixed latest violation frame
+                        cv2.imwrite(f"media/zone_based/output_{curr_datetime}.jpg", annotated)
                         cv2.imwrite("media/zone_based/output.jpg", annotated)
-                        # Trigger face detection for each missing item
-                        for item in missing_items:
-                            detectFace(item)
-
-                color = CLR_OK if not missing_items else CLR_MISS
-
-                # Draw bbox + label for tracked person
-                cv2.rectangle(annotated, (int(px1), int(py1)),
-                              (int(px2), int(py2)), color, 2)
-                label = f"ID:{track_id} {zone} {'OK' if not missing_items else 'MISSING:' + ','.join(missing_items)}"
-                # Use updated colors for missing label
-                text_color = CLR_OK if not missing_items else CLR_MISS_TEXT
-                bg_color = (40, 40, 40) if not missing_items else CLR_MISS_BG
-
-                # Adjust text position based on zone
-                text_x = int(px1)
-                text_y = int(py1) - 8
-                (tw, th), base = cv2.getTextSize(
-                    label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
-                if zone == "RIGHT":
-                    # Align text to the right of the bounding box
-                    text_x = int(px2) - tw - 6
-
-                draw_label(annotated, label, text_x, text_y,
-                           color=text_color, bg=bg_color)
 
             # Draw divider line
             cv2.line(annotated, (int(x1), int(y1)),
@@ -1433,9 +1380,7 @@ def generate_processed_frames3(video_path):
                        color=(0, 0, 0), bg=(255, 255, 255))
 
             # HUD info
-            cv2.putText(annotated, f"Required {zone_names[0]}: {', '.join(sorted(REQUIRED_LEFT))}", (10, 20),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1, cv2.LINE_AA)
-            cv2.putText(annotated, f"Required {zone_names[1]}: {', '.join(sorted(REQUIRED_RIGHT))}", (10, 45),
+            cv2.putText(annotated, f"Zone Analysis: {zone_names[0]} / {zone_names[1]}", (10, 20),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1, cv2.LINE_AA)
 
             # Resize for better performance
@@ -1443,7 +1388,6 @@ def generate_processed_frames3(video_path):
 
             # Encode frame as JPEG
             _, buffer = cv2.imencode('.jpg', annotated,
-                                     # 80% quality
                                      [int(cv2.IMWRITE_JPEG_QUALITY), 80])
             frame_bytes = buffer.tobytes()
 
@@ -1457,10 +1401,14 @@ def generate_processed_frames3(video_path):
         print(f"Streaming error: {str(e)}")
     finally:
         cap.release()
+        # Reset stop flag when processing completes
+        video_processing_stop_requested = False
 
 
 @app.route('/demo2', methods=['POST'])
 def demo2():
+    global video_processing_active, current_processing_type, current_processing_video_path
+    
     if 'file' not in request.files:
         return jsonify({"status": "error", "error": "No file part"}), 400
 
@@ -1481,6 +1429,12 @@ def demo2():
 
         # Save original file
         file.save(sample_path)
+
+        # Set global processing state
+        video_processing_active = True
+        current_processing_type = "general"
+        current_processing_video_path = sample_path
+        video_processing_stop_requested = False  # Reset stop flag
 
         # Create output path (consider adding timestamp for uniqueness)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -1523,6 +1477,8 @@ def video_feed2():
 
 @app.route('/demo3', methods=['POST'])
 def demo3():
+    global video_processing_active, current_processing_type, current_processing_video_path
+    
     if 'file' not in request.files:
         return jsonify({"status": "error", "error": "No file part"}), 400
 
@@ -1543,6 +1499,12 @@ def demo3():
 
         # Save original file
         file.save(sample_path)
+
+        # Set global processing state
+        video_processing_active = True
+        current_processing_type = "zone"
+        current_processing_video_path = sample_path
+        video_processing_stop_requested = False  # Reset stop flag
 
         # Create output path (consider adding timestamp for uniqueness)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -1677,6 +1639,8 @@ def test_video_stream():
 @app.route('/demo4', methods=['POST'])
 def demo4():
     """Class-based PPE detection route"""
+    global video_processing_active, current_processing_type, current_processing_video_path
+    
     print("DEBUG: demo4 route called")
 
     if 'file' not in request.files:
@@ -1713,6 +1677,12 @@ def demo4():
 
         # Save original file
         file.save(sample_path)
+
+        # Set global processing state
+        video_processing_active = True
+        current_processing_type = "class"
+        current_processing_video_path = sample_path
+        video_processing_stop_requested = False  # Reset stop flag
 
         # Create output path
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -1772,16 +1742,14 @@ def video_feed4():
 
 def generate_processed_frames4(video_path):
     """Generator function for class-based PPE detection"""
+    global video_processing_stop_requested
+    
     cap = None
     try:
         # Get the selected classes from app context
         selected_classes = getattr(app, 'class_based_classes', [
                                    "helmet", "shoes", "pvc_suit"])
         print(f"DEBUG: Retrieved classes from app context: {selected_classes}")
-
-        # Initialize tracker (simplified version without DeepSort for now)
-        # tracker = DeepSort(max_age=70, n_init=3)
-        tracker = None
 
         # Class name aliases to normalize names from the model to a standard form
         ALIASES = {
@@ -1798,10 +1766,6 @@ def generate_processed_frames4(video_path):
             "no_goggles": {"no_goggles", "NO_goggles", "no_eye_protection", "no_safety_goggles"},
         }
 
-        # Visual Configuration
-        CLR_OK = (0, 200, 0)
-        CLR_MISS = (0, 0, 255)
-
         def canonicalize(name: str) -> str:
             """Converts a class name to its canonical form using the ALIASES map."""
             n = name.lower().replace(" ", "_")
@@ -1809,17 +1773,6 @@ def generate_processed_frames4(video_path):
                 if n == canon or n in synonyms:
                     return canon
             return n
-
-        def center_of_box(xyxy):
-            """Calculates the center point of a bounding box."""
-            x1, y1, x2, y2 = xyxy
-            return (int((x1 + x2) / 2), int((y1 + y2) / 2))
-
-        def inside_bbox(point, bbox):
-            """Checks if a point is inside a bounding box."""
-            px, py = point
-            x1, y1, x2, y2 = bbox
-            return x1 <= px <= x2 and y1 <= py <= y2
 
         # Determine required classes for detection
         detect_classes_names = set()
@@ -1876,6 +1829,11 @@ def generate_processed_frames4(video_path):
 
         while True:
             try:
+                # Check if stop was requested
+                if video_processing_stop_requested:
+                    print("Video processing stop requested, breaking loop")
+                    break
+                    
                 success, frame = cap.read()
                 if not success:
                     print(
@@ -1888,113 +1846,37 @@ def generate_processed_frames4(video_path):
 
                 consecutive_errors = 0  # Reset error counter on successful frame
 
-                # Process frame with YOLO using selected classes
+                # Process frame with YOLO using selected classes and default visualization
                 results = yolo_model.predict(
                     frame, conf=0.3, iou=0.5, classes=detect_class_indices, verbose=False)
 
+                # Use YOLO's default plotting for detection visualization
+                annotated_frame = results[0].plot()
+                
+                # Add class-based analysis overlay
                 dets = results[0].boxes
-                detections_for_tracker = []
-                ppe_items = []
-
                 if dets is not None and len(dets) > 0:
                     print(f"DEBUG: Found {len(dets)} detections in frame")
+                    
+                    # Add information about selected classes
+                    info_text = f"Selected Classes: {', '.join(selected_classes)}"
+                    cv2.putText(annotated_frame, info_text, (10, 30),
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+                    
                     for i in range(len(dets)):
                         xyxy = dets.xyxy[i].cpu().tolist()
                         cls_id = int(dets.cls[i].cpu().item())
                         conf = float(dets.conf[i].cpu().item())
-                        class_name = canonicalize(
-                            yolo_model.names.get(cls_id, ""))
-
-                        if class_name == "person":
-                            w, h = xyxy[2] - xyxy[0], xyxy[3] - xyxy[1]
-                            detections_for_tracker.append(
-                                ([xyxy[0], xyxy[1], w, h], conf, class_name))
-                            print(
-                                f"DEBUG: Found person with confidence {conf}")
-                        else:
-                            # Only consider PPE detections above the confidence threshold
-                            if conf >= 0.3:
-                                ppe_items.append(
-                                    {"center": center_of_box(xyxy), "name": class_name})
-                                print(
-                                    f"DEBUG: Found PPE item: {class_name} with confidence {conf}")
-
-                # Simple detection without tracking for now
-                for i, detection in enumerate(detections_for_tracker):
-                    x1, y1, w, h = detection[0]
-                    conf = detection[1]
-                    class_name = detection[2]
-
-                    x2, y2 = x1 + w, y1 + h
-                    px1, py1, px2, py2 = map(int, [x1, y1, x2, y2])
-
-                    # Check for nearby PPE items
-                    owned_ppe = {item["name"] for item in ppe_items if inside_bbox(
-                        item["center"], [px1, py1, px2, py2])}
-                    missing_items = set()
-                    present_items = set()
-
-                    # Improved logic for detecting present vs missing items
-                    for required_item in required_ppe:
-                        if required_item in owned_ppe:
-                            present_items.add(required_item)
-                        elif f"no_{required_item}" in owned_ppe:
-                            missing_items.add(required_item)
-                        else:
-                            missing_items.add(required_item)
-
-                    color = CLR_MISS if missing_items else CLR_OK
-                    cv2.rectangle(frame, (px1, py1), (px2, py2), color, 2)
-
-                    # Enhanced visual display with better formatting
-                    x, y = px1, py1 - 10
-                    base_text = f"ID: {i+1} PPE:"
-                    font = cv2.FONT_HERSHEY_SIMPLEX
-                    scale = 0.6        # Increased text size
-                    thickness = 2      # Increased thickness
-
-                    # Compute text size for background
-                    text_size = cv2.getTextSize(
-                        base_text, font, scale, thickness)[0]
-                    overlay = frame.copy()
-                    cv2.rectangle(overlay, (x-2, y-16),
-                                  (x + text_size[0] + 4, y+6), (0, 0, 0), -1)
-                    alpha = 0.6
-                    frame = cv2.addWeighted(
-                        overlay, alpha, frame, 1 - alpha, 0)
-
-                    cv2.putText(frame, base_text, (x, y), font,
-                                scale, (255, 255, 255), thickness)
-
-                    offset_x = x + text_size[0] + 10
-
-                    for item in sorted(list(required_ppe)):
-                        if item in present_items:
-                            status = "OK"
-                            text_color = (0, 200, 0)  # Green
-                        else:
-                            status = "MISSING"
-                            text_color = (0, 0, 255)  # Red
-
-                        text = f" {item}:{status}"
-                        tsize = cv2.getTextSize(
-                            text, font, scale, thickness)[0]
-                        overlay = frame.copy()
-                        cv2.rectangle(overlay, (offset_x-2, y-16),
-                                      (offset_x + tsize[0] + 4, y+6), (0, 0, 0), -1)
-                        frame = cv2.addWeighted(
-                            overlay, alpha, frame, 1 - alpha, 0)
-
-                        cv2.putText(frame, text, (offset_x, y),
-                                    font, scale, text_color, thickness)
-                        offset_x += tsize[0] + 10
+                        class_name = yolo_model.names.get(cls_id, "")
+                        
+                        print(f"DEBUG: Found {class_name} with confidence {conf}")
 
                 # Resize for better performance
-                frame = cv2.resize(frame, (640, 480))
+                annotated_frame = cv2.resize(annotated_frame, (640, 480))
 
                 # Encode frame as JPEG
                 _, buffer = cv2.imencode(
-                    '.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+                    '.jpg', annotated_frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
                 frame_bytes = buffer.tobytes()
 
                 if frame_count % 30 == 0:  # Print every 30 frames
@@ -2025,6 +1907,8 @@ def generate_processed_frames4(video_path):
         if cap is not None:
             cap.release()
             print("DEBUG: Video capture released")
+        # Reset stop flag when processing completes
+        video_processing_stop_requested = False
 
 
 # ======================== MAIN ========================

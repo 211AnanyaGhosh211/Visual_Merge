@@ -1,0 +1,67 @@
+{
+  "total_counts": {
+    "Helmets": 20,
+    "Safety_shoess": 7,
+    "NO_Vests": 16,
+    "Persons": 22,
+    "Helmet": 1,
+    "NO_helmet": 1
+  },
+  "recent_detections": [
+    {
+      "timestamp": "2025-09-22T11:33:11.651077",
+      "summary": "6 Helmets, 2 Safety_shoess, 6 NO_Vests, 6 Persons",
+      "counts": {
+        "Helmets": 6,
+        "Safety_shoess": 2,
+        "NO_Vests": 6,
+        "Persons": 6
+      }
+    },
+    {
+      "timestamp": "2025-09-22T11:33:11.752789",
+      "summary": "4 Helmets, 1 Safety_shoess, 3 NO_Vests, 4 Persons",
+      "counts": {
+        "Helmets": 4,
+        "Safety_shoess": 1,
+        "NO_Vests": 3,
+        "Persons": 4
+      }
+    },
+    {
+      "timestamp": "2025-09-22T11:33:11.854059",
+      "summary": "8 Helmets, 3 Safety_shoess, 2 NO_Vests, 7 Persons",
+      "counts": {
+        "Helmets": 8,
+        "Safety_shoess": 3,
+        "NO_Vests": 2,
+        "Persons": 7
+      }
+    },
+    {
+      "timestamp": "2025-09-22T11:33:11.956280",
+      "summary": "2 Helmets, 1 Safety_shoess, 5 NO_Vests, 3 Persons",
+      "counts": {
+        "Helmets": 2,
+        "Safety_shoess": 1,
+        "NO_Vests": 5,
+        "Persons": 3
+      }
+    },
+    {
+      "timestamp": "2025-09-22T11:33:12.058284",
+      "summary": "No detections",
+      "counts": {}
+    },
+    {
+      "timestamp": "2025-09-22T11:33:12.159106",
+      "summary": "1 Helmet, 1 NO_helmet, 2 Persons",
+      "counts": {
+        "Helmet": 1,
+        "NO_helmet": 1,
+        "Persons": 2
+      }
+    }
+  ],
+  "last_updated": "2025-09-22T11:33:12.159106"
+}
