@@ -2,6 +2,7 @@ import mysql.connector
 import hashlib
 from datetime import datetime
 from flask import Flask, request, jsonify, Blueprint
+from db.Database import db_util
 
 # Create authentication blueprint
 auth_bp = Blueprint('auth_bp', __name__)
@@ -13,26 +14,6 @@ def add_cors_headers(response):
                          'http://localhost:5173')
     response.headers.add('Access-Control-Allow-Credentials', 'true')
     return response
-
-
-class AuthDBUtil:
-    def __init__(self, host, user, password, database):
-        try:
-            self.conn = mysql.connector.connect(
-                host=host,
-                user=user,
-                password=password,
-                database=database
-            )
-            self.cursor = self.conn.cursor()
-            print("Auth database connected successfully")
-        except mysql.connector.Error as err:
-            print(f"Auth database connection error: {err}")
-
-
-# Initialize database connection for authentication
-auth_db = AuthDBUtil(host='localhost', user='root',
-                     password='Mysqlroot^7siuuu', database='EmployeeInfo')
 
 
 @auth_bp.route('/login', methods=['POST', 'OPTIONS'])
@@ -81,12 +62,12 @@ def login():
         # Query database for admin
         query = """
         SELECT AdminID, Username, Password, Role 
-        FROM EmployeeInfo.Admins 
+        FROM Admins 
         WHERE AdminID = %s AND Username = %s
         """
 
-        auth_db.cursor.execute(query, (admin_id, username))
-        result = auth_db.cursor.fetchone()
+        db_util.cursor.execute(query, (admin_id, username))
+        result = db_util.cursor.fetchone()
 
         if not result:
             response = jsonify({
@@ -223,12 +204,12 @@ def change_password():
         # First, verify the current password
         verify_query = """
         SELECT AdminID, Username, Password 
-        FROM EmployeeInfo.Admins 
+        FROM Admins 
         WHERE AdminID = %s AND Username = %s
         """
 
-        auth_db.cursor.execute(verify_query, (admin_id, username))
-        result = auth_db.cursor.fetchone()
+        db_util.cursor.execute(verify_query, (admin_id, username))
+        result = db_util.cursor.fetchone()
 
         if not result:
             response = jsonify({
@@ -253,17 +234,17 @@ def change_password():
 
         # Update the password in the database
         update_query = """
-        UPDATE EmployeeInfo.Admins 
+        UPDATE Admins 
         SET Password = %s 
         WHERE AdminID = %s AND Username = %s
         """
 
-        auth_db.cursor.execute(
+        db_util.cursor.execute(
             update_query, (hashed_new_password, admin_id, username))
-        auth_db.conn.commit()
+        db_util.conn.commit()
 
         # Check if the update was successful
-        if auth_db.cursor.rowcount == 0:
+        if db_util.cursor.rowcount == 0:
             response = jsonify({
                 "success": False,
                 "error": "Failed to update password"
@@ -324,9 +305,3 @@ def verify_token():
             "success": False,
             "error": "Token verification failed"
         }), 500
-
-
-if __name__ == '__main__':
-    app = Flask(__name__)
-    app.register_blueprint(auth_bp, url_prefix='/api/auth')
-    app.run(debug=True)
