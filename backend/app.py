@@ -81,7 +81,7 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 model = InceptionResnetV1(pretrained='vggface2').eval().to(device)
 mtcnn = MTCNN(keep_all=False, device=device)
 # yolo_model = YOLO("model/ppe.pt")
-yolo_model = YOLO("models/best700.pt")
+yolo_model = YOLO("models/aparava_300_epoch.pt")
 
 
 # Ensure media/faces directory exists
@@ -163,9 +163,19 @@ def generate_face_capture_frames():
             # Resize for better performance
             display_frame = cv2.resize(display_frame, (640, 480))
 
-            # Encode frame as JPEG
-            _, buffer = cv2.imencode('.jpg', display_frame, [
+            # Validate frame before encoding
+            if display_frame is None or display_frame.size == 0:
+                print("Warning: Display frame is empty, skipping...")
+                continue
+
+            # Encode frame as JPEG with error checking
+            success, buffer = cv2.imencode('.jpg', display_frame, [
                                      int(cv2.IMWRITE_JPEG_QUALITY), 80])
+            
+            if not success or buffer is None or buffer.size == 0:
+                print("Warning: Failed to encode display frame, skipping...")
+                continue
+                
             frame_bytes = buffer.tobytes()
 
             yield (b'--frame\r\n'
@@ -296,8 +306,8 @@ def generate_detection_frames():
     '''classNames = ['Hardhat', 'Mask', 'NO-Hardhat', 'NO-Mask', 'NO-Safety Vest', 'Person', 
                  'Safety Cone', 'Safety Vest', 'machinery', 'vehicle']'''
 
-    classNames = ['Helmet', 'Safety_Vest', 'Safety_goggles', 'Safety_shoes', 'NO_helmet', 'NO_Vest',
-                  'NO_goggles', 'NO_safetyshoes', 'Person']
+    classNames = ['Helmet', 'Safety_Vest', 'Safety_goggles', 'Safety_shoes', 'No_helmet', 'No_Vest',
+                  'No_goggles', 'No_SafetyShoes', 'Person', 'Safety_Gloves', 'No_Gloves']
 
     try:
         while detection_running:
@@ -322,12 +332,12 @@ def generate_detection_frames():
 
                     # Set color based on the class
                     if conf > 0.5:
-                        if currentClass in ['NO_helmet', 'NO_Vest', 'NO_goggles', 'NO_safetyshoes']:
+                        if currentClass in ['No_helmet', 'No_Vest', 'No_goggles', 'No_SafetyShoes', 'No_Gloves']:
                             myColor = (0, 0, 255)  # Red
                             cv2.imwrite(
                                 f"media/face_detect/output{curr_datetime}.jpg", img)
                             cv2.imwrite("media/face_detect/output.jpg", img)
-                        elif currentClass in ['Helmet', 'Safety_Vest', 'Safety_goggles', 'Safety_shoes']:
+                        elif currentClass in ['Helmet', 'Safety_Vest', 'Safety_goggles', 'Safety_shoes', 'Safety_Gloves']:
                             myColor = (0, 255, 0)  # Green
                         else:
                             myColor = (255, 0, 0)  # Blue
@@ -348,9 +358,19 @@ def generate_detection_frames():
             # Resize for better performance
             img = cv2.resize(img, (640, 480))
 
-            # Encode frame as JPEG
-            _, buffer = cv2.imencode(
+            # Validate frame before encoding
+            if img is None or img.size == 0:
+                print("Warning: Frame is empty after processing, skipping...")
+                continue
+
+            # Encode frame as JPEG with error checking
+            success, buffer = cv2.imencode(
                 '.jpg', img, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+            
+            if not success or buffer is None or buffer.size == 0:
+                print("Warning: Failed to encode frame, skipping...")
+                continue
+                
             frame_bytes = buffer.tobytes()
 
             yield (b'--frame\r\n'
@@ -933,9 +953,6 @@ def display_video(video_path):
     cap = cv2.VideoCapture(video_path)
 
 
-yolo_model2 = YOLO("models/best700.pt")
-
-
 # def generate_processed_frames2(video_path):
 #     """Generator function that yields YOLO-processed frames"""
 #     try:
@@ -977,7 +994,7 @@ def generate_processed_frames2(video_path):
     print(f"Processing video file: {video_path}")
 
     # Import violation counting functions
-    from services.violation_count import count_violation, print_violation_summary, reset_violation_counts, save_violation_log
+    from services.violation_count import count_violation, reset_violation_counts
 
     # Reset violation counts at start
     reset_violation_counts()
@@ -987,6 +1004,13 @@ def generate_processed_frames2(video_path):
     if not cap.isOpened():
         print(f"Error: Could not open video file: {video_path}")
         return
+    
+    # Get video properties for debugging
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    print(f"Video properties - FPS: {fps}, Frames: {frame_count}, Size: {width}x{height}")
 
     # Class names for different objects detected by the model
     '''classNames = ['Hardhat', 'Mask', 'NO-Hardhat', 'NO-Mask', 'NO-Safety Vest', 'Person', 'Safety Cone', 'Safety Vest', 'machinery', 'vehicle']'''
@@ -995,80 +1019,153 @@ def generate_processed_frames2(video_path):
         'Safety_Vest',
         'Safety_goggles',
         'Safety_shoes',
-        'NO_helmet',
-        'NO_Vest',
-        'NO_goggles',
-        'NO_safetyshoes',
-        'Person'
+        'No_helmet',
+        'No_Vest',
+        'No_goggles',
+        'No_SafetyShoes',
+        'Person',
+        'Safety_Gloves',
+        'No_Gloves'
     ]
 
     try:
+        frame_counter = 0
         while True:
-            success, img = cap.read()
-            if not success:
-                break
+            try:
+                success, img = cap.read()
+                if not success:
+                    print(f"End of video or failed to read frame at frame {frame_counter}")
+                    break
 
-            curr_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            # Perform object detection
-            results = yolo_model(img, stream=True)
+                frame_counter += 1
+                
+                # Validate frame data
+                if img is None or img.size == 0:
+                    print(f"Warning: Empty or invalid frame detected at frame {frame_counter}, skipping...")
+                    continue
 
-            for r in results:
-                boxes = r.boxes
-                for box in boxes:
-                    x1, y1, x2, y2 = box.xyxy[0]
-                    x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+                curr_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            
+                # Perform object detection with error handling
+                try:
+                    results = yolo_model(img, stream=True)
+                except Exception as yolo_error:
+                    print(f"YOLO processing error at frame {frame_counter}: {yolo_error}")
+                    # Skip this frame and continue
+                    continue
 
-                    # Calculate confidence and class index
-                    conf = math.ceil((box.conf[0] * 100)) / 100
-                    cls = int(box.cls[0])
-                    currentClass = classNames[cls]
+                try:
+                    for r in results:
+                        if r is None or r.boxes is None:
+                            continue
+                            
+                        boxes = r.boxes
+                        if boxes is None or len(boxes) == 0:
+                            continue
+                            
+                        for box in boxes:
+                            if box is None or box.xyxy is None or len(box.xyxy) == 0:
+                                continue
+                                
+                            try:
+                                x1, y1, x2, y2 = box.xyxy[0]
+                                x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
 
-                    # Set color based on the class
-                    if conf > 0.5:
-                        if currentClass in ['NO_helmet', 'NO_Vest', 'NO_goggles', 'NO_safetyshoes']:
-                            myColor = (0, 0, 255)  # Red
-                            cv2.imwrite(f"media/face_detect/output{curr_datetime}.jpg", img)
-                            cv2.imwrite("media/face_detect/output.jpg", img)
+                                # Calculate confidence and class index
+                                if box.conf is None or len(box.conf) == 0 or box.cls is None or len(box.cls) == 0:
+                                    continue
+                                    
+                                conf = math.ceil((box.conf[0] * 100)) / 100
+                                cls = int(box.cls[0])
+                                
+                                # Validate class index
+                                if cls >= len(classNames) or cls < 0:
+                                    print(f"Warning: Invalid class index {cls} at frame {frame_counter}")
+                                    continue
+                                    
+                                currentClass = classNames[cls]
 
-                            # Count violation for specific classes
-                            if currentClass in ['NO_helmet', 'NO_Vest', 'NO_goggles']:
-                                count_violation(currentClass)
+                                # Set color based on the class
+                                if conf > 0.5:
+                                    if currentClass in ['No_helmet', 'No_Vest', 'No_goggles', 'No_SafetyShoes', 'No_Gloves']:
+                                        myColor = (0, 0, 255)  # Red
+                                        try:
+                                            cv2.imwrite(f"media/face_detect/output{curr_datetime}.jpg", img)
+                                            cv2.imwrite("media/face_detect/output.jpg", img)
+                                        except Exception as write_error:
+                                            print(f"Warning: Failed to write output image at frame {frame_counter}: {write_error}")
 
-                        elif currentClass in ['Helmet', 'Safety_Vest', 'Safety_goggles', 'Safety_shoes']:
-                            myColor = (0, 255, 0)  # Green
-                        else:
-                            myColor = (255, 0, 0)  # Blue
+                                        # Count violation for specific classes
+                                        if currentClass in ['No_helmet', 'No_Vest', 'No_goggles', 'No_SafetyShoes', 'No_Gloves']:
+                                            count_violation(currentClass)
 
-                        # Display the class name and confidence
-                        cvzone.putTextRect(img, f'{classNames[cls]} {conf}',
-                                           (max(0, x1), max(35, y1)), scale=1, thickness=1,
-                                           colorB=myColor, colorT=(
-                                               255, 255, 255),
-                                           colorR=myColor, offset=5)
+                                    elif currentClass in ['Helmet', 'Safety_Vest', 'Safety_goggles', 'Safety_shoes', 'Safety_Gloves']:
+                                        myColor = (0, 255, 0)  # Green
+                                    else:
+                                        myColor = (255, 0, 0)  # Blue
 
-                        # Draw bounding box
-                        cv2.rectangle(img, (x1, y1), (x2, y2), myColor, 3)
+                                    # Display the class name and confidence
+                                    try:
+                                        cvzone.putTextRect(img, f'{classNames[cls]} {conf}',
+                                                           (max(0, x1), max(35, y1)), scale=1, thickness=1,
+                                                           colorB=myColor, colorT=(
+                                                               255, 255, 255),
+                                                           colorR=myColor, offset=5)
+                                    except Exception as text_error:
+                                        print(f"Warning: Failed to draw text at frame {frame_counter}: {text_error}")
 
-                        # Detect faces
-                        detectFace(currentClass)
+                                    # Draw bounding box
+                                    try:
+                                        cv2.rectangle(img, (x1, y1), (x2, y2), myColor, 3)
+                                    except Exception as rect_error:
+                                        print(f"Warning: Failed to draw rectangle at frame {frame_counter}: {rect_error}")
 
-            # Resize for better performance
-            img = cv2.resize(img, (640, 480))
+                                    # Detect faces
+                                    try:
+                                        detectFace(currentClass)
+                                    except Exception as face_error:
+                                        print(f"Warning: Face detection error at frame {frame_counter}: {face_error}")
+                                        
+                            except Exception as box_error:
+                                print(f"Warning: Box processing error at frame {frame_counter}: {box_error}")
+                                continue
+                                
+                except Exception as results_error:
+                    print(f"Warning: Results processing error at frame {frame_counter}: {results_error}")
+                    continue
 
-            # Encode frame as JPEG
-            _, buffer = cv2.imencode(
-                '.jpg', img, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
-            frame_bytes = buffer.tobytes()
+                # Resize for better performance
+                img = cv2.resize(img, (640, 480))
 
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+                # Validate frame before encoding
+                if img is None or img.size == 0:
+                    print(f"Warning: Frame is empty after processing at frame {frame_counter}, skipping...")
+                    continue
+
+                # Encode frame as JPEG with error checking
+                success, buffer = cv2.imencode(
+                    '.jpg', img, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+                
+                if not success or buffer is None or buffer.size == 0:
+                    print(f"Warning: Failed to encode frame {frame_counter}, skipping...")
+                    continue
+                    
+                frame_bytes = buffer.tobytes()
+                
+                # Debug output every 30 frames
+                if frame_counter % 30 == 0:
+                    print(f"Processed frame {frame_counter}, encoded size: {len(frame_bytes)} bytes")
+
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+                       
+            except Exception as frame_error:
+                print(f"Frame processing error at frame {frame_counter}: {frame_error}")
+                continue
 
     except Exception as e:
         print(f"Streaming error: {str(e)}")
     finally:
-        # Print final violation summary and save log
-        print_violation_summary()
-        save_violation_log()
         cap.release()
 
 
@@ -1076,15 +1173,13 @@ def generate_processed_frames2(video_path):
 def get_violation_counts_api():
     """API endpoint to get current violation counts"""
     try:
-        from services.violation_count import get_violation_counts, get_total_violations
+        from services.violation_count import get_violation_counts
 
         counts = get_violation_counts()
-        total = get_total_violations()
 
         return jsonify({
             'success': True,
-            'violation_counts': counts,
-            'total_violations': total
+            'violation_counts': counts
         })
     except Exception as e:
         return jsonify({
