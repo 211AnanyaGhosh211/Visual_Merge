@@ -1025,6 +1025,7 @@ Exception Type: NO_Vest
 Incident Image: media/face_detect/face_detect_2025-09-22 10:33:19.jpg
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 Time: 2025-09-22 11:11:23
 Username: Unknown
 Employee ID: Unknown
@@ -1169,4 +1170,65 @@ Username: Unknown
 Employee ID: Unknown
 Exception Type: NO_helmet
 Incident Image: media/face_detect/face_detect_2025-09-22 15:42:13.jpg
+=======
+Time: 2025-09-22 10:50:18
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_Vest
+Incident Image: media/face_detect/face_detect_2025-09-22 10:50:18.jpg
+
+Time: 2025-09-22 10:53:20
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_Vest
+Incident Image: media/face_detect/face_detect_2025-09-22 10:53:20.jpg
+
+Time: 2025-09-22 11:38:02
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_Vest
+Incident Image: media/face_detect/face_detect_2025-09-22 11:38:02.jpg
+
+Time: 2025-09-22 11:41:03
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_Vest
+Incident Image: media/face_detect/face_detect_2025-09-22 11:41:03.jpg
+
+Time: 2025-09-22 11:44:04
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_Vest
+Incident Image: media/face_detect/face_detect_2025-09-22 11:44:04.jpg
+>>>>>>> acf1739b91257b621b8db7b80f3422775cf733f0
+
+Time: 2025-09-24 10:46:15
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_Vest
+Incident Image: media/face_detect/face_detect_2025-09-24 10:46:15.jpg
+
+Time: 2025-09-24 11:02:53
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_Vest
+Incident Image: media/face_detect/face_detect_2025-09-24 11:02:53.jpg
+
+Time: 2025-09-24 11:08:30
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_Vest
+Incident Image: media/face_detect/face_detect_2025-09-24 11:08:30.jpg
+
+Time: 2025-09-24 11:11:11
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_Vest
+Incident Image: media/face_detect/face_detect_2025-09-24 11:11:11.jpg
+
+Time: 2025-09-24 11:17:28
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_Vest
+Incident Image: media/face_detect/face_detect_2025-09-24 11:17:28.jpg
 

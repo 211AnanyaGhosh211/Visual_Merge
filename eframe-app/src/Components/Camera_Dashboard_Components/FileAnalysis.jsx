@@ -10,6 +10,7 @@ const FileAnalysis = () => {
   const [showClassDropdown, setShowClassDropdown] = useState(false);
   const fileInputRef = useRef(null);
   const dropdownRef = useRef(null);
+  const statusCheckInterval = useRef(null);
 
   // Available PPE classes based on your backend code
   const availableClasses = [
@@ -34,6 +35,35 @@ const FileAnalysis = () => {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+    // Clear status check interval
+    if (statusCheckInterval.current) {
+      clearInterval(statusCheckInterval.current);
+      statusCheckInterval.current = null;
+    }
+  };
+
+  // Check processing status from backend
+  const checkProcessingStatus = async () => {
+    try {
+      const response = await fetch('http://127.0.0.1:5000/video_processing_status');
+      const data = await response.json();
+      
+      if (!data.processing_active && fileProcessingActive) {
+        // Backend processing stopped, reset frontend state
+        resetAllStates();
+        showAlert("Video processing completed or stopped", "info");
+      }
+    } catch (error) {
+      console.error('Error checking processing status:', error);
+    }
+  };
+
+  // Start status checking when processing is active
+  const startStatusChecking = () => {
+    if (statusCheckInterval.current) {
+      clearInterval(statusCheckInterval.current);
+    }
+    statusCheckInterval.current = setInterval(checkProcessingStatus, 2000); // Check every 2 seconds
   };
 
   // Handle class selection
@@ -68,6 +98,15 @@ const FileAnalysis = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Cleanup interval on component unmount
+  useEffect(() => {
+    return () => {
+      if (statusCheckInterval.current) {
+        clearInterval(statusCheckInterval.current);
+      }
     };
   }, []);
 
@@ -126,6 +165,7 @@ const FileAnalysis = () => {
         setUploadStreamUrl(videoUrl);
         setDownloadUrl(downloadUrl);
         setFileProcessingActive(true);
+        startStatusChecking(); // Start monitoring backend status
         showAlert("File processing started successfully", "success");
       } else {
         showAlert(data.error || "File processing failed", "error");
@@ -145,9 +185,32 @@ const FileAnalysis = () => {
     }
   };
 
-  const stopFileProcessing = () => {
-    resetAllStates();
-    showAlert("File processing stopped", "info");
+  const stopFileProcessing = async () => {
+    try {
+      showAlert("Stopping video processing...", "info");
+      
+      const response = await fetch('http://127.0.0.1:5000/stop_video_processing', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === "success") {
+        resetAllStates();
+        showAlert("Video processing stopped successfully", "success");
+      } else {
+        showAlert(data.message || "Failed to stop processing", "error");
+        // Still reset local state even if backend call fails
+        resetAllStates();
+      }
+    } catch (error) {
+      showAlert("Error stopping processing: " + error.message, "error");
+      // Still reset local state even if backend call fails
+      resetAllStates();
+    }
   };
 
   return (
