@@ -81,7 +81,7 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 model = InceptionResnetV1(pretrained='vggface2').eval().to(device)
 mtcnn = MTCNN(keep_all=False, device=device)
 # yolo_model = YOLO("model/ppe.pt")
-yolo_model = YOLO("models/best700.pt")
+yolo_model = YOLO("models/apraava(100epochs).pt")
 
 
 # Ensure media/faces directory exists
