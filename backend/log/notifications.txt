@@ -1370,3 +1370,15 @@ Employee ID: Unknown
 Exception Type: No_Gloves
 Incident Image: media/face_detect/face_detect_2025-09-24 11:58:59.jpg
 
+Time: 2025-09-24 12:25:43
+Username: Unknown
+Employee ID: Unknown
+Exception Type: No_Gloves
+Incident Image: media/face_detect/face_detect_2025-09-24 12:25:43.jpg
+
+Time: 2025-09-24 12:27:45
+Username: Unknown
+Employee ID: Unknown
+Exception Type: No_Gloves
+Incident Image: media/face_detect/face_detect_2025-09-24 12:27:45.jpg
+

@@ -326,13 +326,6 @@ def generate_detection_frames():
             f"Error: Could not open camera {camera_name}. Type: {camera_type}, URL: {camera_url}")
         return
 
-    # Class names for different objects detected by the model
-    '''classNames = ['Hardhat', 'Mask', 'NO-Hardhat', 'NO-Mask', 'NO-Safety Vest', 'Person', 
-                 'Safety Cone', 'Safety Vest', 'machinery', 'vehicle']'''
-
-    classNames = ['Helmet', 'Safety_Vest', 'Safety_goggles', 'Safety_shoes', 'No_helmet', 'No_Vest',
-                  'No_goggles', 'No_SafetyShoes', 'Person', 'Safety_Gloves', 'No_Gloves']
-
     try:
         while detection_running:
             success, img = cam.read()
@@ -351,39 +344,23 @@ def generate_detection_frames():
                 
                 # Check for violations and save images if needed
                 boxes = r.boxes
-                for box in boxes:
-                    x1, y1, x2, y2 = box.xyxy[0]
-                    x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+                if boxes is not None:
+                    for box in boxes:
+                        # Calculate confidence and class index
+                        conf = math.ceil((box.conf[0] * 100)) / 100
+                        cls = int(box.cls[0])
+                        currentClass = yolo_model.names[cls]
 
-                    # Calculate confidence and class index
-                    conf = math.ceil((box.conf[0] * 100)) / 100
-                    cls = int(box.cls[0])
-                    currentClass = classNames[cls]
+                        # Save violation images for specific classes
+                        if conf > 0.5 and currentClass in ['No_helmet', 'No_Vest', 'No_goggles', 'No_SafetyShoes', 'No_Gloves']:
+                            cv2.imwrite(f"media/face_detect/output{curr_datetime}.jpg", annotated_img)
+                            cv2.imwrite("media/face_detect/output.jpg", annotated_img)
 
-                    # Set color based on the class
-                    if conf > 0.5:
-                        if currentClass in ['No_helmet', 'No_Vest', 'No_goggles', 'No_SafetyShoes', 'No_Gloves']:
-                            myColor = (0, 0, 255)  # Red
-                            cv2.imwrite(
-                                f"media/face_detect/output{curr_datetime}.jpg", img)
-                            cv2.imwrite("media/face_detect/output.jpg", img)
-                        elif currentClass in ['Helmet', 'Safety_Vest', 'Safety_goggles', 'Safety_shoes', 'Safety_Gloves']:
-                            myColor = (0, 255, 0)  # Green
-                        else:
-                            myColor = (255, 0, 0)  # Blue
-
-                        # Display the class name and confidence
-                        cvzone.putTextRect(img, f'{classNames[cls]} {conf}',
-                                           (max(0, x1), max(35, y1)), scale=1, thickness=1,
-                                           colorB=myColor, colorT=(
-                                               255, 255, 255),
-                                           colorR=myColor, offset=5)
-
-                        # Draw bounding box
-                        cv2.rectangle(img, (x1, y1), (x2, y2), myColor, 3)
-
-                        # Detect faces
+                        # Detect faces for violations
                         detectFace(currentClass)
+
+                # Use the annotated image from YOLO's default plotting
+                img = annotated_img
 
             # Resize for better performance
             img = cv2.resize(img, (640, 480))
@@ -1135,79 +1112,40 @@ def generate_processed_frames2(video_path):
 
                 try:
                     for r in results:
-                        if r is None or r.boxes is None:
+                        if r is None:
                             continue
                             
+                        # Use YOLO's built-in plot method for default visualization
+                        annotated_img = r.plot()
+                        
+                        # Check for violations and save images if needed
                         boxes = r.boxes
-                        if boxes is None or len(boxes) == 0:
-                            continue
-                            
-                        for box in boxes:
-                            if box is None or box.xyxy is None or len(box.xyxy) == 0:
-                                continue
-                                
-                            try:
-                                x1, y1, x2, y2 = box.xyxy[0]
-                                x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
-
+                        if boxes is not None:
+                            for box in boxes:
                                 # Calculate confidence and class index
-                                if box.conf is None or len(box.conf) == 0 or box.cls is None or len(box.cls) == 0:
-                                    continue
-                                    
                                 conf = math.ceil((box.conf[0] * 100)) / 100
                                 cls = int(box.cls[0])
-                                
-                                # Validate class index
-                                if cls >= len(classNames) or cls < 0:
-                                    print(f"Warning: Invalid class index {cls} at frame {frame_counter}")
-                                    continue
-                                    
-                                currentClass = classNames[cls]
+                                currentClass = yolo_model.names[cls]
 
-                                # Set color based on the class
-                                if conf > 0.5:
-                                    if currentClass in ['No_helmet', 'No_Vest', 'No_goggles', 'No_SafetyShoes', 'No_Gloves']:
-                                        myColor = (0, 0, 255)  # Red
-                                        try:
-                                            cv2.imwrite(f"media/face_detect/output{curr_datetime}.jpg", img)
-                                            cv2.imwrite("media/face_detect/output.jpg", img)
-                                        except Exception as write_error:
-                                            print(f"Warning: Failed to write output image at frame {frame_counter}: {write_error}")
-
-                                        # Count violation for specific classes
-                                        if currentClass in ['No_helmet', 'No_Vest', 'No_goggles', 'No_SafetyShoes', 'No_Gloves']:
-                                            count_violation(currentClass)
-
-                                    elif currentClass in ['Helmet', 'Safety_Vest', 'Safety_goggles', 'Safety_shoes', 'Safety_Gloves']:
-                                        myColor = (0, 255, 0)  # Green
-                                    else:
-                                        myColor = (255, 0, 0)  # Blue
-
-                                    # Display the class name and confidence
+                                # Save violation images for specific classes
+                                if conf > 0.5 and currentClass in ['No_helmet', 'No_Vest', 'No_goggles', 'No_SafetyShoes', 'No_Gloves']:
                                     try:
-                                        cvzone.putTextRect(img, f'{classNames[cls]} {conf}',
-                                                           (max(0, x1), max(35, y1)), scale=1, thickness=1,
-                                                           colorB=myColor, colorT=(
-                                                               255, 255, 255),
-                                                           colorR=myColor, offset=5)
-                                    except Exception as text_error:
-                                        print(f"Warning: Failed to draw text at frame {frame_counter}: {text_error}")
+                                        cv2.imwrite(f"media/face_detect/output{curr_datetime}.jpg", annotated_img)
+                                        cv2.imwrite("media/face_detect/output.jpg", annotated_img)
+                                    except Exception as write_error:
+                                        print(f"Warning: Failed to write output image at frame {frame_counter}: {write_error}")
 
-                                    # Draw bounding box
-                                    try:
-                                        cv2.rectangle(img, (x1, y1), (x2, y2), myColor, 3)
-                                    except Exception as rect_error:
-                                        print(f"Warning: Failed to draw rectangle at frame {frame_counter}: {rect_error}")
+                                    # Count violation for specific classes
+                                    count_violation(currentClass)
 
-                                    # Detect faces
-                                    try:
-                                        detectFace(currentClass)
-                                    except Exception as face_error:
-                                        print(f"Warning: Face detection error at frame {frame_counter}: {face_error}")
-                                        
-                            except Exception as box_error:
-                                print(f"Warning: Box processing error at frame {frame_counter}: {box_error}")
-                                continue
+                                # Detect faces for violations
+                                try:
+                                    detectFace(currentClass)
+                                except Exception as face_error:
+                                    print(f"Warning: Face detection error at frame {frame_counter}: {face_error}")
+
+                        # Use the annotated image from YOLO's default plotting
+                        img = annotated_img
                                 
                 except Exception as results_error:
                     print(f"Warning: Results processing error at frame {frame_counter}: {results_error}")
