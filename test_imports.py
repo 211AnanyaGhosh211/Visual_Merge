@@ -26,7 +26,7 @@ try:
     # Test YOLO model loading (this will work if the model file exists)
     try:
         # This will fail if ppe.pt doesn't exist, but that's expected
-        model = YOLO("ppe.pt")
+        model = YOLO("backend/models/aparava_300_epoch.pt")
         print("✅ YOLO model loaded successfully!")
     except Exception as e:
         print(f"ℹ️ YOLO model file not found (expected): {e}")

@@ -17,8 +17,8 @@ from email.message import EmailMessage
 from services.violation_count import get_violation_counts
 
 # Reciver email address
-# MY_EMAIL = 'shounakc@icloud.com';
-MY_EMAIL = 'arghyaghosh790@gmail.com'
+# RECEIVER_EMAIL = 'shounakc@icloud.com';
+RECEIVER_EMAIL = 'avijit.eframe@gmail.com'
 
 # Office365 email credentials
 EMAIL_ADDRESS = 'eframeAI@outlook.com'
@@ -132,7 +132,7 @@ os.makedirs('media/face_detect', exist_ok=True)
 
 
 # Allowed classes for SQL insertion
-allowed_classes = {'NO_helmet', 'NO_Vest', 'NO_goggles', 'NO_safetyshoes'}
+allowed_classes = {'No_helmet', 'No_Vest', 'No_goggles', 'No_SafetyShoes', 'No_Gloves'}
 
 # Cache face embeddings from MySQL database
 
@@ -289,18 +289,21 @@ def detectFace(currentClass):
 
                     # Build violation summary for email
                     violation_summary = []
-                    if violation_counts.get('NO_helmet', 0) > 0:
+                    if violation_counts.get('No_helmet', 0) > 0:
                         violation_summary.append(
-                            f"NO_HELMET - {violation_counts['NO_helmet']} people")
-                    if violation_counts.get('NO_Vest', 0) > 0:
+                            f"NO_HELMET - {violation_counts['No_helmet']} people")
+                    if violation_counts.get('No_Vest', 0) > 0:
                         violation_summary.append(
-                            f"NO_VEST - {violation_counts['NO_Vest']} people")
-                    if violation_counts.get('NO_goggles', 0) > 0:
+                            f"NO_VEST - {violation_counts['No_Vest']} people")
+                    if violation_counts.get('No_goggles', 0) > 0:
                         violation_summary.append(
-                            f"NO_GOGGLES - {violation_counts['NO_goggles']} people")
-                    if violation_counts.get('NO_safetyshoes', 0) > 0:
+                            f"NO_GOGGLES - {violation_counts['No_goggles']} people")
+                    if violation_counts.get('No_SafetyShoes', 0) > 0:
                         violation_summary.append(
-                            f"NO_SAFETYSHOES - {violation_counts['NO_safetyshoes']} people")
+                            f"NO_SAFETYSHOES - {violation_counts['No_SafetyShoes']} people")
+                    if violation_counts.get('No_Gloves', 0) > 0:
+                        violation_summary.append(
+                            f"NO_GLOVES - {violation_counts['No_Gloves']} people")
 
                     # Create email body with violation summary
                     violation_text = "\n".join(
@@ -309,7 +312,7 @@ def detectFace(currentClass):
 
                     send_gmail_email(
                         # ------- to_email # Replace
-                        to_email=f"{MY_EMAIL}",
+                        to_email=f"{RECEIVER_EMAIL}",
                         subject=f"Safety Violation Alert - {currentClass}",
                         body_text=body_text,
                         image_path="media/face_detect/output.jpg"
