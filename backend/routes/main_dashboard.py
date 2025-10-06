@@ -1,10 +1,12 @@
 from flask import Blueprint, request, jsonify, send_file
-from db.db import get_db_connection, close_db_connection
+from db.db import get_db_connection, close_db_connection, db_config
 from datetime import datetime, timedelta
 import calendar
 from collections import Counter
 import io
 from typing import Any
+import mysql.connector
+import pandas as pd
 
 
 # Create a Blueprint for API routes
@@ -643,3 +645,83 @@ def get_combined_exception_data():
     finally:
         cursor.close()
         close_db_connection(conn)
+
+
+# Daily Violation Report Generation
+@main_dashboard_bp.route('/report', methods=['GET'])
+def get_report():
+    today_date = datetime.now().strftime("%Y-%m-%d")
+    report_filename = f"log/violation_report_{today_date}.txt"
+
+    # Connect to MySQL
+    conn = mysql.connector.connect(**db_config)
+    cursor = conn.cursor()
+
+    # Query to fetch only today's violation data
+    query = f"""
+    SELECT time_occurred, Username, Employee_id, Exception_Type
+    FROM EmployeeInfo.Exception_Logs WHERE DATE(time_occurred) = '{today_date}';
+    """
+    cursor.execute(query)
+
+    # Load data into a Pandas DataFrame
+    if cursor.description is not None:
+        columns = [desc[0] for desc in cursor.description]
+        df = pd.DataFrame(cursor.fetchall(), columns=columns)
+    else:
+        df = pd.DataFrame()  # Empty DataFrame if no description
+
+    # Close the connection
+    cursor.close()
+    conn.close()
+
+    # If no violations today, generate an empty report
+    if df.empty:
+        report = f"""
+SAFETY VIOLATION REPORT - {today_date}
+--------------------------------------
+No safety violations recorded today.
+"""
+    else:
+        # Count total violations
+        total_violations = len(df)
+
+        # Count violations per employee
+        violations_per_employee = df.groupby(
+            "Username")["Exception_Type"].count().reset_index()
+        violations_per_employee.columns = ["Username", "Total_Violations"]
+
+        # Find who made the most errors (if applicable)
+        most_errors = violations_per_employee.sort_values(
+            by="Total_Violations", ascending=False).iloc[0]
+
+        # Count violations per type
+        violations_per_type = df["Exception_Type"].value_counts()
+
+        # # Generate name-wise fault report
+        # namewise_fault_report = df.groupby("Username").apply(
+        #     lambda x: x[["time_occurred", "Exception_Type"]].to_string(index=False)
+        # ).to_string()
+
+        # Generate report
+        report = f"""
+SAFETY VIOLATION REPORT - {today_date}
+--------------------------------------
+Total Violations: {total_violations}
+
+Violations per Employee:
+{violations_per_employee.to_string(index=False)}
+
+Most Errors:
+{most_errors["Username"]} with {most_errors["Total_Violations"]} violations
+
+Violations per Type:
+{violations_per_type.to_string()}
+
+"""
+
+    with open(report_filename, "w") as file:
+        file.write(report)
+
+    # Return file as a download
+    return send_file(report_filename, as_attachment=True)

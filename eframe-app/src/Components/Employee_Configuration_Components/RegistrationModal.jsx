@@ -9,7 +9,7 @@ const RegistrationModal = ({ show, onClose, formData, onChange, onStartCamera, o
 
   useEffect(() => {
     if (showCamera) {
-      setStreamUrl('http://127.0.0.1:5000/face_capture_feed');
+      setStreamUrl('http://127.0.0.1:5000/api/employee_configuration/face_capture_feed');
     } else {
       setStreamUrl('');
     }
@@ -21,7 +21,7 @@ const RegistrationModal = ({ show, onClose, formData, onChange, onStartCamera, o
     if (isCapturing) {
       interval = setInterval(async () => {
         try {
-          const response = await fetch('http://127.0.0.1:5000/face_capture_progress');
+          const response = await fetch('http://127.0.0.1:5000/api/employee_configuration/face_capture_progress');
           const progress = await response.json();
           setCaptureProgress(progress.percentage);
           
@@ -132,7 +132,7 @@ const RegistrationModal = ({ show, onClose, formData, onChange, onStartCamera, o
                     setCaptureProgress(0);
                     
                     try {
-                      const response = await fetch('http://127.0.0.1:5000/start_face_capture', {
+                      const response = await fetch('http://127.0.0.1:5000/api/employee_configuration/start_face_capture', {
                         method: 'POST',
                         headers: {
                           'Content-Type': 'application/json',
@@ -166,7 +166,7 @@ const RegistrationModal = ({ show, onClose, formData, onChange, onStartCamera, o
                   type="button"
                   onClick={async () => {
                     try {
-                      const response = await fetch('http://127.0.0.1:5000/stop_face_capture', {
+                      const response = await fetch('http://127.0.0.1:5000/api/employee_configuration/stop_face_capture', {
                         method: 'POST'
                       });
                       const data = await response.json();

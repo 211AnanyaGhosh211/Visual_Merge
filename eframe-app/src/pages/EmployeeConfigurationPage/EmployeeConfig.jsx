@@ -44,7 +44,7 @@ const EmployeeConfig = () => {
    */
   const fetchEmployees = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/employees');
+      const response = await fetch('http://127.0.0.1:5000/api/employee_configuration/employees');
       const data = await response.json();
       console.log('Received employee data:', data);
       setEmployees(data);
@@ -82,7 +82,7 @@ const EmployeeConfig = () => {
       formData.append('employeeName', employeeName);
       formData.append('employeeId', employeeId);
 
-      const response = await fetch('http://127.0.0.1:5000/capture_faces', {
+      const response = await fetch('http://127.0.0.1:5000/api/employee_configuration/capture_faces', {
         method: 'POST',
         body: formData
       });
@@ -112,7 +112,7 @@ const EmployeeConfig = () => {
       formDataToSend.append('employeeName', formData.employeeName);
       formDataToSend.append('employeeId', formData.employeeId);
 
-      const response = await fetch('http://127.0.0.1:5000/capture_faces', {
+      const response = await fetch('http://127.0.0.1:5000/api/employee_configuration/capture_faces', {
         method: 'POST',
         body: formDataToSend
       });
@@ -146,7 +146,7 @@ const EmployeeConfig = () => {
     e.preventDefault();
     
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/del_employee', {
+      const response = await fetch('http://127.0.0.1:5000/api/employee_configuration/del_employee', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

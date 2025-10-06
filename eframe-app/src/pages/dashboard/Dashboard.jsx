@@ -15,7 +15,7 @@ const Dashboard = () => {
    * Redirects to the report generation endpoint
    */
   const handleReportGen = () => {
-    window.location.href = 'http://127.0.0.1:5000/report';
+    window.location.href = 'http://127.0.0.1:5000/api/main_dashboard/report';
   };
 
   return (

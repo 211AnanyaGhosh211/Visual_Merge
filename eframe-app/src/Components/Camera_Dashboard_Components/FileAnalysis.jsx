@@ -45,7 +45,7 @@ const FileAnalysis = () => {
   // Check processing status from backend
   const checkProcessingStatus = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:5000/video_processing_status');
+      const response = await fetch('http://127.0.0.1:5000/api/camera_dashboard/video_processing_status');
       const data = await response.json();
       
       if (!data.processing_active && fileProcessingActive) {
@@ -147,7 +147,7 @@ const FileAnalysis = () => {
       const apiEndpoint = detectionType === 'general' ? 'demo2' : detectionType === 'zone' ? 'demo3' : 'demo4';
       console.log('DEBUG: Using API endpoint:', apiEndpoint);
       
-      const response = await fetch(`http://127.0.0.1:5000/${apiEndpoint}`, {
+      const response = await fetch(`http://127.0.0.1:5000/api/camera_dashboard/${apiEndpoint}`, {
         method: 'POST',
         body: formData
       });
@@ -189,7 +189,7 @@ const FileAnalysis = () => {
     try {
       showAlert("Stopping video processing...", "info");
       
-      const response = await fetch('http://127.0.0.1:5000/stop_video_processing', {
+      const response = await fetch('http://127.0.0.1:5000/api/camera_dashboard/stop_video_processing', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -22,7 +22,7 @@ const Notifications = () => {
   // Function to fetch notifications from the API
   const fetchNotifications = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/notifications');
+      const response = await fetch('http://127.0.0.1:5000/api/notification_management/notifications');
       const data = await response.json();
       setNotifications(data);
     } catch (error) {

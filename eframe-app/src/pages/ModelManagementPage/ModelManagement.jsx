@@ -31,7 +31,7 @@ const ModelManagement = () => {
    */
   const fetchModels = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/models');
+      const response = await fetch('http://127.0.0.1:5000/api/model_management/models');
       const data = await response.json();
       console.log('Received models data:', data); // Debug log
       setModels(data);

@@ -70,7 +70,7 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/change-password",
+        "http://localhost:5000/api/auth/change-password",
         {
           method: "POST",
           headers: {
