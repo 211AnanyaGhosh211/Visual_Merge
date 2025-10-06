@@ -17,7 +17,7 @@ const HourlyHeatmap = () => {
     setError(null);
     
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/plot-exceptions', {
+      const response = await fetch('http://127.0.0.1:5000/api/main_dashboard/exception-heatmap', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

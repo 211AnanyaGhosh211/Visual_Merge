@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 
+
 const ReportGenerator = ({ onReportGenerate }) => {
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -8,7 +9,7 @@ const ReportGenerator = ({ onReportGenerate }) => {
     
     try {
       // Fetch data from the combined API
-      const response = await fetch('http://127.0.0.1:5000/api/export-exception-data');
+      const response = await fetch('http://127.0.0.1:5000/api/main_dashboard/export-exception-data');
 
       if (!response.ok) {
         throw new Error('Failed to fetch data from the API');

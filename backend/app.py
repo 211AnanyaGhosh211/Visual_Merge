@@ -38,10 +38,8 @@ import multiprocessing as mp
 from datetime import timedelta
 import base64
 from collections import namedtuple
+from routes.main_dashboard import main_dashboard_bp
 
-# Import analytics_api.py functionality
-import services.analytics_api
-from services.analytics_api import api as dashboard_api
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
@@ -59,7 +57,7 @@ CORS(app,
      supports_credentials=True)  # Allow credentials
 app.register_blueprint(database_bp, url_prefix='/api')
 # Register dashboard API blueprint
-app.register_blueprint(dashboard_api, url_prefix='/api')
+app.register_blueprint(main_dashboard_bp)
 # Register authentication API blueprint
 app.register_blueprint(auth_bp, url_prefix='/api')
 
