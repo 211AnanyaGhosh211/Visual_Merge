@@ -26,21 +26,3 @@ def get_models():
     except Exception as e:
         logging.error(f"Unexpected error: {e}")
         return jsonify({"error": "Internal server error"}), 500
-
-
-@model_management_bp.route('/model_management.html', methods=['GET'])
-def model_management():
-    """Display model configuration."""
-    conn = get_db_connection()
-    models = []
-    if conn:
-        try:
-            cursor = conn.cursor(dictionary=True)
-            cursor.execute("SELECT * FROM EmployeeInfo.Models")
-            models = cursor.fetchall()
-        except mysql.connector.Error as err:
-            logging.error(f"Database error: {err}")
-        finally:
-            cursor.close()
-            conn.close()
-    return render_template('model_management.html', models=models)

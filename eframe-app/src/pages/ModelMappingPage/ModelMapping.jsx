@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import Header from '../../Components/Model_Mapping_Components/Header';
 import Footer from '../../Components/Model_Mapping_Components/Footer';
-import CameraList from '../../components/Model_Mapping_Components/CameraList';
-import ModelSelection from '../../components/Model_Mapping_Components/ModelSelection';
+import CameraList from '../../Components/Model_Mapping_Components/CameraList';
+import ModelSelection from '../../Components/Model_Mapping_Components/ModelSelection';
 
 const ModelMapping = () => {
   const [selectedCamera, setSelectedCamera] = useState(null);

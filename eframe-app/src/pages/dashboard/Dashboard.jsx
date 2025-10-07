@@ -3,6 +3,7 @@ import Header from '../../components/Dashboard_Components/Header';
 import Footer from '../../components/Dashboard_Components/Footer';
 import WelcomeCard from '../../Components/Dashboard_Components/WelcomeCard';
 import AnalyticsDashboard from '../../Components/Dashboard_Components/AnalyticsDashboard';
+import API_CONFIG, { API_HELPERS, REQUEST_HEADERS } from '../../config/apiConfig';
 
 /**
  * Dashboard Component
@@ -15,7 +16,7 @@ const Dashboard = () => {
    * Redirects to the report generation endpoint
    */
   const handleReportGen = () => {
-    window.location.href = 'http://127.0.0.1:5000/api/main_dashboard/report';
+    window.location.href = API_CONFIG.MAIN_DASHBOARD.DAILY_REPORT;
   };
 
   return (

@@ -397,21 +397,3 @@ def delete_employee():
         logging.error(f"Unexpected error: {e}")
         return jsonify({"status": "error", "message": "Internal server error"}), 500
 
-
-@employee_configuration_bp.route('/employee_config.html', methods=['GET'])
-def employee_config():
-    """Display employee configuration."""
-    conn = get_db_connection()
-    employees = []
-    if conn:
-        try:
-            cursor = conn.cursor(dictionary=True)
-            cursor.execute("SELECT * FROM Registered_Employees")
-            employees = cursor.fetchall()
-        except mysql.connector.Error as err:
-            logging.error(f"Database error: {err}")
-        finally:
-            cursor.close()
-            conn.close()
-    return render_template('employee_config.html', employees=employees)
-

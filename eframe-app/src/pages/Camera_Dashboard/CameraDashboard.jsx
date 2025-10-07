@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Header from '../../components/Camera_Dashboard_Components/Header';
+import Header from '../../Components/Camera_Dashboard_Components/Header';
 import Stats from '../../Components/Camera_Dashboard_Components/Stats';
 import LiveDetection from '../../Components/Camera_Dashboard_Components/LiveDetection';
 import FileAnalysis from '../../Components/Camera_Dashboard_Components/FileAnalysis';

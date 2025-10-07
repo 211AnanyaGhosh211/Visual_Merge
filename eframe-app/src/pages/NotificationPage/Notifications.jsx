@@ -6,6 +6,7 @@ import Header from '../../components/Notification_Components/Header';
 import Footer from '../../Components/Notification_Components/Footer';
 import NotificationHeader from '../../components/Notification_Components/NotificationHeader';
 import NotificationList from '../../components/Notification_Components/NotificationList';
+import API_CONFIG, { API_HELPERS, REQUEST_HEADERS } from '../../config/apiConfig';
 
 const Notifications = () => {
   // State to hold the list of notifications
@@ -22,7 +23,7 @@ const Notifications = () => {
   // Function to fetch notifications from the API
   const fetchNotifications = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/notification_management/notifications');
+      const response = await fetch(API_CONFIG.NOTIFICATION_MANAGEMENT.GET_NOTIFICATIONS);
       const data = await response.json();
       setNotifications(data);
     } catch (error) {

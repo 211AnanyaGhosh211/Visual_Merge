@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import API_CONFIG, { API_HELPERS, REQUEST_HEADERS } from '../../config/apiConfig';
 
 const RegistrationModal = ({ show, onClose, formData, onChange, onStartCamera, onCaptureComplete }) => {
   const [showCamera, setShowCamera] = useState(false);
@@ -9,7 +10,7 @@ const RegistrationModal = ({ show, onClose, formData, onChange, onStartCamera, o
 
   useEffect(() => {
     if (showCamera) {
-      setStreamUrl('http://127.0.0.1:5000/api/employee_configuration/face_capture_feed');
+      setStreamUrl(API_CONFIG.EMPLOYEE_CONFIGURATION.FACE_CAPTURE_FEED);
     } else {
       setStreamUrl('');
     }
@@ -21,7 +22,7 @@ const RegistrationModal = ({ show, onClose, formData, onChange, onStartCamera, o
     if (isCapturing) {
       interval = setInterval(async () => {
         try {
-          const response = await fetch('http://127.0.0.1:5000/api/employee_configuration/face_capture_progress');
+          const response = await fetch(API_CONFIG.EMPLOYEE_CONFIGURATION.FACE_CAPTURE_PROGRESS);
           const progress = await response.json();
           setCaptureProgress(progress.percentage);
           
@@ -132,7 +133,7 @@ const RegistrationModal = ({ show, onClose, formData, onChange, onStartCamera, o
                     setCaptureProgress(0);
                     
                     try {
-                      const response = await fetch('http://127.0.0.1:5000/api/employee_configuration/start_face_capture', {
+                      const response = await fetch(API_CONFIG.EMPLOYEE_CONFIGURATION.START_FACE_CAPTURE, {
                         method: 'POST',
                         headers: {
                           'Content-Type': 'application/json',
@@ -166,7 +167,7 @@ const RegistrationModal = ({ show, onClose, formData, onChange, onStartCamera, o
                   type="button"
                   onClick={async () => {
                     try {
-                      const response = await fetch('http://127.0.0.1:5000/api/employee_configuration/stop_face_capture', {
+                      const response = await fetch(API_CONFIG.EMPLOYEE_CONFIGURATION.STOP_FACE_CAPTURE, {
                         method: 'POST'
                       });
                       const data = await response.json();

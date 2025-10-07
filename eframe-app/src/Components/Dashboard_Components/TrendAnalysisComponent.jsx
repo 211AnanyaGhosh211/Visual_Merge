@@ -1,3 +1,5 @@
+import API_CONFIG, { API_HELPERS, REQUEST_HEADERS } from '../../config/apiConfig';
+
 import React, { useState, useEffect } from "react";
 import {
   LineChart,
@@ -34,7 +36,7 @@ const TrendAnalysisComponent = () => {
     const fetchData = async () => {
       try {
         const response = await fetch(
-          `http://127.0.0.1:5000/api/main_dashboard/trend_analysis?range=${timeRange}`
+          API_CONFIG.MAIN_DASHBOARD.TREND_ANALYSIS + `?range=${timeRange}`
         );
         if (!response.ok)
           throw new Error("Failed to fetch trend analysis data");

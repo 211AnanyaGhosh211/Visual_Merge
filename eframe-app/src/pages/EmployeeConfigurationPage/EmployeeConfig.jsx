@@ -11,6 +11,7 @@ import EmployeeTable from '../../Components/Employee_Configuration_Components/Em
 import RegistrationModal from '../../Components/Employee_Configuration_Components/RegistrationModal';
 import DeleteModal from '../../Components/Employee_Configuration_Components/DeleteModal';
 import FloatingActionButton from '../../Components/Employee_Configuration_Components/FloatingActionButton';
+import API_CONFIG, { API_HELPERS, REQUEST_HEADERS } from '../../config/apiConfig';
 
 /**
  * EmployeeConfig Component
@@ -44,7 +45,7 @@ const EmployeeConfig = () => {
    */
   const fetchEmployees = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/employee_configuration/employees');
+      const response = await fetch(API_CONFIG.EMPLOYEE_CONFIGURATION.GET_ALL_EMPLOYEES);
       const data = await response.json();
       console.log('Received employee data:', data);
       setEmployees(data);
@@ -82,7 +83,7 @@ const EmployeeConfig = () => {
       formData.append('employeeName', employeeName);
       formData.append('employeeId', employeeId);
 
-      const response = await fetch('http://127.0.0.1:5000/api/employee_configuration/capture_faces', {
+      const response = await fetch(API_CONFIG.EMPLOYEE_CONFIGURATION.CREATE_EMPLOYEE, {
         method: 'POST',
         body: formData
       });
@@ -112,7 +113,7 @@ const EmployeeConfig = () => {
       formDataToSend.append('employeeName', formData.employeeName);
       formDataToSend.append('employeeId', formData.employeeId);
 
-      const response = await fetch('http://127.0.0.1:5000/api/employee_configuration/capture_faces', {
+      const response = await fetch(API_CONFIG.EMPLOYEE_CONFIGURATION.CREATE_EMPLOYEE, {
         method: 'POST',
         body: formDataToSend
       });
@@ -146,7 +147,7 @@ const EmployeeConfig = () => {
     e.preventDefault();
     
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/employee_configuration/del_employee', {
+      const response = await fetch(API_CONFIG.EMPLOYEE_CONFIGURATION.DELETE_EMPLOYEE, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

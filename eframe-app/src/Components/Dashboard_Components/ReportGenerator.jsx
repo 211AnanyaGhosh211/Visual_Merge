@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import API_CONFIG, { API_HELPERS, REQUEST_HEADERS } from '../../config/apiConfig';
 
 const ReportGenerator = ({ onReportGenerate }) => {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -9,7 +9,7 @@ const ReportGenerator = ({ onReportGenerate }) => {
     
     try {
       // Fetch data from the combined API
-      const response = await fetch('http://127.0.0.1:5000/api/main_dashboard/export-exception-data');
+      const response = await fetch(API_CONFIG.MAIN_DASHBOARD.EXPORT_EXCEPTION_DATA);
 
       if (!response.ok) {
         throw new Error('Failed to fetch data from the API');

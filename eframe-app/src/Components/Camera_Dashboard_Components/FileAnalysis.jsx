@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { API_CONFIG, API_HELPERS, REQUEST_HEADERS } from '../../config/apiConfig';
 
 const FileAnalysis = () => {
   const [fileProcessingActive, setFileProcessingActive] = useState(false);
@@ -45,7 +46,7 @@ const FileAnalysis = () => {
   // Check processing status from backend
   const checkProcessingStatus = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/camera_dashboard/video_processing_status');
+      const response = await fetch(API_CONFIG.CAMERA_DASHBOARD.VIDEO_PROCESSING_STATUS);
       const data = await response.json();
       
       if (!data.processing_active && fileProcessingActive) {
@@ -147,7 +148,7 @@ const FileAnalysis = () => {
       const apiEndpoint = detectionType === 'general' ? 'demo2' : detectionType === 'zone' ? 'demo3' : 'demo4';
       console.log('DEBUG: Using API endpoint:', apiEndpoint);
       
-      const response = await fetch(`http://127.0.0.1:5000/api/camera_dashboard/${apiEndpoint}`, {
+      const response = await fetch(API_CONFIG.CAMERA_DASHBOARD[`${apiEndpoint.toUpperCase()}_UPLOAD`], {
         method: 'POST',
         body: formData
       });
@@ -157,7 +158,7 @@ const FileAnalysis = () => {
       console.log('DEBUG: Response status:', response.status);
       
       if (data.status === "success") {
-        const baseUrl = "http://127.0.0.1:5000";
+        const baseUrl = API_CONFIG.BASE_URL;
         const videoUrl = data.video_feed_url.startsWith('http') ? data.video_feed_url : baseUrl + data.video_feed_url;
         const downloadUrl = data.download_url && data.download_url.startsWith('http') ? data.download_url : (data.download_url ? baseUrl + data.download_url : '');
         console.log('DEBUG: Video URL:', videoUrl);
@@ -189,7 +190,7 @@ const FileAnalysis = () => {
     try {
       showAlert("Stopping video processing...", "info");
       
-      const response = await fetch('http://127.0.0.1:5000/api/camera_dashboard/stop_video_processing', {
+      const response = await fetch(API_CONFIG.CAMERA_DASHBOARD.STOP_VIDEO_PROCESSING, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

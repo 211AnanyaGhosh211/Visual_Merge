@@ -21,13 +21,14 @@ from db.db import db_util
 # ----------------------
 # Blueprint Imports
 # ----------------------
-from routes.main_dashboard import main_dashboard_bp
-from routes.camera_dashboard import camera_dashboard_bp
 from routes.auth import auth_bp
-from routes.employee_configuration import employee_configuration_bp
-from routes.model_management import model_management_bp
-from routes.notification_management import notification_management_bp
+from routes.camera_dashboard import camera_dashboard_bp
 from routes.camera_management import camera_management_bp
+from routes.employee_configuration import employee_configuration_bp
+from routes.main_dashboard import main_dashboard_bp
+from routes.model_management import model_management_bp
+from routes.model_mapping import model_mapping_bp
+from routes.notification_management import notification_management_bp
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
@@ -50,20 +51,15 @@ CORS(app,
      allow_headers=["Content-Type", "Authorization", "X-Requested-With"], supports_credentials=True)  # Allow credentials
 
 
-# Register dashboard API blueprint
-app.register_blueprint(main_dashboard_bp)
-# Register authentication API blueprint
 app.register_blueprint(auth_bp)
-# Register camera dashboard API blueprint
 app.register_blueprint(camera_dashboard_bp)
-# Register employee configuration API blueprint
-app.register_blueprint(employee_configuration_bp)
-# Register model management API blueprint
-app.register_blueprint(model_management_bp)
-# Register notification management API blueprint
-app.register_blueprint(notification_management_bp)
-# Register camera management API blueprint
 app.register_blueprint(camera_management_bp)
+app.register_blueprint(employee_configuration_bp)
+app.register_blueprint(main_dashboard_bp)
+app.register_blueprint(model_management_bp)
+app.register_blueprint(model_mapping_bp)
+app.register_blueprint(notification_management_bp)
+
 
 
 # Ensure media/faces directory exists

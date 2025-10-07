@@ -22,9 +22,18 @@ backend/
 │   ├── auth.py                    # Authentication service
 │   └── camera_config.py           # Camera configuration
 │
+├── routes/                        # API route modules (organized)
+│   ├── main_dashboard.py         # Main dashboard API routes
+│   ├── camera_dashboard.py       # Camera dashboard API routes
+│   ├── auth.py                   # Authentication API routes
+│   ├── employee_configuration.py # Employee management API routes
+│   ├── model_management.py       # Model management API routes
+│   ├── notification_management.py # Notification API routes
+│   ├── camera_management.py      # Camera management API routes
+│   └── model_mapping.py          # Model mapping API routes
+│
 ├── db/                           # Database modules
-│   ├── db.py                     # Centralized database configuration
-│   └── Database.py               # Database API endpoints
+│   └── db.py                     # Centralized database configuration and utilities
 │
 ├── data/                         # Data files
 │   ├── users.csv                 # Registered employees data
@@ -70,9 +79,9 @@ backend/
 - **`cctvconn.py`** → **`live_cctv_processor.py`** (live CCTV processing)
 - **`start_server.py`** → **`ppe_server_launcher.py`** (server launcher)
 
-#### 3. **Database Modules** (moved to `db/` directory)
-- **`db.py`** → **`db/db.py`** (centralized database config)
-- **`Database.py`** → **`db/Database.py`** (database API endpoints)
+#### 3. **Database Modules** (consolidated in `db/` directory)
+- **`db.py`** → **`db/db.py`** (centralized database config and utilities)
+- **`Database.py`** → **MERGED into `db/db.py`** (database utilities consolidated)
 
 #### 4. **Data Files** (moved to `data/` directory)
 - **`users.csv`** → **`data/users.csv`** (employee data)
@@ -185,12 +194,22 @@ from services.analytics_api import api as dashboard_api
 The database configuration is centralized in `db/db.py`:
 
 ```python
+# Database configuration with environment variable support
 db_config = {
-    "host": os.getenv("DB_HOST", "localhost"),
-    "user": os.getenv("DB_USER", "root"),
-    "password": os.getenv("DB_PASS", "12345"),
-    "database": os.getenv("DB_NAME", "EmployeeInfo")
+    "host": os.getenv("DB_HOST"),
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASS"),
+    "database": os.getenv("DB_NAME")
 }
+
+# Database utility class for connection management
+class DBUtil:
+    def __init__(self):
+        self.conn = mysql.connector.connect(**db_config)
+        self.cursor = self.conn.cursor()
+
+# Global database utility instance
+db_util = DBUtil()
 ```
 
 ### Model Configuration
@@ -220,16 +239,37 @@ db_config = {
 - `GET /api/analytics/violations` - Violations data
 - `GET /api/analytics/employees` - Employee data
 
-### Database API (`db/Database.py`)
-- `GET /api/db/employees` - Employee management
-- `POST /api/db/employees` - Add employee
-- `PUT /api/db/employees/<id>` - Update employee
-- `DELETE /api/db/employees/<id>` - Delete employee
+### Route APIs (organized by functionality)
 
-### Authentication (`services/auth.py`)
-- `POST /auth/login` - User login
-- `POST /auth/register` - User registration
-- `POST /auth/logout` - User logout
+#### **Camera Management** (`routes/camera_management.py`)
+- `GET /api/camera_management/cameras` - Get all cameras
+- `GET /api/camera_management/get_camera` - Get single camera by ID
+- `POST /api/camera_management/set_camera` - Create new camera
+- `DELETE /api/camera_management/del_camera` - Delete camera
+
+#### **Model Management** (`routes/model_management.py`)
+- `GET /api/model_management/models` - Get all models
+- `POST /api/model_management/models` - Create new model
+- `DELETE /api/model_management/models/<id>` - Delete model
+
+#### **Model Mapping** (`routes/model_mapping.py`)
+- `GET /api/model_mapping/get_camera` - Get camera for mapping
+- `GET /api/model_mapping/get_model` - Get model for mapping
+- `POST /api/model_mapping/set_model` - Create model
+- `DELETE /api/model_mapping/del_model` - Delete model
+- `POST /api/model_mapping/link_camera_model` - Link camera with model
+
+#### **Employee Configuration** (`routes/employee_configuration.py`)
+- `GET /api/employee_configuration/employees` - Get all employees
+- `POST /api/employee_configuration/employees` - Add employee
+- `PUT /api/employee_configuration/employees/<id>` - Update employee
+- `DELETE /api/employee_configuration/employees/<id>` - Delete employee
+
+#### **Authentication** (`routes/auth.py`)
+- `POST /api/auth/login` - User login
+- `POST /api/auth/logout` - User logout
+- `POST /api/auth/verify-token` - Token verification
+
 
 ## 🎥 Camera Management
 
@@ -518,6 +558,35 @@ python -c "from services.camera_config import CAMERA_CONFIG; print('Cameras:', l
 
 ## 📊 Changelog
 
+### [2.1.0] - 2025-01-18
+
+#### 🏗️ Database Consolidation & Route Organization
+
+**Added:**
+- Organized route modules in `routes/` directory
+- Centralized database utilities in `db/db.py`
+- Camera management API endpoints
+- Model mapping API endpoints
+- Employee configuration API endpoints
+- Notification management API endpoints
+
+**Changed:**
+- Database.py merged into db/db.py for better organization
+- API routes organized by functionality
+- Import paths updated to use absolute imports
+- Database connection management centralized
+
+**Fixed:**
+- Relative import issues in route files
+- Database connection management
+- API endpoint organization
+- Import path consistency across modules
+
+**Removed:**
+- Duplicate Database.py file
+- Relative imports causing runtime errors
+- Scattered database configuration
+
 ### [2.0.0] - 2025-01-18
 
 #### 🏗️ Major Refactoring & Organization
@@ -585,13 +654,17 @@ python -c "import os; print('Media dirs exist:', all(os.path.exists(d) for d in 
 
 ### Key Files
 - **Main App**: `app.py`
-- **Camera Config**: `services/camera_config.py`
 - **Database Config**: `db/db.py`
-- **Authentication**: `services/auth.py`
+- **Camera Management**: `routes/camera_management.py`
+- **Model Mapping**: `routes/model_mapping.py`
+- **Employee Config**: `routes/employee_configuration.py`
+- **Authentication**: `routes/auth.py`
 - **PPE Detection**: `services/ppe_kit_detector.py`
 
 ### Important URLs
 - **Backend**: `http://127.0.0.1:5000`
 - **Frontend**: `http://127.0.0.1:5173`
-- **Camera API**: `http://127.0.0.1:5000/api/cameras`
-- **Login API**: `http://127.0.0.1:5000/api/login`
+- **Camera Management API**: `http://127.0.0.1:5000/api/camera_management/cameras`
+- **Model Mapping API**: `http://127.0.0.1:5000/api/model_mapping/`
+- **Employee Config API**: `http://127.0.0.1:5000/api/employee_configuration/`
+- **Authentication API**: `http://127.0.0.1:5000/api/auth/login`

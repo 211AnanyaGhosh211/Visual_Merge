@@ -6,6 +6,7 @@ import InsertCameraModal from '../../components/Camera_Management_Components/Ins
 import DeleteCameraModal from '../../components/Camera_Management_Components/DeleteCameraModal';
 import CameraActions from '../../components/Camera_Management_Components/CameraActions';
 import { FaVideo } from 'react-icons/fa';
+import API_CONFIG, { API_HELPERS, REQUEST_HEADERS } from '../../config/apiConfig';
 
 const CameraManagement = () => {
   const [cameras, setCameras] = useState([]);
@@ -27,10 +28,9 @@ const CameraManagement = () => {
 
   const fetchCameras = async () => {
     try {
-      console.log('Fetching cameras from:', 'http://127.0.0.1:5000/api/camera_management/cameras');
-      const res = await fetch('http://127.0.0.1:5000/api/camera_management/cameras');
-      console.log('Response status:', res.status);
-      console.log('Response ok:', res.ok);
+
+      const res = await fetch(API_CONFIG.CAMERA_MANAGEMENT.GET_ALL_CAMERAS);
+
       
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
@@ -54,7 +54,7 @@ const CameraManagement = () => {
   const handleInsertSubmit = async (e) => {
     e.preventDefault();
     try {
-      await fetch('http://127.0.0.1:5000/api/camera_management/set_camera', {
+      await fetch(API_CONFIG.CAMERA_MANAGEMENT.CREATE_CAMERA, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -77,7 +77,7 @@ const CameraManagement = () => {
   const handleDeleteSubmit = async (e) => {
     e.preventDefault();
     try {
-      await fetch('http://127.0.0.1:5000/api/camera_management/del_camera', {
+      await fetch(API_CONFIG.CAMERA_MANAGEMENT.DELETE_CAMERA, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ camera_id: deleteCameraID }),

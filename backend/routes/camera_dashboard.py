@@ -656,12 +656,6 @@ def generate_processed_frames3(video_path):
         video_processing_stop_requested = False
 
 
-
-
-
-
-
-
 @camera_dashboard_bp.route('/demo4', methods=['POST'])
 def demo4():
     """Class-based PPE detection route"""

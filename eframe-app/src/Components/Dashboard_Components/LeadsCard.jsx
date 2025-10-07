@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import ReactApexChart from "react-apexcharts";
+import API_CONFIG, { API_HELPERS, REQUEST_HEADERS } from '../../config/apiConfig';
 
 const TIME_RANGES = [
   { label: "Day", value: "day" },
@@ -87,8 +88,7 @@ const LeadsCard = () => {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    // fetch(`http://127.0.0.1:5000/api/bargraph?timerange=${range}`)
-    fetch(`http://127.0.0.1:5000/api/main_dashboard/bargraph-user-exception-counts`)
+    fetch(API_CONFIG.MAIN_DASHBOARD.BARGRAPH_USER_EXCEPTION_COUNTS)
 
       .then((res) => res.json())
       .then((data) => {
