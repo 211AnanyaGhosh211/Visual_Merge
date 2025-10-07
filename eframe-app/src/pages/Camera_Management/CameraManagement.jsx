@@ -27,9 +27,19 @@ const CameraManagement = () => {
 
   const fetchCameras = async () => {
     try {
-      const res = await fetch('http://127.0.0.1:5000/api/cameras');
+      console.log('Fetching cameras from:', 'http://127.0.0.1:5000/api/camera_management/cameras');
+      const res = await fetch('http://127.0.0.1:5000/api/camera_management/cameras');
+      console.log('Response status:', res.status);
+      console.log('Response ok:', res.ok);
+      
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      
       const data = await res.json();
       console.log('Received camera data:', data);
+      console.log('Data type:', typeof data);
+      console.log('Data length:', Array.isArray(data) ? data.length : 'Not an array');
       setCameras(data);
     } catch (err) {
       console.error('Error fetching cameras:', err);
@@ -44,7 +54,7 @@ const CameraManagement = () => {
   const handleInsertSubmit = async (e) => {
     e.preventDefault();
     try {
-      await fetch('http://127.0.0.1:5000/api/set_camera', {
+      await fetch('http://127.0.0.1:5000/api/camera_management/set_camera', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -67,7 +77,7 @@ const CameraManagement = () => {
   const handleDeleteSubmit = async (e) => {
     e.preventDefault();
     try {
-      await fetch('http://127.0.0.1:5000/api/del_camera', {
+      await fetch('http://127.0.0.1:5000/api/camera_management/del_camera', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ camera_id: deleteCameraID }),

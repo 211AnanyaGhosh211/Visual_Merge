@@ -2,7 +2,7 @@ import mysql.connector
 import hashlib
 from datetime import datetime
 from flask import Flask, request, jsonify, Blueprint
-from db.Database import db_util
+from db.db import db_util
 
 # Create authentication blueprint
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')

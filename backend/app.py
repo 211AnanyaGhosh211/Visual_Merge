@@ -16,7 +16,7 @@ from ultralytics import YOLO
 # ----------------------
 # Database Imports
 # ----------------------
-from db.Database import database_bp
+from db.db import db_util
 
 # ----------------------
 # Blueprint Imports
@@ -27,8 +27,7 @@ from routes.auth import auth_bp
 from routes.employee_configuration import employee_configuration_bp
 from routes.model_management import model_management_bp
 from routes.notification_management import notification_management_bp
-
-
+from routes.camera_management import camera_management_bp
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
@@ -50,8 +49,7 @@ CORS(app,
      # Allow necessary headers
      allow_headers=["Content-Type", "Authorization", "X-Requested-With"], supports_credentials=True)  # Allow credentials
 
-# Register database API blueprint
-app.register_blueprint(database_bp, url_prefix='/api')
+
 # Register dashboard API blueprint
 app.register_blueprint(main_dashboard_bp)
 # Register authentication API blueprint
@@ -64,12 +62,8 @@ app.register_blueprint(employee_configuration_bp)
 app.register_blueprint(model_management_bp)
 # Register notification management API blueprint
 app.register_blueprint(notification_management_bp)
-
-
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-model = InceptionResnetV1(pretrained='vggface2').eval().to(device)
-mtcnn = MTCNN(keep_all=False, device=device)
-yolo_model = YOLO("models/aparava_300_epoch.pt")
+# Register camera management API blueprint
+app.register_blueprint(camera_management_bp)
 
 
 # Ensure media/faces directory exists
