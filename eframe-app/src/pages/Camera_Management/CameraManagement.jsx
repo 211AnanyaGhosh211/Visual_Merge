@@ -37,9 +37,6 @@ const CameraManagement = () => {
       }
       
       const data = await res.json();
-      console.log('Received camera data:', data);
-      console.log('Data type:', typeof data);
-      console.log('Data length:', Array.isArray(data) ? data.length : 'Not an array');
       setCameras(data);
     } catch (err) {
       console.error('Error fetching cameras:', err);
