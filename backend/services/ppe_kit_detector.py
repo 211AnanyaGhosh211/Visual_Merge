@@ -1,4 +1,4 @@
-from services.violation_count import get_violation_counts, count_violation
+from Services.violation_count import get_violation_counts, count_violation
 from db.db import db_config
 import os
 import mysql.connector
@@ -14,7 +14,7 @@ import requests
 import smtplib
 from email.message import EmailMessage
 
-from services.violation_count import get_violation_counts
+from Services.violation_count import get_violation_counts
 
 # Reciver email address
 # RECEIVER_EMAIL = 'shounakc@icloud.com';
