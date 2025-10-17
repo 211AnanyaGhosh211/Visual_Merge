@@ -1,4 +1,4 @@
-from Services.violation_count import get_violation_counts, count_violation
+from services.violation_count import get_violation_counts, count_violation
 from db.db import db_config
 import os
 import mysql.connector
@@ -14,11 +14,11 @@ import requests
 import smtplib
 from email.message import EmailMessage
 
-from Services.violation_count import get_violation_counts
+from services.violation_count import get_violation_counts
 
 # Reciver email address
 # RECEIVER_EMAIL = 'shounakc@icloud.com';
-RECEIVER_EMAIL = 'koushik.eframe@gmail.com'
+RECEIVER_EMAIL = 'avijit.eframe@gmail.com'
 
 # Office365 email credentials
 EMAIL_ADDRESS = 'eframeAI@outlook.com'

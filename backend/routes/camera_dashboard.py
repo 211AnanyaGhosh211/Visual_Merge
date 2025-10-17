@@ -9,10 +9,10 @@ import threading
 from datetime import datetime
 import torch
 from facenet_pytorch import InceptionResnetV1, MTCNN
-from Services.ppe_kit_detector import detectFace
+from services.ppe_kit_detector import detectFace
 from ultralytics import YOLO
 from flask import current_app
-from Services.camera_config import CAMERA_CONFIG
+from services.camera_config import CAMERA_CONFIG
 
 
 camera_dashboard_bp = Blueprint(
@@ -148,7 +148,7 @@ def detection_feed():
 def get_cameras():
     """Get list of available cameras"""
     # Reload camera config to get latest changes
-    from Services.camera_config import CAMERA_CONFIG
+    from services.camera_config import CAMERA_CONFIG
     return jsonify({
         "cameras": CAMERA_CONFIG,
         "current_camera_id": current_camera_id,
