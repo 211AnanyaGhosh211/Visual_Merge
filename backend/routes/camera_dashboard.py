@@ -1,20 +1,22 @@
 from flask import Blueprint, jsonify, request, Response, url_for, render_template
 from werkzeug.utils import secure_filename
-import os, json, math
+import os
+import json
+import math
 import cv2
 import time
 import threading
 from datetime import datetime
 import torch
 from facenet_pytorch import InceptionResnetV1, MTCNN
-from services.ppe_kit_detector import detectFace
+from Services.ppe_kit_detector import detectFace
 from ultralytics import YOLO
 from flask import current_app
-from services.camera_config import CAMERA_CONFIG
+from Services.camera_config import CAMERA_CONFIG
 
 
-
-camera_dashboard_bp = Blueprint('camera_dashboard', __name__, url_prefix='/api/camera_dashboard')
+camera_dashboard_bp = Blueprint(
+    'camera_dashboard', __name__, url_prefix='/api/camera_dashboard')
 
 # Global variables for video processing
 video_processing_active = False
@@ -35,11 +37,9 @@ mtcnn = MTCNN(keep_all=False, device=device)
 yolo_model = YOLO("models/aparava_300_epoch.pt")
 
 
-
 # Configure upload folder
 UPLOAD_FOLDER = 'media/uploads'
 ALLOWED_EXTENSIONS = {'mp4', 'avi', 'mov', 'mkv', 'jpg', 'jpeg', 'png'}
-
 
 
 def allowed_file(filename):
@@ -85,12 +85,12 @@ def generate_detection_frames():
 
             # Use YOLO's default detection with built-in visualization
             results = yolo_model(img, stream=True)
-            
+
             # Process results and use YOLO's default plotting
             for r in results:
                 # Use YOLO's built-in plot method for default visualization
                 annotated_img = r.plot()
-                
+
                 # Use the annotated image from YOLO's default plotting
                 img = annotated_img
 
@@ -105,11 +105,11 @@ def generate_detection_frames():
             # Encode frame as JPEG with error checking
             success, buffer = cv2.imencode(
                 '.jpg', img, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
-            
+
             if not success or buffer is None or buffer.size == 0:
                 print("Warning: Failed to encode frame, skipping...")
                 continue
-                
+
             frame_bytes = buffer.tobytes()
 
             yield (b'--frame\r\n'
@@ -148,7 +148,7 @@ def detection_feed():
 def get_cameras():
     """Get list of available cameras"""
     # Reload camera config to get latest changes
-    from services.camera_config import CAMERA_CONFIG
+    from Services.camera_config import CAMERA_CONFIG
     return jsonify({
         "cameras": CAMERA_CONFIG,
         "current_camera_id": current_camera_id,
@@ -211,7 +211,7 @@ def stop_detection():
 @camera_dashboard_bp.route('/demo2', methods=['POST'])
 def demo2():
     global video_processing_active, current_processing_type, current_processing_video_path
-    
+
     if 'file' not in request.files:
         return jsonify({"status": "error", "error": "No file part"}), 400
 
@@ -228,7 +228,8 @@ def demo2():
             return jsonify({"status": "error", "error": "No filename provided"}), 400
         filename = secure_filename(file.filename)
         os.makedirs(current_app.config['UPLOAD_FOLDER'], exist_ok=True)
-        sample_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+        sample_path = os.path.join(
+            current_app.config['UPLOAD_FOLDER'], filename)
 
         # Save original file
         file.save(sample_path)
@@ -262,9 +263,12 @@ def demo2():
 def video_feed2():
     """Route for streaming PPE detection processed video with zone-based analysis"""
     video_path = request.args.get('video_path')
+    print(f"🎥 Video feed requested for: {video_path}")
     if not video_path or not os.path.exists(video_path):
+        print(f"❌ Invalid video path: {video_path}")
         return jsonify({"status": "error", "error": "Invalid video path"}), 404
     try:
+        print(f"✅ Starting video stream for: {video_path}")
         return Response(
             generate_processed_frames2(video_path),
             mimetype='multipart/x-mixed-replace; boundary=frame',
@@ -275,6 +279,7 @@ def video_feed2():
             }
         )
     except Exception as e:
+        print(f"❌ Video streaming error: {e}")
         return jsonify({"status": "error", "error": str(e)}), 500
 
 
@@ -317,8 +322,9 @@ def video_feed2():
 def generate_processed_frames2(video_path):
     """Generator function that yields YOLO-processed frames from a video file"""
     global video_processing_stop_requested
-    
-    print(f"Processing video file: {video_path}")
+
+    print(f"🎬 Starting video processing for: {video_path}")
+    print(f"📁 Video file exists: {os.path.exists(video_path)}")
 
     # Import violation counting functions - COMMENTED OUT
     # from services.violation_count import count_violation, reset_violation_counts
@@ -331,7 +337,7 @@ def generate_processed_frames2(video_path):
     if not cap.isOpened():
         print(f"Error: Could not open video file: {video_path}")
         return
-    
+
     # Get video properties for debugging
     fps = cap.get(cv2.CAP_PROP_FPS)
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -361,27 +367,30 @@ def generate_processed_frames2(video_path):
             if video_processing_stop_requested:
                 print("Video processing stop requested, breaking loop")
                 break
-            
+
             try:
                 success, img = cap.read()
                 if not success:
-                    print(f"End of video or failed to read frame at frame {frame_counter}")
+                    print(
+                        f"End of video or failed to read frame at frame {frame_counter}")
                     break
 
                 frame_counter += 1
-                
+
                 # Validate frame data
                 if img is None or img.size == 0:
-                    print(f"Warning: Empty or invalid frame detected at frame {frame_counter}, skipping...")
+                    print(
+                        f"Warning: Empty or invalid frame detected at frame {frame_counter}, skipping...")
                     continue
 
-                # curr_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            
+                curr_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
                 # Perform object detection with error handling
                 try:
                     results = yolo_model(img, stream=True)
                 except Exception as yolo_error:
-                    print(f"YOLO processing error at frame {frame_counter}: {yolo_error}")
+                    print(
+                        f"YOLO processing error at frame {frame_counter}: {yolo_error}")
                     # Skip this frame and continue
                     continue
 
@@ -389,41 +398,57 @@ def generate_processed_frames2(video_path):
                     for r in results:
                         if r is None:
                             continue
-                            
+
                         # Use YOLO's built-in plot method for default visualization
                         annotated_img = r.plot()
-                        
-                        # CLASS DETECTION ONLY - Comment out other functionalities
-                        # boxes = r.boxes
-                        # if boxes is not None:
-                        #     for box in boxes:
-                        #         # Calculate confidence and class index
-                        #         conf = math.ceil((box.conf[0] * 100)) / 100
-                        #         cls = int(box.cls[0])
-                        #         currentClass = yolo_model.names[cls]
 
-                        #         # Save violation images for specific classes - COMMENTED OUT
-                        #         if conf > 0.5 and currentClass in ['No_helmet', 'No_Vest', 'No_goggles', 'No_SafetyShoes', 'No_Gloves']:
-                        #             try:
-                        #                 cv2.imwrite(f"media/face_detect/output{curr_datetime}.jpg", annotated_img)
-                        #                 cv2.imwrite("media/face_detect/output.jpg", annotated_img)
-                        #             except Exception as write_error:
-                        #                 print(f"Warning: Failed to write output image at frame {frame_counter}: {write_error}")
+                        # CLASS DETECTION ONLY - Process violations
+                        boxes = r.boxes
+                        if boxes is not None:
+                            for box in boxes:
+                                # Calculate confidence and class index
+                                conf = math.ceil((box.conf[0] * 100)) / 100
+                                cls = int(box.cls[0])
+                                currentClass = yolo_model.names[cls]
+                                # Check if this is a violation
+                                violation_classes = [
+                                    'NO_helmet', 'NO_Vest', 'NO_goggles', 'NO_SafetyShoes', 'NO_Gloves']
+                                is_violation = currentClass in violation_classes
 
-                        #         # Count violation for specific classes - COMMENTED OUT
-                        #         count_violation(currentClass)
+                                # Process violations only
+                                if conf > 0.5 and is_violation:
+                                    # Save violation images first
+                                    try:
+                                        # Ensure directory exists
+                                        os.makedirs(
+                                            "media/face_detect", exist_ok=True)
 
-                        #         # Detect faces for violations - COMMENTED OUT
-                        #         try:
-                        #             detectFace(currentClass)
-                        #         except Exception as face_error:
-                        #             print(f"Warning: Face detection error at frame {frame_counter}: {face_error}")
+                                        cv2.imwrite(
+                                            f"media/face_detect/output{curr_datetime}.jpg", annotated_img)
+                                        cv2.imwrite(
+                                            "media/face_detect/output.jpg", annotated_img)
+                                        print(
+                                            f"✅ Saved violation image for {currentClass}")
+                                    except Exception as write_error:
+                                        print(
+                                            f"Warning: Failed to write output image at frame {frame_counter}: {write_error}")
+
+                                    # Count violation for specific classes
+                                    # count_violation(currentClass)
+
+                                    # Detect faces for violations
+                                    try:
+                                        detectFace(currentClass)
+                                    except Exception as face_error:
+                                        print(
+                                            f"Warning: Face detection error at frame {frame_counter}: {face_error}")
 
                         # Use the annotated image from YOLO's default plotting
                         img = annotated_img
-                                
+
                 except Exception as results_error:
-                    print(f"Warning: Results processing error at frame {frame_counter}: {results_error}")
+                    print(
+                        f"Warning: Results processing error at frame {frame_counter}: {results_error}")
                     continue
 
                 # Resize for better performance
@@ -431,28 +456,32 @@ def generate_processed_frames2(video_path):
 
                 # Validate frame before encoding
                 if img is None or img.size == 0:
-                    print(f"Warning: Frame is empty after processing at frame {frame_counter}, skipping...")
+                    print(
+                        f"Warning: Frame is empty after processing at frame {frame_counter}, skipping...")
                     continue
 
                 # Encode frame as JPEG with error checking
                 success, buffer = cv2.imencode(
                     '.jpg', img, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
-                
+
                 if not success or buffer is None or buffer.size == 0:
-                    print(f"Warning: Failed to encode frame {frame_counter}, skipping...")
+                    print(
+                        f"Warning: Failed to encode frame {frame_counter}, skipping...")
                     continue
-                    
+
                 frame_bytes = buffer.tobytes()
-                
+
                 # Debug output every 30 frames
                 if frame_counter % 30 == 0:
-                    pass
+                    print(
+                        f"📹 Streaming frame {frame_counter} - Size: {len(frame_bytes)} bytes")
 
                 yield (b'--frame\r\n'
                        b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-                       
+
             except Exception as frame_error:
-                print(f"Frame processing error at frame {frame_counter}: {frame_error}")
+                print(
+                    f"Frame processing error at frame {frame_counter}: {frame_error}")
                 continue
 
     except Exception as e:
@@ -463,13 +492,10 @@ def generate_processed_frames2(video_path):
         video_processing_stop_requested = False
 
 
-
-
-
 @camera_dashboard_bp.route('/demo3', methods=['POST'])
 def demo3():
     global video_processing_active, current_processing_type, current_processing_video_path
-    
+
     if 'file' not in request.files:
         return jsonify({"status": "error", "error": "No file part"}), 400
 
@@ -486,7 +512,8 @@ def demo3():
             return jsonify({"status": "error", "error": "No filename provided"}), 400
         filename = secure_filename(file.filename)
         os.makedirs(current_app.config['UPLOAD_FOLDER'], exist_ok=True)
-        sample_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+        sample_path = os.path.join(
+            current_app.config['UPLOAD_FOLDER'], filename)
 
         # Save original file
         file.save(sample_path)
@@ -539,7 +566,7 @@ def video_feed3():
 def generate_processed_frames3(video_path):
     """Generator function that yields PPE detection processed frames with zone-based analysis"""
     global video_processing_stop_requested
-    
+
     try:
         # PPE Detection Configuration
         CONF_THRES = 0.25
@@ -578,7 +605,7 @@ def generate_processed_frames3(video_path):
             if video_processing_stop_requested:
                 print("Video processing stop requested, breaking loop")
                 break
-                
+
             success, frame = cap.read()
             if not success:
                 break
@@ -586,38 +613,43 @@ def generate_processed_frames3(video_path):
             # Run YOLO detection with default visualization
             results = yolo_model.predict(
                 frame, conf=CONF_THRES, iou=IOU_THRES, verbose=False)
-            
+
             # Use YOLO's default plotting for detection visualization
             annotated = results[0].plot()
-            
-            # CLASS DETECTION ONLY - Comment out other functionalities
-            # Add zone-based analysis overlay - COMMENTED OUT
-            # dets = results[0].boxes
-            # if dets is not None and dets.shape[0] > 0:
-            #     for i in range(len(dets)):
-            #         xyxy = dets.xyxy[i].cpu().tolist()
-            #         cls = int(dets.cls[i].cpu().item())
-            #         conf = float(dets.conf[i].cpu().item())
-            #         class_name = yolo_model.names.get(cls, str(cls))
-                    
-            #         # Check if it's a person for zone analysis - COMMENTED OUT
-            #         if class_name.lower() == "person":
-            #             # Calculate person center
-            #             px1, py1, px2, py2 = xyxy
-            #             pcx, pcy = (px1 + px2) / 2, (py1 + py2) / 2
-                        
-            #             # Determine which zone the person is in
-            #             sign = point_side_of_line(pcx, pcy, x1, y1, x2, y2)
-            #             zone = zone_names[0] if sign > 0 else zone_names[1] if sign < 0 else "ON_LINE"
-                        
-            #             # Add zone information overlay
-            #             label = f"Zone: {zone}"
-            #             draw_label(annotated, label, int(px1), int(py1) - 20,
-            #                        color=(255, 255, 255), bg=(0, 0, 0))
-                    
-            #         # Detect faces for violations - COMMENTED OUT
-            #         detectFace(class_name)
-                    
+
+            # CLASS DETECTION ONLY - Process violations
+            dets = results[0].boxes
+            if dets is not None and dets.shape[0] > 0:
+                for i in range(len(dets)):
+                    xyxy = dets.xyxy[i].cpu().tolist()
+                    cls = int(dets.cls[i].cpu().item())
+                    conf = float(dets.conf[i].cpu().item())
+                    class_name = yolo_model.names.get(cls, str(cls))
+                    # Check if this is a violation
+                    violation_classes = ['NO_helmet', 'NO_Vest',
+                                         'NO_goggles', 'NO_SafetyShoes', 'NO_Gloves']
+                    is_violation = class_name in violation_classes
+
+                    # Process violations only
+                    if conf > 0.5 and is_violation:
+                        # Save violation images first
+                        try:
+                            # Ensure directory exists
+                            os.makedirs("media/face_detect", exist_ok=True)
+
+                            curr_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                            cv2.imwrite(
+                                f"media/face_detect/output_{curr_datetime}.jpg", annotated)
+                            cv2.imwrite(
+                                "media/face_detect/output.jpg", annotated)
+                            print(f"✅ Saved violation image for {class_name}")
+                        except Exception as write_error:
+                            print(
+                                f"Warning: Failed to write output image: {write_error}")
+
+                        # Detect faces for violations
+                        detectFace(class_name)
+
             #         # Save violation images for specific classes - COMMENTED OUT
             #         if conf > 0.5 and class_name in ['NO_helmet', 'NO_Vest', 'NO_goggles', 'NO_safetyshoes']:
             #             curr_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -660,7 +692,7 @@ def generate_processed_frames3(video_path):
 def demo4():
     """Class-based PPE detection route"""
     global video_processing_active, current_processing_type, current_processing_video_path
-    
+
     if 'file' not in request.files:
         return jsonify({"status": "error", "error": "No file part"}), 400
 
@@ -685,7 +717,8 @@ def demo4():
             return jsonify({"status": "error", "error": "No filename provided"}), 400
         filename = secure_filename(file.filename)
         os.makedirs(current_app.config['UPLOAD_FOLDER'], exist_ok=True)
-        sample_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+        sample_path = os.path.join(
+            current_app.config['UPLOAD_FOLDER'], filename)
 
         # Save original file
         file.save(sample_path)
@@ -705,7 +738,8 @@ def demo4():
         # Store the selected classes in the app context
         camera_dashboard_bp.class_based_classes = selected_classes
 
-        video_feed_url = url_for('camera_dashboard.video_feed4', video_path=sample_path)
+        video_feed_url = url_for(
+            'camera_dashboard.video_feed4', video_path=sample_path)
 
         return jsonify({
             "status": "success",
@@ -749,7 +783,7 @@ def video_feed4():
 def generate_processed_frames4(video_path):
     """Generator function for class-based PPE detection"""
     global video_processing_stop_requested
-    
+
     cap = None
     try:
         # Get the selected classes from app context
@@ -827,7 +861,7 @@ def generate_processed_frames4(video_path):
                 # Check if stop was requested
                 if video_processing_stop_requested:
                     break
-                    
+
                 success, frame = cap.read()
                 if not success:
                     break
@@ -842,24 +876,24 @@ def generate_processed_frames4(video_path):
 
                 # Use YOLO's default plotting for detection visualization
                 annotated_frame = results[0].plot()
-                
+
                 # CLASS DETECTION ONLY - Comment out other functionalities
                 # Add class-based analysis overlay - COMMENTED OUT
                 # dets = results[0].boxes
                 # if dets is not None and len(dets) > 0:
                 #     print(f"DEBUG: Found {len(dets)} detections in frame")
-                    
+
                 #     # Add information about selected classes
                 #     info_text = f"Selected Classes: {', '.join(selected_classes)}"
                 #     cv2.putText(annotated_frame, info_text, (10, 30),
                 #                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-                    
+
                 #     for i in range(len(dets)):
                 #         xyxy = dets.xyxy[i].cpu().tolist()
                 #         cls_id = int(dets.cls[i].cpu().item())
                 #         conf = float(dets.conf[i].cpu().item())
                 #         class_name = yolo_model.names.get(cls_id, "")
-                        
+
                 #         print(f"DEBUG: Found {class_name} with confidence {conf}")
 
                 # Resize for better performance
@@ -900,23 +934,23 @@ def generate_processed_frames4(video_path):
 def stop_video_processing():
     """Stop video processing and reset global state"""
     global video_processing_active, current_processing_type, current_processing_video_path, video_processing_stop_requested
-    
+
     try:
         # Set stop flag to signal processing functions to stop
         video_processing_stop_requested = True
-        
+
         # Reset global processing state
         video_processing_active = False
         current_processing_type = None
         current_processing_video_path = None
-        
+
         return jsonify({
             "status": "success",
             "message": "Video processing stopped successfully"
         })
     except Exception as e:
         return jsonify({
-            "status": "error", 
+            "status": "error",
             "message": "Failed to stop video processing",
             "error": str(e)
         }), 500
@@ -926,7 +960,7 @@ def stop_video_processing():
 def get_video_processing_status():
     """Get current video processing status"""
     global video_processing_active, current_processing_type, current_processing_video_path, video_processing_stop_requested
-    
+
     return jsonify({
         "processing_active": video_processing_active,
         "processing_type": current_processing_type,
