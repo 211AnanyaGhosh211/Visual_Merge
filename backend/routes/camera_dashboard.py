@@ -263,9 +263,12 @@ def demo2():
 def video_feed2():
     """Route for streaming PPE detection processed video with zone-based analysis"""
     video_path = request.args.get('video_path')
+    print(f"🎥 Video feed requested for: {video_path}")
     if not video_path or not os.path.exists(video_path):
+        print(f"❌ Invalid video path: {video_path}")
         return jsonify({"status": "error", "error": "Invalid video path"}), 404
     try:
+        print(f"✅ Starting video stream for: {video_path}")
         return Response(
             generate_processed_frames2(video_path),
             mimetype='multipart/x-mixed-replace; boundary=frame',
@@ -276,6 +279,7 @@ def video_feed2():
             }
         )
     except Exception as e:
+        print(f"❌ Video streaming error: {e}")
         return jsonify({"status": "error", "error": str(e)}), 500
 
 
@@ -319,7 +323,8 @@ def generate_processed_frames2(video_path):
     """Generator function that yields YOLO-processed frames from a video file"""
     global video_processing_stop_requested
 
-    print(f"Processing video file: {video_path}")
+    print(f"🎬 Starting video processing for: {video_path}")
+    print(f"📁 Video file exists: {os.path.exists(video_path)}")
 
     # Import violation counting functions - COMMENTED OUT
     # from services.violation_count import count_violation, reset_violation_counts
@@ -378,7 +383,7 @@ def generate_processed_frames2(video_path):
                         f"Warning: Empty or invalid frame detected at frame {frame_counter}, skipping...")
                     continue
 
-                # curr_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                curr_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
                 # Perform object detection with error handling
                 try:
@@ -397,31 +402,46 @@ def generate_processed_frames2(video_path):
                         # Use YOLO's built-in plot method for default visualization
                         annotated_img = r.plot()
 
-                        # CLASS DETECTION ONLY - Comment out other functionalities
-                        # boxes = r.boxes
-                        # if boxes is not None:
-                        #     for box in boxes:
-                        #         # Calculate confidence and class index
-                        #         conf = math.ceil((box.conf[0] * 100)) / 100
-                        #         cls = int(box.cls[0])
-                        #         currentClass = yolo_model.names[cls]
+                        # CLASS DETECTION ONLY - Process violations
+                        boxes = r.boxes
+                        if boxes is not None:
+                            for box in boxes:
+                                # Calculate confidence and class index
+                                conf = math.ceil((box.conf[0] * 100)) / 100
+                                cls = int(box.cls[0])
+                                currentClass = yolo_model.names[cls]
+                                # Check if this is a violation
+                                violation_classes = [
+                                    'NO_helmet', 'NO_Vest', 'NO_goggles', 'NO_SafetyShoes', 'NO_Gloves']
+                                is_violation = currentClass in violation_classes
 
-                        #         # Save violation images for specific classes - COMMENTED OUT
-                        #         if conf > 0.5 and currentClass in ['No_helmet', 'No_Vest', 'No_goggles', 'No_SafetyShoes', 'No_Gloves']:
-                        #             try:
-                        #                 cv2.imwrite(f"media/face_detect/output{curr_datetime}.jpg", annotated_img)
-                        #                 cv2.imwrite("media/face_detect/output.jpg", annotated_img)
-                        #             except Exception as write_error:
-                        #                 print(f"Warning: Failed to write output image at frame {frame_counter}: {write_error}")
+                                # Process violations only
+                                if conf > 0.5 and is_violation:
+                                    # Save violation images first
+                                    try:
+                                        # Ensure directory exists
+                                        os.makedirs(
+                                            "media/face_detect", exist_ok=True)
 
-                        #         # Count violation for specific classes - COMMENTED OUT
-                        #         count_violation(currentClass)
+                                        cv2.imwrite(
+                                            f"media/face_detect/output{curr_datetime}.jpg", annotated_img)
+                                        cv2.imwrite(
+                                            "media/face_detect/output.jpg", annotated_img)
+                                        print(
+                                            f"✅ Saved violation image for {currentClass}")
+                                    except Exception as write_error:
+                                        print(
+                                            f"Warning: Failed to write output image at frame {frame_counter}: {write_error}")
 
-                        #         # Detect faces for violations - COMMENTED OUT
-                        #         try:
-                        #             detectFace(currentClass)
-                        #         except Exception as face_error:
-                        #             print(f"Warning: Face detection error at frame {frame_counter}: {face_error}")
+                                    # Count violation for specific classes
+                                    # count_violation(currentClass)
+
+                                    # Detect faces for violations
+                                    try:
+                                        detectFace(currentClass)
+                                    except Exception as face_error:
+                                        print(
+                                            f"Warning: Face detection error at frame {frame_counter}: {face_error}")
 
                         # Use the annotated image from YOLO's default plotting
                         img = annotated_img
@@ -453,7 +473,8 @@ def generate_processed_frames2(video_path):
 
                 # Debug output every 30 frames
                 if frame_counter % 30 == 0:
-                    pass
+                    print(
+                        f"📹 Streaming frame {frame_counter} - Size: {len(frame_bytes)} bytes")
 
                 yield (b'--frame\r\n'
                        b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
@@ -596,33 +617,38 @@ def generate_processed_frames3(video_path):
             # Use YOLO's default plotting for detection visualization
             annotated = results[0].plot()
 
-            # CLASS DETECTION ONLY - Comment out other functionalities
-            # Add zone-based analysis overlay - COMMENTED OUT
-            # dets = results[0].boxes
-            # if dets is not None and dets.shape[0] > 0:
-            #     for i in range(len(dets)):
-            #         xyxy = dets.xyxy[i].cpu().tolist()
-            #         cls = int(dets.cls[i].cpu().item())
-            #         conf = float(dets.conf[i].cpu().item())
-            #         class_name = yolo_model.names.get(cls, str(cls))
+            # CLASS DETECTION ONLY - Process violations
+            dets = results[0].boxes
+            if dets is not None and dets.shape[0] > 0:
+                for i in range(len(dets)):
+                    xyxy = dets.xyxy[i].cpu().tolist()
+                    cls = int(dets.cls[i].cpu().item())
+                    conf = float(dets.conf[i].cpu().item())
+                    class_name = yolo_model.names.get(cls, str(cls))
+                    # Check if this is a violation
+                    violation_classes = ['NO_helmet', 'NO_Vest',
+                                         'NO_goggles', 'NO_SafetyShoes', 'NO_Gloves']
+                    is_violation = class_name in violation_classes
 
-            #         # Check if it's a person for zone analysis - COMMENTED OUT
-            #         if class_name.lower() == "person":
-            #             # Calculate person center
-            #             px1, py1, px2, py2 = xyxy
-            #             pcx, pcy = (px1 + px2) / 2, (py1 + py2) / 2
+                    # Process violations only
+                    if conf > 0.5 and is_violation:
+                        # Save violation images first
+                        try:
+                            # Ensure directory exists
+                            os.makedirs("media/face_detect", exist_ok=True)
 
-            #             # Determine which zone the person is in
-            #             sign = point_side_of_line(pcx, pcy, x1, y1, x2, y2)
-            #             zone = zone_names[0] if sign > 0 else zone_names[1] if sign < 0 else "ON_LINE"
+                            curr_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                            cv2.imwrite(
+                                f"media/face_detect/output_{curr_datetime}.jpg", annotated)
+                            cv2.imwrite(
+                                "media/face_detect/output.jpg", annotated)
+                            print(f"✅ Saved violation image for {class_name}")
+                        except Exception as write_error:
+                            print(
+                                f"Warning: Failed to write output image: {write_error}")
 
-            #             # Add zone information overlay
-            #             label = f"Zone: {zone}"
-            #             draw_label(annotated, label, int(px1), int(py1) - 20,
-            #                        color=(255, 255, 255), bg=(0, 0, 0))
-
-            #         # Detect faces for violations - COMMENTED OUT
-            #         detectFace(class_name)
+                        # Detect faces for violations
+                        detectFace(class_name)
 
             #         # Save violation images for specific classes - COMMENTED OUT
             #         if conf > 0.5 and class_name in ['NO_helmet', 'NO_Vest', 'NO_goggles', 'NO_safetyshoes']:

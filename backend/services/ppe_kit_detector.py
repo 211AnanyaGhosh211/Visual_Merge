@@ -74,42 +74,27 @@ def send_gmail_email(to_email, subject, body_text, image_path):
     msg.set_content(body_text)
 
     # Add image attachment if it exists
-    print(f"🔍 Checking image path: {image_path}")
     if image_path and os.path.exists(image_path):
         try:
-            # Get absolute path for better debugging
-            abs_path = os.path.abspath(image_path)
-            print(f"📁 Absolute path: {abs_path}")
-
             with open(image_path, 'rb') as img_file:
                 img_data = img_file.read()
                 img_name = os.path.basename(image_path)
-                print(f"📊 Image size: {len(img_data)} bytes")
 
                 # Determine the correct MIME type based on file extension
                 if img_name.lower().endswith('.jpg') or img_name.lower().endswith('.jpeg'):
                     msg.add_attachment(
                         img_data, maintype='image', subtype='jpeg', filename=img_name)
-                    print(f"📎 JPEG attachment added: {img_name}")
                 elif img_name.lower().endswith('.png'):
                     msg.add_attachment(
                         img_data, maintype='image', subtype='png', filename=img_name)
-                    print(f"📎 PNG attachment added: {img_name}")
                 else:
                     # Default to jpeg if extension is unclear
                     msg.add_attachment(
                         img_data, maintype='image', subtype='jpeg', filename=img_name)
-                    print(f"📎 Default JPEG attachment added: {img_name}")
         except Exception as img_error:
             print(f"❌ Failed to attach image: {img_error}")
     else:
         print(f"⚠️ Image file not found: {image_path}")
-        if image_path:
-            print(f"📁 Current working directory: {os.getcwd()}")
-            print(f"📁 Directory contents: {os.listdir('.')}")
-            if os.path.exists('media/face_detect'):
-                print(
-                    f"📁 face_detect directory contents: {os.listdir('media/face_detect')}")
 
     try:
         with smtplib.SMTP(GMAIL_SMTP_SERVER, GMAIL_SMTP_PORT) as smtp:
@@ -132,7 +117,7 @@ os.makedirs('media/face_detect', exist_ok=True)
 
 
 # Allowed classes for SQL insertion
-allowed_classes = {'No_helmet', 'No_Vest', 'No_goggles', 'No_SafetyShoes', 'No_Gloves'}
+allowed_classes = {'NO_helmet', 'NO_Vest', 'NO_goggles', 'NO_SafetyShoes', 'NO_Gloves'}
 
 # Cache face embeddings from MySQL database
 
@@ -199,9 +184,8 @@ last_logged_exceptions = defaultdict(lambda: datetime.min)
 def detectFace(currentClass):
     frame = cv2.imread("media/face_detect/output.jpg")
     if frame is None:
-        print("Error: Received an empty frame.")
+        print("❌ Error: Could not read media/face_detect/output.jpg")
         return
-
     rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     detection = mtcnn.detect(rgb_frame)
     faces = detection[0] if detection is not None else None
@@ -253,6 +237,7 @@ def detectFace(currentClass):
 
     # Check if we should log this violation
     if currentClass in allowed_classes:
+        print(f"🚨 PPE Violation detected: {currentClass} for employee {identity} ({roll_no})")
         # Count the violation
         count_violation(currentClass)
 
@@ -280,7 +265,7 @@ def detectFace(currentClass):
             connection.commit()
 
             if cursor.rowcount > 0:
-                print("Record inserted successfully.")
+                print("✅ Record inserted successfully into database.")
 
                 # Send email notification after successful database insertion
                 try:
@@ -310,15 +295,28 @@ def detectFace(currentClass):
                         violation_summary) if violation_summary else "No violations detected"
                     body_text = f"Employee {identity} ({roll_no}) was detected without proper safety equipment at {curr_datetime}.\n\nException Type: {currentClass}\nTime: {curr_datetime}\nEmployee ID: {roll_no}\n\nCurrent Violation Summary:\n{violation_text}"
 
+                    # Send email notification
+                    print(f"📧 Attempting to send email notification to {RECEIVER_EMAIL}")
                     send_gmail_email(
-                        # ------- to_email # Replace
-                        to_email=f"{RECEIVER_EMAIL}",
+                        to_email=RECEIVER_EMAIL,
                         subject=f"Safety Violation Alert - {currentClass}",
                         body_text=body_text,
                         image_path="media/face_detect/output.jpg"
                     )
+                    print(f"✅ Email notification sent successfully to {RECEIVER_EMAIL}")
                 except Exception as email_error:
-                    print(f"Failed to send email notification: {email_error}")
+                    print(f"❌ Failed to send email notification: {email_error}")
+                    # Try alternative email method (Office365) as fallback
+                    try:
+                        print("🔄 Attempting fallback email via Office365...")
+                        send_o365_email(
+                            to_email=RECEIVER_EMAIL,
+                            subject=f"Safety Violation Alert - {currentClass}",
+                            body_text=body_text,
+                            image_path="media/face_detect/output.jpg"
+                        )
+                    except Exception as fallback_error:
+                        print(f"❌ Fallback email also failed: {fallback_error}")
             else:
                 print("No records inserted.")
 
