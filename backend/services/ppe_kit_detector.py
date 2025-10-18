@@ -1,3 +1,8 @@
+# =============================================================================
+# PPE KIT DETECTOR - Face Recognition and Email Notification System
+# =============================================================================
+
+# Import statements
 from services.violation_count import get_violation_counts, count_violation
 from db.db import db_config
 import os
@@ -10,14 +15,14 @@ from PIL import Image
 from datetime import datetime, timedelta
 from collections import defaultdict
 import requests
-
 import smtplib
 from email.message import EmailMessage
 
-from services.violation_count import get_violation_counts
+# =============================================================================
+# CONFIGURATION CONSTANTS
+# =============================================================================
 
-# Reciver email address
-# RECEIVER_EMAIL = 'shounakc@icloud.com';
+# Email Configuration
 RECEIVER_EMAIL = 'avijit.eframe@gmail.com'
 
 # Office365 email credentials
@@ -26,21 +31,54 @@ EMAIL_PASSWORD = 'lfmpzajspuopbrrr'
 SMTP_SERVER = 'smtp.office365.com'
 SMTP_PORT = 587
 
-# Gmail email credentials (alternative)
-# GMAIL_ADDRESS = 'commanderlieutenant114@gmail.com'
-# GMAIL_PASSWORD = 'zeru dcjx jois xivx'  # Use App Password, not regular password
-# GMAIL_SMTP_SERVER = 'smtp.gmail.com'
-# GMAIL_SMTP_PORT = 587
-
+# Gmail email credentials
 GMAIL_ADDRESS = 'eframeinterns@gmail.com'
 GMAIL_PASSWORD = 'neza emsw lwpw gvkf'
 GMAIL_SMTP_SERVER = 'smtp.gmail.com'
 GMAIL_SMTP_PORT = 587
 
-# Function to send email with image
+# Default email interval in minutes (1 minute)
+DEFAULT_EMAIL_INTERVAL_MINUTES = 1.0
 
+# Allowed classes for SQL insertion
+ALLOWED_CLASSES = {'NO_helmet', 'NO_Vest', 'NO_goggles', 'NO_SafetyShoes', 'NO_Gloves'}
+
+# =============================================================================
+# MODEL INITIALIZATION
+# =============================================================================
+
+# Load FaceNet model & MTCNN detector
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+model = InceptionResnetV1(pretrained='vggface2').eval().to(device)
+mtcnn = MTCNN(keep_all=False, device=device)
+
+# Initialize directories
+os.makedirs('media/faces', exist_ok=True)
+os.makedirs('media/face_detect', exist_ok=True)
+
+# =============================================================================
+# GLOBAL VARIABLES
+# =============================================================================
+
+# Dictionary to store the last detection time for each (Username, Exception_Type)
+last_logged_exceptions = defaultdict(lambda: datetime.min)
+
+# Global timer for email sending based on frame detection
+last_email_sent = datetime.min
+
+# Initialize known embeddings from MySQL
+try:
+    known_embeddings = cache_embeddings_from_db()
+except Exception as e:
+    print(f"Error initializing embeddings: {e}")
+    known_embeddings = []
+
+# =============================================================================
+# EMAIL FUNCTIONS
+# =============================================================================
 
 def send_o365_email(to_email, subject, body_text, image_path):
+    """Send email using Office365 SMTP"""
     msg = EmailMessage()
     msg['Subject'] = subject
     msg['From'] = EMAIL_ADDRESS
@@ -63,10 +101,9 @@ def send_o365_email(to_email, subject, body_text, image_path):
     except Exception as e:
         print(f"❌ Failed to send O365 email: {e}")
 
-# Function to send email with Gmail
-
 
 def send_gmail_email(to_email, subject, body_text, image_path):
+    """Send email using Gmail SMTP"""
     msg = EmailMessage()
     msg['Subject'] = subject
     msg['From'] = GMAIL_ADDRESS
@@ -106,23 +143,67 @@ def send_gmail_email(to_email, subject, body_text, image_path):
         print(f"❌ Failed to send Gmail: {e}")
 
 
-# Load FaceNet model & MTCNN detector
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-model = InceptionResnetV1(pretrained='vggface2').eval().to(device)
-mtcnn = MTCNN(keep_all=False, device=device)
+def send_interval_email_notification(email_interval_minutes):
+    """Send email notification based on frame detection timing"""
+    global last_email_sent
+    
+    current_time = datetime.now()
+    
+    # Check if enough time has passed since last email
+    if current_time - last_email_sent < timedelta(minutes=email_interval_minutes):
+        return False  # Not time to send email yet
+    
+    try:
+        # Get current violation counts
+        violation_counts = get_violation_counts()
+        
+        # Build violation summary for email
+        violation_summary = []
+        if violation_counts.get('No_helmet', 0) > 0:
+            violation_summary.append(f"No_Helmet: {violation_counts['No_helmet']} people")
+        if violation_counts.get('No_Vest', 0) > 0:
+            violation_summary.append(f"No_Vest: {violation_counts['No_Vest']} people")
+        if violation_counts.get('No_goggles', 0) > 0:
+            violation_summary.append(f"No_goggles: {violation_counts['No_goggles']} people")
+        if violation_counts.get('No_SafetyShoes', 0) > 0:
+            violation_summary.append(f"No_SafetyShoes: {violation_counts['No_SafetyShoes']} people")
+        if violation_counts.get('No_Gloves', 0) > 0:
+            violation_summary.append(f"No_Gloves: {violation_counts['No_Gloves']} people")
+        
+        # Create email body with violation summary
+        violation_text = "\n".join(violation_summary) if violation_summary else "No violations detected"
+        body_text = f"""SAFETY VIOLATION ALERT - PPE DETECTION SYSTEM
 
-# Initialize directories
-os.makedirs('media/faces', exist_ok=True)
-os.makedirs('media/face_detect', exist_ok=True)
+Exception Types:
+{violation_text}
 
+This is an automated safety alert from the PPE Detection System.
+Please ensure all employees follow proper safety protocols."""
+        
+        # Send email notification
+        print(f"📧 Sending interval-based email notification to {RECEIVER_EMAIL}")
+        send_gmail_email(
+            to_email=RECEIVER_EMAIL,
+            subject="Safety Violation Alert - PPE Detection",
+            body_text=body_text,
+            image_path="media/face_detect/output.jpg"
+        )
+        print(f"✅ Interval-based email notification sent successfully to {RECEIVER_EMAIL}")
+        
+        # Update last email sent time
+        last_email_sent = current_time
+        return True  # Email was sent
+        
+    except Exception as email_error:
+        print(f"❌ Failed to send interval-based email notification: {email_error}")
+        return False
 
-# Allowed classes for SQL insertion
-allowed_classes = {'NO_helmet', 'NO_Vest', 'NO_goggles', 'NO_SafetyShoes', 'NO_Gloves'}
-
-# Cache face embeddings from MySQL database
-
+# =============================================================================
+# DATABASE FUNCTIONS
+# =============================================================================
 
 def cache_embeddings_from_db():
+    """Cache face embeddings from MySQL database"""
     embeddings = []
 
     try:
@@ -167,21 +248,12 @@ def cache_embeddings_from_db():
 
     return embeddings
 
+# =============================================================================
+# MAIN DETECTION FUNCTION
+# =============================================================================
 
-# Initialize known embeddings from MySQL
-try:
-    known_embeddings = cache_embeddings_from_db()
-except Exception as e:
-    print(f"Error initializing embeddings: {e}")
-    known_embeddings = []
-
-# Dictionary to store the last detection time for each (Username, Exception_Type)
-last_logged_exceptions = defaultdict(lambda: datetime.min)
-
-# Function to detect and recognize faces
-
-
-def detectFace(currentClass):
+def detectFace(currentClass, email_interval_minutes=DEFAULT_EMAIL_INTERVAL_MINUTES):
+    """Main function to detect faces and process violations"""
     frame = cv2.imread("media/face_detect/output.jpg")
     if frame is None:
         print("❌ Error: Could not read media/face_detect/output.jpg")
@@ -236,7 +308,7 @@ def detectFace(currentClass):
     cv2.imwrite(image_path, frame)
 
     # Check if we should log this violation
-    if currentClass in allowed_classes:
+    if currentClass in ALLOWED_CLASSES:
         print(f"🚨 PPE Violation detected: {currentClass} for employee {identity} ({roll_no})")
         # Count the violation
         count_violation(currentClass)
@@ -250,7 +322,13 @@ def detectFace(currentClass):
 
         # Update last logged time
         last_logged_exceptions[last_logged_key] = current_time
+        
+        # Check if it's time to send interval-based email (based on frame detection)
+        email_sent = send_interval_email_notification(email_interval_minutes)
+        if email_sent:
+            print(f"📧 Email sent at {curr_datetime} for violation: {currentClass}")
 
+        # Database operations
         try:
             connection = mysql.connector.connect(**db_config)
             cursor = connection.cursor()
@@ -266,57 +344,7 @@ def detectFace(currentClass):
 
             if cursor.rowcount > 0:
                 print("✅ Record inserted successfully into database.")
-
-                # Send email notification after successful database insertion
-                try:
-                    # Get current violation counts
-                    violation_counts = get_violation_counts()
-
-                    # Build violation summary for email
-                    violation_summary = []
-                    if violation_counts.get('No_helmet', 0) > 0:
-                        violation_summary.append(
-                            f"NO_HELMET - {violation_counts['No_helmet']} people")
-                    if violation_counts.get('No_Vest', 0) > 0:
-                        violation_summary.append(
-                            f"NO_VEST - {violation_counts['No_Vest']} people")
-                    if violation_counts.get('No_goggles', 0) > 0:
-                        violation_summary.append(
-                            f"NO_GOGGLES - {violation_counts['No_goggles']} people")
-                    if violation_counts.get('No_SafetyShoes', 0) > 0:
-                        violation_summary.append(
-                            f"NO_SAFETYSHOES - {violation_counts['No_SafetyShoes']} people")
-                    if violation_counts.get('No_Gloves', 0) > 0:
-                        violation_summary.append(
-                            f"NO_GLOVES - {violation_counts['No_Gloves']} people")
-
-                    # Create email body with violation summary
-                    violation_text = "\n".join(
-                        violation_summary) if violation_summary else "No violations detected"
-                    body_text = f"Employee {identity} ({roll_no}) was detected without proper safety equipment at {curr_datetime}.\n\nException Type: {currentClass}\nTime: {curr_datetime}\nEmployee ID: {roll_no}\n\nCurrent Violation Summary:\n{violation_text}"
-
-                    # Send email notification
-                    print(f"📧 Attempting to send email notification to {RECEIVER_EMAIL}")
-                    send_gmail_email(
-                        to_email=RECEIVER_EMAIL,
-                        subject=f"Safety Violation Alert - {currentClass}",
-                        body_text=body_text,
-                        image_path="media/face_detect/output.jpg"
-                    )
-                    print(f"✅ Email notification sent successfully to {RECEIVER_EMAIL}")
-                except Exception as email_error:
-                    print(f"❌ Failed to send email notification: {email_error}")
-                    # Try alternative email method (Office365) as fallback
-                    try:
-                        print("🔄 Attempting fallback email via Office365...")
-                        send_o365_email(
-                            to_email=RECEIVER_EMAIL,
-                            subject=f"Safety Violation Alert - {currentClass}",
-                            body_text=body_text,
-                            image_path="media/face_detect/output.jpg"
-                        )
-                    except Exception as fallback_error:
-                        print(f"❌ Fallback email also failed: {fallback_error}")
+                print("📧 Email will be sent based on interval settings")
             else:
                 print("No records inserted.")
 
@@ -335,20 +363,20 @@ def detectFace(currentClass):
             log_file.write(f"Incident Image: {image_path}\n")
             log_file.write("\n")
 
-        url = "https://backend.aisensy.com/campaign/t1/api/v2"  # Replace with actual URL
+        # Send WhatsApp notification
+        url = "https://backend.aisensy.com/campaign/t1/api/v2"
 
         payload = {
-
             "apiKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3Y2U4YzRkMjkzOGM1MDM4ZmQ0YTYzMyIsIm5hbWUiOiJZb3V0aCBDb21wdXRlciBUcmFpbmluZyBDZW50cmUgIiwiYXBwTmFtZSI6IkFpU2Vuc3kiLCJjbGllbnRJZCI6IjY3Y2U4YzRkMjkzOGM1MDM4ZmQ0YTYyZCIsImFjdGl2ZVBsYW4iOiJGUkVFX0ZPUkVWRVIiLCJpYXQiOjE3NDE1ODk1ODF9.RTXa7AU_8M9JGkEBoptS9mSH6Izxdg8fADZ9NW_rADM",
             "campaignName": "Visual Analytics",
             "destination": "917003840021",
             "userName": "Youth Computer Training Centre ",
-                        "templateParams": [
-                            f"{identity}",
-                            f"{roll_no}",
-                            f"{currentClass}",
-                            f"{curr_datetime}"
-                        ],
+            "templateParams": [
+                f"{identity}",
+                f"{roll_no}",
+                f"{currentClass}",
+                f"{curr_datetime}"
+            ],
             "source": "new-landing-page form",
             "media": {},
             "buttons": [],
@@ -356,9 +384,8 @@ def detectFace(currentClass):
             "location": {},
             "attributes": {},
             "paramsFallbackValue": {
-                            "FirstName": "user"
-                        }
-
+                "FirstName": "user"
+            }
         }
 
         headers = {
@@ -366,6 +393,5 @@ def detectFace(currentClass):
         }
 
         response = requests.post(url, json=payload, headers=headers)
-
         print(response.status_code)
         print(response.text)
