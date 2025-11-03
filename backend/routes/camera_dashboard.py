@@ -686,14 +686,12 @@ def generate_processed_frames3(video_path):
             if not success:
                 break
 
-            # Run YOLO detection with default visualization
+            # Run YOLO detection
             results = yolo_model.predict(
                 frame, conf=CONF_THRES, iou=IOU_THRES, verbose=False)
-
-            # Use YOLO's default plotting for detection visualization
-            annotated = results[0].plot()
-
-            # CLASS DETECTION ONLY - Process violations
+            
+            # Get detection boxes for zone-based analysis
+            annotated = frame.copy()
             dets = results[0].boxes
             if dets is not None and dets.shape[0] > 0:
                 for i in range(len(dets)):
@@ -701,36 +699,50 @@ def generate_processed_frames3(video_path):
                     cls = int(dets.cls[i].cpu().item())
                     conf = float(dets.conf[i].cpu().item())
                     class_name = yolo_model.names.get(cls, str(cls))
-                    # Check if this is a violation
-                    violation_classes = ['NO_helmet', 'NO_Vest',
-                                         'NO_goggles', 'NO_SafetyShoes', 'NO_Gloves']
-                    is_violation = class_name in violation_classes
-
-                    # Process violations only
-                    if conf > 0.5 and is_violation:
-                        # Save violation images first
-                        try:
-                            # Ensure directory exists
-                            os.makedirs("media/face_detect", exist_ok=True)
-
-                            curr_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-                            cv2.imwrite(
-                                f"media/face_detect/output_{curr_datetime}.jpg", annotated)
-                            cv2.imwrite(
-                                "media/face_detect/output.jpg", annotated)
-                            print(f"✅ Saved violation image for {class_name}")
-                        except Exception as write_error:
-                            print(
-                                f"Warning: Failed to write output image: {write_error}")
-
-                        # Detect faces for violations
-                        detectFace(class_name, email_interval_minutes)
-
-            #         # Save violation images for specific classes - COMMENTED OUT
-            #         if conf > 0.5 and class_name in ['NO_helmet', 'NO_Vest', 'NO_goggles', 'NO_safetyshoes']:
-            #             curr_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            #             cv2.imwrite(f"media/zone_based/output_{curr_datetime}.jpg", annotated)
-            #             cv2.imwrite("media/zone_based/output.jpg", annotated)
+                    
+                    px1, py1, px2, py2 = [int(coord) for coord in xyxy]
+                    
+                    # Zone-based analysis for person detections
+                    if class_name.lower() == "person":
+                        # Calculate person center
+                        pcx, pcy = (px1 + px2) / 2, (py1 + py2) / 2
+                        
+                        # Determine which zone the person is in
+                        sign = point_side_of_line(pcx, pcy, x1, y1, x2, y2)
+                        zone = zone_names[0] if sign > 0 else zone_names[1] if sign < 0 else "ON_LINE"
+                        
+                        # If person is on RIGHT zone, just show OK - no detection needed
+                        if zone == zone_names[1]:  # RIGHT zone
+                            cv2.rectangle(annotated, (px1, py1), (px2, py2), (0, 255, 0), 2)
+                            draw_label(annotated, "OK", px1, py1 - 10,
+                                       color=(255, 255, 255), bg=(0, 255, 0))
+                        else:
+                            # Person is on LEFT zone - do normal detection
+                            cv2.rectangle(annotated, (px1, py1), (px2, py2), (0, 255, 0), 2)
+                            cv2.putText(annotated, f"{class_name} {conf:.2f}", (px1, py1 - 10),
+                                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                            # Add zone information overlay
+                            label = f"Zone: {zone}"
+                            draw_label(annotated, label, px1, py1 - 30,
+                                       color=(255, 255, 255), bg=(0, 0, 255))
+                    else:
+                        # For non-person detections, only process if in LEFT zone
+                        # Calculate detection center for zone check
+                        dcx, dcy = (px1 + px2) / 2, (py1 + py2) / 2
+                        sign = point_side_of_line(dcx, dcy, x1, y1, x2, y2)
+                        zone = zone_names[0] if sign > 0 else zone_names[1] if sign < 0 else "ON_LINE"
+                        
+                        # Only show detections and check violations in LEFT zone
+                        if zone == zone_names[0] or sign == 0:  # LEFT zone or on line
+                            cv2.rectangle(annotated, (px1, py1), (px2, py2), (0, 255, 0), 2)
+                            cv2.putText(annotated, f"{class_name} {conf:.2f}", (px1, py1 - 10),
+                                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                            
+                            # Save violation images for specific classes (only in LEFT zone)
+                            if conf > 0.5 and class_name in ['NO_helmet', 'NO_Vest', 'NO_goggles', 'NO_safetyshoes']:
+                                curr_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                                cv2.imwrite(f"media/zone_based/output_{curr_datetime}.jpg", annotated)
+                                cv2.imwrite("media/zone_based/output.jpg", annotated)
 
             # Draw divider line
             cv2.line(annotated, (int(x1), int(y1)),
@@ -742,12 +754,17 @@ def generate_processed_frames3(video_path):
             cv2.putText(annotated, f"Zone Analysis: {zone_names[0]} / {zone_names[1]}", (10, 20),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1, cv2.LINE_AA)
 
-            # Resize for better performance
-            annotated = cv2.resize(annotated, (640, 480))
+            # Resize only if frame is very large (to maintain quality while ensuring performance)
+            # If original is larger than 1920x1080, resize to 1920x1080 maintaining aspect ratio
+            if annotated.shape[1] > 1920 or annotated.shape[0] > 1080:
+                scale = min(1920 / annotated.shape[1], 1080 / annotated.shape[0])
+                new_width = int(annotated.shape[1] * scale)
+                new_height = int(annotated.shape[0] * scale)
+                annotated = cv2.resize(annotated, (new_width, new_height), interpolation=cv2.INTER_LANCZOS4)
 
-            # Encode frame as JPEG
+            # Encode frame as JPEG with high quality
             _, buffer = cv2.imencode('.jpg', annotated,
-                                     [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+                                     [int(cv2.IMWRITE_JPEG_QUALITY), 95])
             frame_bytes = buffer.tobytes()
 
             yield (b'--frame\r\n'
@@ -763,7 +780,130 @@ def generate_processed_frames3(video_path):
         # Reset stop flag when processing completes
         video_processing_stop_requested = False
 
+# def generate_processed_framesX(video_path):
+#     """Generator function that yields PPE detection processed frames with zone-based analysis"""
+#     global video_processing_stop_requested
+    
+#     try:
+#         # PPE Detection Configuration
+#         CONF_THRES = 0.25
+#         IOU_THRES = 0.45
 
+#         cap = cv2.VideoCapture(video_path)
+#         if not cap.isOpened():
+#             raise ValueError("Could not open video file")
+
+#         # Calculate the video width and height
+#         W = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+#         H = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+#         # Set vertical divider
+#         x_mid = W // 2
+#         divider = [x_mid, 0, x_mid, H - 1]
+#         zone_names = ("LEFT", "RIGHT")
+#         x1, y1, x2, y2 = divider
+
+#         # Colors for zone visualization
+#         CLR_LINE = (255, 255, 255)
+
+#         def point_side_of_line(px, py, x1, y1, x2, y2):
+#             """Returns sign of cross product for vertical line: >0 = left side, <0 = right side, =0 = on the line"""
+#             return (x2 - x1) * (py - y1) - (y2 - y1) * (px - x1)
+
+#         def draw_label(img, text, x, y, color=(255, 255, 255), bg=(0, 0, 0)):
+#             (tw, th), base = cv2.getTextSize(
+#                 text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+#             cv2.rectangle(img, (x, y - th - 6), (x + tw + 6, y + 2), bg, -1)
+#             cv2.putText(img, text, (x + 3, y - 6),
+#                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1, cv2.LINE_AA)
+
+#         while True:
+#             # Check if stop was requested
+#             if video_processing_stop_requested:
+#                 print("Video processing stop requested, breaking loop")
+#                 break
+                
+#             success, frame = cap.read()
+#             if not success:
+#                 break
+
+#             # Run YOLO detection with default visualization
+#             results = yolo_model.predict(
+#                 frame, conf=CONF_THRES, iou=IOU_THRES, verbose=False)
+            
+#             # Use YOLO's default plotting for detection visualization
+#             annotated = results[0].plot()
+            
+#             # CLASS DETECTION ONLY - Comment out other functionalities
+#             # Add zone-based analysis overlay - COMMENTED OUT
+#             # dets = results[0].boxes
+#             # if dets is not None and dets.shape[0] > 0:
+#             #     for i in range(len(dets)):
+#             #         xyxy = dets.xyxy[i].cpu().tolist()
+#             #         cls = int(dets.cls[i].cpu().item())
+#             #         conf = float(dets.conf[i].cpu().item())
+#             #         class_name = yolo_model.names.get(cls, str(cls))
+                    
+#             #         # Check if it's a person for zone analysis - COMMENTED OUT
+#             #         if class_name.lower() == "person":
+#             #             # Calculate person center
+#             #             px1, py1, px2, py2 = xyxy
+#             #             pcx, pcy = (px1 + px2) / 2, (py1 + py2) / 2
+                        
+#             #             # Determine which zone the person is in
+#             #             sign = point_side_of_line(pcx, pcy, x1, y1, x2, y2)
+#             #             zone = zone_names[0] if sign > 0 else zone_names[1] if sign < 0 else "ON_LINE"
+                        
+#             #             # Add zone information overlay
+#             #             label = f"Zone: {zone}"
+#             #             draw_label(annotated, label, int(px1), int(py1) - 20,
+#             #                        color=(255, 255, 255), bg=(0, 0, 0))
+                    
+#             #         # Detect faces for violations - COMMENTED OUT
+#             #         detectFace(class_name)
+                    
+#             #         # Save violation images for specific classes - COMMENTED OUT
+#             #         if conf > 0.5 and class_name in ['NO_helmet', 'NO_Vest', 'NO_goggles', 'NO_safetyshoes']:
+#             #             curr_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+#             #             cv2.imwrite(f"media/zone_based/output_{curr_datetime}.jpg", annotated)
+#             #             cv2.imwrite("media/zone_based/output.jpg", annotated)
+
+#             # Draw divider line
+#             cv2.line(annotated, (int(x1), int(y1)),
+#                      (int(x2), int(y2)), CLR_LINE, 2)
+#             draw_label(annotated, f"AUTO DIVIDER (VERTICAL)", int((x1 + x2) / 2), int((y1 + y2) / 2) - 6,
+#                        color=(0, 0, 0), bg=(255, 255, 255))
+
+#             # HUD info
+#             cv2.putText(annotated, f"Zone Analysis: {zone_names[0]} / {zone_names[1]}", (10, 20),
+#                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1, cv2.LINE_AA)
+
+#             # Resize only if frame is very large (to maintain quality while ensuring performance)
+#             # If original is larger than 1920x1080, resize to 1920x1080 maintaining aspect ratio
+#             if annotated.shape[1] > 1920 or annotated.shape[0] > 1080:
+#                 scale = min(1920 / annotated.shape[1], 1080 / annotated.shape[0])
+#                 new_width = int(annotated.shape[1] * scale)
+#                 new_height = int(annotated.shape[0] * scale)
+#                 annotated = cv2.resize(annotated, (new_width, new_height), interpolation=cv2.INTER_LANCZOS4)
+
+#             # Encode frame as JPEG with high quality
+#             _, buffer = cv2.imencode('.jpg', annotated,
+#                                      [int(cv2.IMWRITE_JPEG_QUALITY), 95])
+#             frame_bytes = buffer.tobytes()
+
+#             yield (b'--frame\r\n'
+#                    b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+
+#             # Adjust sleep based on actual processing speed
+#             time.sleep(0.033)  # ~30fps
+
+#     except Exception as e:
+#         print(f"Streaming error: {str(e)}")
+#     finally:
+#         cap.release()
+#         # Reset stop flag when processing completes
+#         video_processing_stop_requested = False
+        
 @camera_dashboard_bp.route('/demo4', methods=['POST'])
 def demo4():
     """Class-based PPE detection route"""

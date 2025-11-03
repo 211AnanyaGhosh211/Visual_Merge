@@ -1592,3 +1592,15 @@ Employee ID: Unknown
 Exception Type: NO_goggles
 Incident Image: media/face_detect/face_detect_2025-10-17 16:11:25.jpg
 
+Time: 2025-11-03 15:54:51
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_Vest
+Incident Image: media/face_detect/face_detect_2025-11-03 15:54:51.jpg
+
+Time: 2025-11-03 15:58:08
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_Vest
+Incident Image: media/face_detect/face_detect_2025-11-03 15:58:08.jpg
+
