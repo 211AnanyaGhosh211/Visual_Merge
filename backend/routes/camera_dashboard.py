@@ -462,8 +462,13 @@ def generate_processed_frames2(video_path):
                 curr_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
                 # Perform object detection with error handling
+                # Explicitly pass ALL class indices to ensure ALL classes are detected
+                # This overrides any previous class filtering from class-based detection
                 try:
-                    results = yolo_model(img, stream=True)
+                    # Get all available class indices from the model to explicitly enable all classes
+                    all_class_indices = list(yolo_model.names.keys())
+                    # Use direct model call with explicit class list to ensure no filtering
+                    results = yolo_model(img, conf=0.25, iou=0.45, classes=all_class_indices, verbose=False)
                 except Exception as yolo_error:
                     print(
                         f"YOLO processing error at frame {frame_counter}: {yolo_error}")
@@ -471,14 +476,20 @@ def generate_processed_frames2(video_path):
                     continue
 
                 try:
+                    # Process results - results is a list when using direct model call
+                    # Iterate through results (usually just one result for a single image)
+                    annotated_img = img
+                    for r in results:
+                        if r is not None:
+                            # Use YOLO's built-in plot method for default visualization
+                            annotated_img = r.plot()
+                            break  # Use first result
+
+                    # CLASS DETECTION ONLY - Process violations
+                    # Process results to extract violation information
                     for r in results:
                         if r is None:
                             continue
-
-                        # Use YOLO's built-in plot method for default visualization
-                        annotated_img = r.plot()
-
-                        # CLASS DETECTION ONLY - Process violations
                         boxes = r.boxes
                         if boxes is not None:
                             for box in boxes:
@@ -518,9 +529,10 @@ def generate_processed_frames2(video_path):
                                     except Exception as face_error:
                                         print(
                                             f"Warning: Face detection error at frame {frame_counter}: {face_error}")
+                        break  # Process first result only
 
-                        # Use the annotated image from YOLO's default plotting
-                        img = annotated_img
+                    # Use the annotated image from YOLO's default plotting
+                    img = annotated_img
 
                 except Exception as results_error:
                     print(
