@@ -1730,3 +1730,57 @@ Employee ID: Unknown
 Exception Type: NO_helmet
 Incident Image: media/face_detect/face_detect_2026-01-07 16:13:38.jpg
 
+Time: 2026-01-07 16:20:25
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_helmet
+Incident Image: media/face_detect/face_detect_2026-01-07 16:20:25.jpg
+
+Time: 2026-01-07 16:20:35
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_goggles
+Incident Image: media/face_detect/face_detect_2026-01-07 16:20:35.jpg
+
+Time: 2026-01-07 16:20:40
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_Vest
+Incident Image: media/face_detect/face_detect_2026-01-07 16:20:40.jpg
+
+Time: 2026-01-07 16:21:31
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_helmet
+Incident Image: media/face_detect/face_detect_2026-01-07 16:21:31.jpg
+
+Time: 2026-01-07 16:21:41
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_goggles
+Incident Image: media/face_detect/face_detect_2026-01-07 16:21:41.jpg
+
+Time: 2026-01-07 16:21:42
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_Vest
+Incident Image: media/face_detect/face_detect_2026-01-07 16:21:42.jpg
+
+Time: 2026-01-07 16:23:33
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_goggles
+Incident Image: media/face_detect/face_detect_2026-01-07 16:23:33.jpg
+
+Time: 2026-01-07 16:23:47
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_helmet
+Incident Image: media/face_detect/face_detect_2026-01-07 16:23:47.jpg
+
+Time: 2026-01-07 17:59:03
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_Vest
+Incident Image: media/face_detect/face_detect_2026-01-07 17:59:03.jpg
+
