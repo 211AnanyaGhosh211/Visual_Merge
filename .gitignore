@@ -58,3 +58,4 @@ static/
 __MACOSX/
 
 backend/log
+backend/media/face_detect
