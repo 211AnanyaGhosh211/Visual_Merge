@@ -1682,3 +1682,21 @@ Employee ID: Unknown
 Exception Type: NO_goggles
 Incident Image: media/face_detect/face_detect_2026-01-07 10:42:46.jpg
 
+Time: 2026-01-07 11:12:47
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_Vest
+Incident Image: media/face_detect/face_detect_2026-01-07 11:12:47.jpg
+
+Time: 2026-01-07 11:12:55
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_helmet
+Incident Image: media/face_detect/face_detect_2026-01-07 11:12:55.jpg
+
+Time: 2026-01-07 11:12:57
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_goggles
+Incident Image: media/face_detect/face_detect_2026-01-07 11:12:57.jpg
+
