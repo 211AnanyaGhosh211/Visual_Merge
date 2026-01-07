@@ -1700,3 +1700,33 @@ Employee ID: Unknown
 Exception Type: NO_goggles
 Incident Image: media/face_detect/face_detect_2026-01-07 11:12:57.jpg
 
+Time: 2026-01-07 16:09:35
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_helmet
+Incident Image: media/face_detect/face_detect_2026-01-07 16:09:35.jpg
+
+Time: 2026-01-07 16:09:46
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_goggles
+Incident Image: media/face_detect/face_detect_2026-01-07 16:09:46.jpg
+
+Time: 2026-01-07 16:11:02
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_Vest
+Incident Image: media/face_detect/face_detect_2026-01-07 16:11:02.jpg
+
+Time: 2026-01-07 16:12:59
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_goggles
+Incident Image: media/face_detect/face_detect_2026-01-07 16:12:59.jpg
+
+Time: 2026-01-07 16:13:38
+Username: Unknown
+Employee ID: Unknown
+Exception Type: NO_helmet
+Incident Image: media/face_detect/face_detect_2026-01-07 16:13:38.jpg
+
