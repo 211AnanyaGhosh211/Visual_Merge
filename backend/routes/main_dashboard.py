@@ -1,13 +1,17 @@
 from flask import Blueprint, request, jsonify, send_file
-from db.db import get_db_connection, close_db_connection
+from db.db import get_db_connection, close_db_connection, db_config
 from datetime import datetime, timedelta
 import calendar
 from collections import Counter
 import io
-from typing import Any, List, Tuple, Optional, Union
+from typing import Any
+import mysql.connector
+import pandas as pd
+
 
 # Create a Blueprint for API routes
-api = Blueprint('api', __name__, url_prefix='/api')
+main_dashboard_bp = Blueprint('main_dashboard', __name__, url_prefix='/api/main_dashboard')
+
 
 # Helper to decode bytes
 def decode_bytes(val: Any) -> str:
@@ -26,176 +30,6 @@ def safe_datetime_str(val: Any) -> str:
         return val.strftime("%Y-%m-%d %H:%M:%S")
     return str(val)
 
-# Helper function to get start and end dates based on range
-def get_date_range_from_string(range_type: str, date_str: str):
-    base_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-    range_type = range_type.lower()
-
-    if range_type == 'week':
-        start_date = base_date - timedelta(days=base_date.weekday())
-        end_date = start_date + timedelta(days=6)
-    elif range_type == 'month':
-        start_date = base_date.replace(day=1)
-        _, last_day = calendar.monthrange(base_date.year, base_date.month)
-        end_date = base_date.replace(day=last_day)
-    elif range_type == 'quarter':
-        quarter = (base_date.month - 1) // 3 + 1
-        start_month = 3 * (quarter - 1) + 1
-        start_date = datetime(base_date.year, start_month, 1).date()
-        end_month = start_month + 2
-        _, last_day = calendar.monthrange(base_date.year, end_month)
-        end_date = datetime(base_date.year, end_month, last_day).date()
-    elif range_type == 'year':
-        start_date = datetime(base_date.year, 1, 1).date()
-        end_date = datetime(base_date.year, 12, 31).date()
-    else:
-        raise ValueError("Invalid range type. Use week, month, quarter, or year.")
-    
-    return start_date, end_date
-
-
-@api.route('/bargraph', methods=['GET'])
-def get_user_exception_counts():
-    conn = get_db_connection()
-    if conn is None:
-        return jsonify({"error": "Failed to connect to the database"}), 500
-
-    cursor = conn.cursor()
-
-    try:
-        query = """
-        SELECT Username, COUNT(*) AS exception_count
-        FROM exception_logs
-        GROUP BY Username
-        """
-        cursor.execute(query)
-        result = cursor.fetchall()
-
-        usernames = [decode_bytes(row[0]) for row in result]
-        exception_counts = [int(row[1]) for row in result]
-
-        return jsonify({
-            'usernames': usernames,
-            'exception_counts': exception_counts
-        })
-    except Exception as e:
-        print(f"DB Query Error: {e}")
-        return jsonify({"error": "Failed to fetch data from DB"}), 500
-    finally:
-        cursor.close()
-        close_db_connection(conn)
-
-@api.route('/plot-exceptions', methods=['GET'])
-def plot_exceptions():
-    conn = get_db_connection()
-    if conn is None:
-        return jsonify({"error": "Failed to connect to the database"}), 500
-
-    cursor = conn.cursor()
-
-    try:
-        cursor.execute("SELECT time_occurred, Exception_Type FROM exception_logs")
-        rows = cursor.fetchall()
-
-        time_stamps = [safe_datetime_str(row[0]) for row in rows]
-
-        counter = Counter(time_stamps)
-        x = list(counter.keys())
-        y = list(counter.values())
-
-        max_count = max(y) if y else 0
-        max_time = x[y.index(max_count)] if y else None
-
-        return jsonify({
-            'x': x,
-            'y': y,
-            'max_count': max_count,
-            'max_time': max_time
-        })
-    except Exception as e:
-        print(f"DB Query Error: {e}")
-        return jsonify({"error": "Failed to fetch data from DB"}), 500
-    finally:
-        cursor.close()
-        close_db_connection(conn)
-
-@api.route('/exception_piechart', methods=['GET'])
-def get_exception_piechart():
-    time_range = request.args.get('time_range', 'all')  # default is 'all'
-
-    conn = get_db_connection()
-    if conn is None:
-        return jsonify({"error": "Failed to connect to the database"}), 500
-
-    cursor = conn.cursor()
-
-    try:
-        query = "SELECT Exception_Type, COUNT(*) AS count FROM exception_logs"
-        
-        # Add WHERE clause based on time_range
-        if time_range == "day":
-            query += " WHERE time_occurred >= NOW() - INTERVAL 1 DAY"
-        elif time_range == "week":
-            query += " WHERE time_occurred >= NOW() - INTERVAL 7 DAY"
-        elif time_range == "month":
-            query += " WHERE time_occurred >= NOW() - INTERVAL 1 MONTH"
-        elif time_range == "quarter":
-            query += " WHERE time_occurred >= NOW() - INTERVAL 3 MONTH"
-        elif time_range == "year":
-            query += " WHERE time_occurred >= NOW() - INTERVAL 1 YEAR"
-        
-        query += " GROUP BY Exception_Type"
-        
-        cursor.execute(query)
-        results = cursor.fetchall()
-
-    except Exception as e:
-        print(f"DB Query Error: {e}")
-        return jsonify({"error": "Failed to fetch data from DB"}), 500
-    finally:
-        cursor.close()
-        close_db_connection(conn)
-
-    data = [{"label": decode_bytes(row[0]), "value": int(row[1])} for row in results]
-    return jsonify(data)
-
-@api.route('/logs/by-date', methods=['POST'])
-def fetch_logs_by_date():
-    
-    request_date = request.values.get('date')
-
-    if not request_date:
-        return jsonify({'error': 'Date is required'}), 400
-
-    try:
-        date_obj = datetime.strptime(request_date, '%Y-%m-%d').date()
-    except ValueError:
-        return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
-
-    try:
-        conn = get_db_connection()
-        if conn is None:
-            return jsonify({"error": "Failed to connect to the database"}), 500
-            
-        cursor = conn.cursor(dictionary=True)
-
-        query = """
-            SELECT * FROM exception_logs
-            WHERE DATE(time_occurred) = %s
-        """
-        cursor.execute(query, (date_obj,))
-        rows = cursor.fetchall()
-
-        cursor.close()
-        close_db_connection(conn)
-
-        if not rows:
-            return jsonify({'count': 0, 'message': 'No logs/data found for the specified date'}), 404
-        
-        return jsonify({'count': len(rows), 'data': rows})
-
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 # Date range calculation helper
 def get_date_range_from_payload(range_type: str, payload: dict):
@@ -259,7 +93,138 @@ def get_date_range_from_payload(range_type: str, payload: dict):
 
     return start_date, end_date
 
-@api.route('/logs/trend_analysis', methods=['GET'])
+
+# Helper function to get start and end dates based on range
+def get_date_range_from_string(range_type: str, date_str: str):
+    base_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+    range_type = range_type.lower()
+
+    if range_type == 'week':
+        start_date = base_date - timedelta(days=base_date.weekday())
+        end_date = start_date + timedelta(days=6)
+    elif range_type == 'month':
+        start_date = base_date.replace(day=1)
+        _, last_day = calendar.monthrange(base_date.year, base_date.month)
+        end_date = base_date.replace(day=last_day)
+    elif range_type == 'quarter':
+        quarter = (base_date.month - 1) // 3 + 1
+        start_month = 3 * (quarter - 1) + 1
+        start_date = datetime(base_date.year, start_month, 1).date()
+        end_month = start_month + 2
+        _, last_day = calendar.monthrange(base_date.year, end_month)
+        end_date = datetime(base_date.year, end_month, last_day).date()
+    elif range_type == 'year':
+        start_date = datetime(base_date.year, 1, 1).date()
+        end_date = datetime(base_date.year, 12, 31).date()
+    else:
+        raise ValueError("Invalid range type. Use week, month, quarter, or year.")
+    
+    return start_date, end_date
+
+# Export data in text format
+@main_dashboard_bp.route('/export-exception-data', methods=['GET'])
+def export_exception_data():
+    from tabulate import tabulate
+    conn = get_db_connection()
+    if conn is None:
+        return jsonify({"error": "Failed to connect to the database"}), 500
+
+    cursor = conn.cursor()
+
+    try:
+        output = io.StringIO()
+
+        # Bargraph data
+        cursor.execute("""
+            SELECT Username, COUNT(*) AS exception_count
+            FROM exception_logs
+            GROUP BY Username
+        """)
+        bar_data = cursor.fetchall()
+        output.write("USER EXCEPTION COUNTS (Bar Graph)\n")
+        output.write(tabulate(bar_data, headers=["Username", "Exception Count"]))
+        output.write("\n\n")
+
+        # Line plot data
+        cursor.execute("SELECT time_occurred, Exception_Type FROM exception_logs")
+        rows = cursor.fetchall()
+        time_stamps = [safe_datetime_str(row[0]) for row in rows]
+        counter = Counter(time_stamps)
+        line_data = list(counter.items())
+        output.write("EXCEPTIONS OVER TIME (Line Plot)\n")
+        output.write(tabulate(line_data, headers=["Timestamp", "Count"]))
+        output.write("\n\n")
+
+        # Pie chart data
+        query = "SELECT Exception_Type, COUNT(*) AS count FROM exception_logs GROUP BY Exception_Type"
+        cursor.execute(query)
+        pie_results = cursor.fetchall()
+        output.write("EXCEPTION TYPE DISTRIBUTION (Pie Chart)\n")
+        output.write(tabulate(pie_results, headers=["Exception Type", "Count"]))
+        output.write("\n")
+
+        # Send as downloadable file
+        mem = io.BytesIO()
+        mem.write(output.getvalue().encode('utf-8'))
+        mem.seek(0)
+
+        return send_file(
+            mem,
+            as_attachment=True,
+            download_name='exception_report.txt',
+            mimetype='text/plain'
+        )
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        close_db_connection(conn)
+
+
+# Exception Distribution Pie Chart
+@main_dashboard_bp.route('/exception_piechart', methods=['GET'])
+def get_exception_piechart():
+    time_range = request.args.get('time_range', 'all')  # default is 'all'
+
+    conn = get_db_connection()
+    if conn is None:
+        return jsonify({"error": "Failed to connect to the database"}), 500
+
+    cursor = conn.cursor()
+
+    try:
+        query = "SELECT Exception_Type, COUNT(*) AS count FROM exception_logs"
+        
+        # Add WHERE clause based on time_range
+        if time_range == "day":
+            query += " WHERE time_occurred >= NOW() - INTERVAL 1 DAY"
+        elif time_range == "week":
+            query += " WHERE time_occurred >= NOW() - INTERVAL 7 DAY"
+        elif time_range == "month":
+            query += " WHERE time_occurred >= NOW() - INTERVAL 1 MONTH"
+        elif time_range == "quarter":
+            query += " WHERE time_occurred >= NOW() - INTERVAL 3 MONTH"
+        elif time_range == "year":
+            query += " WHERE time_occurred >= NOW() - INTERVAL 1 YEAR"
+        
+        query += " GROUP BY Exception_Type"
+        
+        cursor.execute(query)
+        results = cursor.fetchall()
+
+    except Exception as e:
+        print(f"DB Query Error: {e}")
+        return jsonify({"error": "Failed to fetch data from DB"}), 500
+    finally:
+        cursor.close()
+        close_db_connection(conn)
+
+    data = [{"label": decode_bytes(row[0]), "value": int(row[1])} for row in results]
+    return jsonify(data)
+
+# Logs Trend Analysis
+@main_dashboard_bp.route('/trend_analysis', methods=['GET'])
 def fetch_logs_by_trend_analysis():
     try:
         range_type = request.args.get('range')
@@ -496,8 +461,125 @@ def fetch_logs_by_trend_analysis():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
+# Exception Counts Bar Graph
+@main_dashboard_bp.route('/bargraph-user-exception-counts', methods=['GET'])
+def get_user_exception_counts():
+    conn = get_db_connection()
+    if conn is None:
+        return jsonify({"error": "Failed to connect to the database"}), 500
+
+    cursor = conn.cursor()
+
+    try:
+        query = """
+        SELECT Username, COUNT(*) AS exception_count
+        FROM exception_logs
+        GROUP BY Username
+        """
+        cursor.execute(query)
+        result = cursor.fetchall()
+
+        usernames = [decode_bytes(row[0]) for row in result]
+        exception_counts = [int(row[1]) for row in result]
+
+        return jsonify({
+            'usernames': usernames,
+            'exception_counts': exception_counts
+        })
+    except Exception as e:
+        print(f"DB Query Error: {e}")
+        return jsonify({"error": "Failed to fetch data from DB"}), 500
+    finally:
+        cursor.close()
+        close_db_connection(conn)
+
+
+
+# Exception Heatmap
+@main_dashboard_bp.route('/exception-heatmap', methods=['GET'])
+def plot_exceptions():
+    conn = get_db_connection()
+    if conn is None:
+        return jsonify({"error": "Failed to connect to the database"}), 500
+
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("SELECT time_occurred, Exception_Type FROM exception_logs")
+        rows = cursor.fetchall()
+
+        time_stamps = [safe_datetime_str(row[0]) for row in rows]
+
+        counter = Counter(time_stamps)
+        x = list(counter.keys())
+        y = list(counter.values())
+
+        max_count = max(y) if y else 0
+        max_time = x[y.index(max_count)] if y else None
+
+        return jsonify({
+            'x': x,
+            'y': y,
+            'max_count': max_count,
+            'max_time': max_time
+        })
+    except Exception as e:
+        print(f"DB Query Error: {e}")
+        return jsonify({"error": "Failed to fetch data from DB"}), 500
+    finally:
+        cursor.close()
+        close_db_connection(conn)
+
+
+
+
+#----unused
+
+@main_dashboard_bp.route('/logs/by-date', methods=['POST'])
+def fetch_logs_by_date():
+    
+    request_date = request.values.get('date')
+
+    if not request_date:
+        return jsonify({'error': 'Date is required'}), 400
+
+    try:
+        date_obj = datetime.strptime(request_date, '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
+
+    try:
+        conn = get_db_connection()
+        if conn is None:
+            return jsonify({"error": "Failed to connect to the database"}), 500
+            
+        cursor = conn.cursor(dictionary=True)
+
+        query = """
+            SELECT * FROM exception_logs
+            WHERE DATE(time_occurred) = %s
+        """
+        cursor.execute(query, (date_obj,))
+        rows = cursor.fetchall()
+
+        cursor.close()
+        close_db_connection(conn)
+
+        if not rows:
+            return jsonify({'count': 0, 'message': 'No logs/data found for the specified date'}), 404
+        
+        return jsonify({'count': len(rows), 'data': rows})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+
+
+
 # Unified API endpoint
-@api.route('/combined-exception-data', methods=['GET'])
+@main_dashboard_bp.route('/combined-exception-data', methods=['GET'])
 def get_combined_exception_data():
     conn = get_db_connection()
     if conn is None:
@@ -565,62 +647,81 @@ def get_combined_exception_data():
         close_db_connection(conn)
 
 
-# Export data as text
-@api.route('/export-exception-data', methods=['GET'])
-def export_exception_data():
-    from tabulate import tabulate
-    conn = get_db_connection()
-    if conn is None:
-        return jsonify({"error": "Failed to connect to the database"}), 500
+# Daily Violation Report Generation
+@main_dashboard_bp.route('/report', methods=['GET'])
+def get_report():
+    today_date = datetime.now().strftime("%Y-%m-%d")
+    report_filename = f"log/violation_report_{today_date}.txt"
 
+    # Connect to MySQL
+    conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor()
 
-    try:
-        output = io.StringIO()
+    # Query to fetch only today's violation data
+    query = f"""
+    SELECT time_occurred, Username, Employee_id, Exception_Type
+    FROM EmployeeInfo.Exception_Logs WHERE DATE(time_occurred) = '{today_date}';
+    """
+    cursor.execute(query)
 
-        # Bargraph data
-        cursor.execute("""
-            SELECT Username, COUNT(*) AS exception_count
-            FROM exception_logs
-            GROUP BY Username
-        """)
-        bar_data = cursor.fetchall()
-        output.write("USER EXCEPTION COUNTS (Bar Graph)\n")
-        output.write(tabulate(bar_data, headers=["Username", "Exception Count"]))
-        output.write("\n\n")
+    # Load data into a Pandas DataFrame
+    if cursor.description is not None:
+        columns = [desc[0] for desc in cursor.description]
+        df = pd.DataFrame(cursor.fetchall(), columns=columns)
+    else:
+        df = pd.DataFrame()  # Empty DataFrame if no description
 
-        # Line plot data
-        cursor.execute("SELECT time_occurred, Exception_Type FROM exception_logs")
-        rows = cursor.fetchall()
-        time_stamps = [safe_datetime_str(row[0]) for row in rows]
-        counter = Counter(time_stamps)
-        line_data = list(counter.items())
-        output.write("EXCEPTIONS OVER TIME (Line Plot)\n")
-        output.write(tabulate(line_data, headers=["Timestamp", "Count"]))
-        output.write("\n\n")
+    # Close the connection
+    cursor.close()
+    conn.close()
 
-        # Pie chart data
-        query = "SELECT Exception_Type, COUNT(*) AS count FROM exception_logs GROUP BY Exception_Type"
-        cursor.execute(query)
-        pie_results = cursor.fetchall()
-        output.write("EXCEPTION TYPE DISTRIBUTION (Pie Chart)\n")
-        output.write(tabulate(pie_results, headers=["Exception Type", "Count"]))
-        output.write("\n")
+    # If no violations today, generate an empty report
+    if df.empty:
+        report = f"""
+SAFETY VIOLATION REPORT - {today_date}
+--------------------------------------
+No safety violations recorded today.
+"""
+    else:
+        # Count total violations
+        total_violations = len(df)
 
-        # Send as downloadable file
-        mem = io.BytesIO()
-        mem.write(output.getvalue().encode('utf-8'))
-        mem.seek(0)
+        # Count violations per employee
+        violations_per_employee = df.groupby(
+            "Username")["Exception_Type"].count().reset_index()
+        violations_per_employee.columns = ["Username", "Total_Violations"]
 
-        return send_file(
-            mem,
-            as_attachment=True,
-            download_name='exception_report.txt',
-            mimetype='text/plain'
-        )
+        # Find who made the most errors (if applicable)
+        most_errors = violations_per_employee.sort_values(
+            by="Total_Violations", ascending=False).iloc[0]
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    finally:
-        cursor.close()
-        close_db_connection(conn)
+        # Count violations per type
+        violations_per_type = df["Exception_Type"].value_counts()
+
+        # # Generate name-wise fault report
+        # namewise_fault_report = df.groupby("Username").apply(
+        #     lambda x: x[["time_occurred", "Exception_Type"]].to_string(index=False)
+        # ).to_string()
+
+        # Generate report
+        report = f"""
+SAFETY VIOLATION REPORT - {today_date}
+--------------------------------------
+Total Violations: {total_violations}
+
+Violations per Employee:
+{violations_per_employee.to_string(index=False)}
+
+Most Errors:
+{most_errors["Username"]} with {most_errors["Total_Violations"]} violations
+
+Violations per Type:
+{violations_per_type.to_string()}
+
+"""
+
+    with open(report_filename, "w") as file:
+        file.write(report)
+
+    # Return file as a download
+    return send_file(report_filename, as_attachment=True)

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import API_CONFIG, { API_HELPERS, REQUEST_HEADERS } from '../../config/apiConfig';
 
 const HourlyHeatmap = () => {
   const [exceptionData, setExceptionData] = useState({});
@@ -17,7 +18,7 @@ const HourlyHeatmap = () => {
     setError(null);
     
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/plot-exceptions', {
+      const response = await fetch(API_CONFIG.MAIN_DASHBOARD.EXCEPTION_HEATMAP, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

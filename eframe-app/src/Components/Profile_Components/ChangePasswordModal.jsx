@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
+import API_CONFIG, { API_HELPERS, REQUEST_HEADERS } from '../../config/apiConfig';
 
 const ChangePasswordModal = ({ isOpen, onClose }) => {
   const { user } = useAuth();
@@ -70,7 +71,7 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/change-password",
+        API_CONFIG.AUTH.CHANGE_PASSWORD,
         {
           method: "POST",
           headers: {

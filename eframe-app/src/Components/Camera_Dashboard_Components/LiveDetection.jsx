@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import API_CONFIG, { API_HELPERS, REQUEST_HEADERS } from '../../config/apiConfig';
 
 const LiveDetection = () => {
   const [liveDetectionActive, setLiveDetectionActive] = useState(false);
@@ -27,8 +28,8 @@ const LiveDetection = () => {
   const loadCameras = async () => {
     setLoading(true);
     try {
-      console.log("Fetching cameras from: http://127.0.0.1:5000/api/cameras");
-      const response = await fetch('http://127.0.0.1:5000/api/cameras');
+      console.log("Fetching cameras from: API_CONFIG.CAMERA_DASHBOARD.GET_CAMERAS");
+      const response = await fetch(API_CONFIG.CAMERA_DASHBOARD.GET_CAMERAS);
       console.log("Response status:", response.status);
       console.log("Response headers:", response.headers);
       
@@ -56,7 +57,7 @@ const LiveDetection = () => {
     try {
       console.log("Starting detection with camera:", selectedCamera);
       
-      const response = await fetch('http://127.0.0.1:5000/safetydetection', {
+      const response = await fetch(API_CONFIG.CAMERA_DASHBOARD.SAFETY_DETECTION, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -70,7 +71,7 @@ const LiveDetection = () => {
       console.log("API Response:", data);
       
       if (data.stream_url) {
-        const fullStreamUrl = "http://127.0.0.1:5000" + data.stream_url;
+        const fullStreamUrl = API_CONFIG.BASE_URL + data.stream_url;
         console.log("Full Stream URL:", fullStreamUrl);
         
         setLiveStreamUrl(fullStreamUrl);
@@ -89,7 +90,7 @@ const LiveDetection = () => {
   const stopLiveDetection = async () => {
     
     try {
-      const response = await fetch('http://127.0.0.1:5000/stopdetection', {
+      const response = await fetch(API_CONFIG.CAMERA_DASHBOARD.STOP_DETECTION, {
         method: 'POST'
       });
       

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ResponsivePie } from '@nivo/pie';
+import API_CONFIG, { API_HELPERS, REQUEST_HEADERS } from '../../config/apiConfig';
 
 // Custom hook to reactively detect Tailwind's dark mode
 function useIsDark() {
@@ -53,7 +54,7 @@ const PieChartComponent = () => {
     const fetchData = async () => {
       try {
         const response = await fetch(
-          `http://127.0.0.1:5000/api/exception_piechart`
+          API_CONFIG.MAIN_DASHBOARD.EXCEPTION_PIECHART
         );
         if (!response.ok)
           throw new Error("Failed to fetch dashboard statistics");

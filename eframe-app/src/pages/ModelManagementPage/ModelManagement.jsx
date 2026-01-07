@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNavigate } from 'react-router-dom';
-import Header from '../../components/Model_Management_Components/Header';
+import Header from '../../Components/Model_Management_Components/Header';
 import Footer from '../../Components/Model_Management_Components/Footer';
-import ModelHeader from '../../components/Model_Management_Components/ModelHeader';
-import ModelActions from '../../components/Model_Management_Components/ModelActions';
-import ModelTable from '../../components/Model_Management_Components/ModelTable';
+import ModelHeader from '../../Components/Model_Management_Components/ModelHeader';
+import ModelActions from '../../Components/Model_Management_Components/ModelActions';
+import ModelTable from '../../Components/Model_Management_Components/ModelTable';
+import API_CONFIG, { API_HELPERS, REQUEST_HEADERS } from '../../config/apiConfig';
 
 /**
  * ModelManagement Component
@@ -31,9 +32,8 @@ const ModelManagement = () => {
    */
   const fetchModels = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/models');
+      const response = await fetch(API_CONFIG.MODEL_MANAGEMENT.GET_ALL_MODELS);
       const data = await response.json();
-      console.log('Received models data:', data); // Debug log
       setModels(data);
     } catch (error) {
       console.error('Error fetching models:', error);

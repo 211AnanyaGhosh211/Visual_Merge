@@ -6,53 +6,86 @@ A comprehensive Personal Protective Equipment (PPE) detection and face recogniti
 
 ```
 backend/
-├── app.py                          # Main Flask application (renamed from newapp3.py)
+├── app.py                          # Main Flask application
 ├── requirements.txt                # Python dependencies
-├── requirements2.txt              # Additional dependencies
-├── test_image.jpg                 # Test image for development
-├── test2.py                       # PPE violation logging script
+├── README.md                      # Project documentation
 │
 ├── services/                      # Service modules (organized)
-│   ├── ppe_kit_detector.py        # Main PPE + Face detection service
-│   ├── ppe_violation_detector.py  # Alternative PPE detection service
-│   ├── model_visualizer.py        # YOLO detection visualization utilities
-│   ├── analytics_api.py           # Analytics dashboard API endpoints
+│   ├── camera_config.py           # Camera configuration
 │   ├── live_cctv_processor.py     # Live CCTV/NVR feed processing
+│   ├── model_visualizer.py        # YOLO detection visualization utilities
+│   ├── ppe_kit_detector.py        # Main PPE + Face detection service
 │   ├── ppe_server_launcher.py     # Main server launcher script
-│   ├── auth.py                    # Authentication service
-│   └── camera_config.py           # Camera configuration
+│   ├── ppe_violation_detector.py  # Alternative PPE detection service
+│   └── violation_count.py        # Violation counting utilities
+│
+├── routes/                        # API route modules (organized)
+│   ├── auth.py                   # Authentication API routes
+│   ├── camera_dashboard.py       # Camera dashboard API routes
+│   ├── camera_management.py      # Camera management API routes
+│   ├── employee_configuration.py # Employee management API routes
+│   ├── main_dashboard.py         # Main dashboard API routes
+│   ├── model_management.py       # Model management API routes
+│   ├── model_mapping.py          # Model mapping API routes
+│   └── notification_management.py # Notification API routes
 │
 ├── db/                           # Database modules
-│   ├── db.py                     # Centralized database configuration
-│   └── Database.py               # Database API endpoints
+│   └── db.py                     # Centralized database configuration and utilities
 │
 ├── data/                         # Data files
-│   ├── users.csv                 # Registered employees data
+│   ├── ppe_violations.csv        # PPE violations log
 │   ├── users_backup.csv          # Backup of users data
-│   └── ppe_violations.csv        # PPE violations log
+│   └── users.csv                 # Registered employees data
 │
 ├── log/                          # Log files
 │   ├── notifications.txt         # System notifications
 │   ├── ppe_violations_log.txt    # PPE violations log
-│   └── violation_report_*.txt    # Violation reports
+│   ├── time_based_detection_log.json # Time-based detection logs
+│   ├── time_based_summary.txt    # Time-based detection summary
+│   └── violation_report_2025-06-11.txt # Violation reports
 │
 ├── media/                        # Media files
-│   ├── faces/                    # Employee face images
-│   │   ├── 007_Arghya/
-│   │   ├── 10101_sumansamui/
-│   │   └── ... (employee folders)
 │   ├── face_detect/              # Face detection outputs
-│   ├── uploads/                  # Uploaded videos/images
-│   └── detections/               # Detection outputs
+│   ├── faces/                    # Employee face images
+│   │   ├── 10101_sumansamui/
+│   │   ├── 234_xxyx/
+│   │   ├── 7_Avijit/
+│   │   ├── E156_James Rodrigues/
+│   │   ├── E189_john cena/
+│   │   └── E234_john cena/
+│   └── uploads/                  # Uploaded videos/images
+│       ├── cropped.mp4
+│       ├── forklift_speed_output.mp4
+│       ├── Mill_A_Unit_1_Boiler_NVR_*.mp4
+│       ├── Mill_A_Unit_2_Boiler_NVR_*.mp4
+│       ├── Mill_B_Unit_1_Boiler_NVR_*.mp4
+│       ├── speed_estimation.avi
+│       ├── TATA.mp4
+│       └── vecteezy_car-and-truck-traffic_*.mp4
 │
-└── models/                       # AI model files
-    ├── best700.pt               # Main YOLO model
-    ├── best (3).pt              # Alternative YOLO model
-    ├── current_400.pt           # Training checkpoint
-    ├── epochs_500.pt            # Training checkpoint
-    ├── Indorama_pvc_suit_best.pt # Specialized model
-    ├── PPE_detection1.pt        # PPE detection model
-    └── ppe.pt                   # General PPE model
+├── models/                       # AI model files
+│   ├── aparava_300_epoch.pt      # Training checkpoint
+│   ├── apraava(100epochs).pt     # Training checkpoint
+│   ├── best (3).pt               # Alternative YOLO model
+│   ├── best700.pt                # Main YOLO model
+│   ├── current_400.pt            # Training checkpoint
+│   ├── epochs_500.pt             # Training checkpoint
+│   ├── Indorama_pvc_suit_best.pt # Specialized model
+│   ├── PPE_detection1.pt         # PPE detection model
+│   └── ppe.pt                    # General PPE model
+│
+├── test_purposes/                # Testing and development files
+│   ├── cctvconn2.py             # CCTV connection testing
+│   ├── cpu_or_gpu_testing.py    # Hardware testing utilities
+│   ├── test_imports.py          # Import testing
+│   ├── test.py                  # General testing
+│   └── test2.py                 # Additional testing
+│
+└── venv/                        # Python virtual environment
+    ├── Include/
+    ├── Lib/
+    ├── Scripts/
+    └── share/
 ```
 
 ## 🔄 Recent Changes & Refactoring
@@ -62,34 +95,53 @@ backend/
 #### 1. **Main Application**
 - **`newapp3.py`** → **`app.py`** (cleaner, more standard naming)
 
-#### 2. **Service Modules** (moved to `services/` directory)
-- **`detect.py`** → **`ppe_kit_detector.py`** (main PPE + face detection)
-- **`detect2.py`** → **`ppe_violation_detector.py`** (alternative PPE detection)
-- **`img.py`** → **`model_visualizer.py`** (YOLO visualization utilities)
-- **`dashdash.py`** → **`analytics_api.py`** (analytics dashboard API)
-- **`cctvconn.py`** → **`live_cctv_processor.py`** (live CCTV processing)
-- **`start_server.py`** → **`ppe_server_launcher.py`** (server launcher)
+#### 2. **Service Modules** (organized in `services/` directory)
+- **`camera_config.py`** - Camera configuration management
+- **`live_cctv_processor.py`** - Live CCTV/NVR feed processing
+- **`model_visualizer.py`** - YOLO detection visualization utilities
+- **`ppe_kit_detector.py`** - Main PPE + face detection service
+- **`ppe_server_launcher.py`** - Main server launcher script
+- **`ppe_violation_detector.py`** - Alternative PPE detection service
+- **`violation_count.py`** - Violation counting utilities
 
-#### 3. **Database Modules** (moved to `db/` directory)
-- **`db.py`** → **`db/db.py`** (centralized database config)
-- **`Database.py`** → **`db/Database.py`** (database API endpoints)
+#### 3. **Database Modules** (consolidated in `db/` directory)
+- **`db.py`** → **`db/db.py`** (centralized database config and utilities)
+- **`Database.py`** → **MERGED into `db/db.py`** (database utilities consolidated)
 
-#### 4. **Data Files** (moved to `data/` directory)
-- **`users.csv`** → **`data/users.csv`** (employee data)
-- **`ppe_violations.csv`** → **`data/ppe_violations.csv`** (violations data)
+#### 4. **Data Files** (organized in `data/` directory)
+- **`ppe_violations.csv`** - PPE violations log
+- **`users_backup.csv`** - Backup of users data
+- **`users.csv`** - Registered employees data
 
 #### 5. **Media Files** (moved to `media/` directory)
 - **`static/faces/`** → **`media/faces/`** (employee face images)
 - **`static/uploads/`** → **`media/uploads/`** (uploaded files)
 - **`face_detect/`** → **`media/face_detect/`** (face detection outputs)
 
-#### 6. **Model Files** (moved to `models/` directory)
-- All `.pt` model files moved to `models/` directory
+#### 6. **Model Files** (organized in `models/` directory)
+- **`aparava_300_epoch.pt`** - Training checkpoint
+- **`apraava(100epochs).pt`** - Training checkpoint
+- **`best (3).pt`** - Alternative YOLO model
+- **`best700.pt`** - Main YOLO model
+- **`current_400.pt`** - Training checkpoint
+- **`epochs_500.pt`** - Training checkpoint
+- **`Indorama_pvc_suit_best.pt`** - Specialized model
+- **`PPE_detection1.pt`** - PPE detection model
+- **`ppe.pt`** - General PPE model
 
-#### 7. **Log Files** (moved to `log/` directory)
-- **`log.txt`** → **`log/notifications.txt`** (system notifications)
-- **`ppe_violations_log.txt`** → **`log/ppe_violations_log.txt`** (violations log)
-- **`violation_report_*.txt`** → **`log/violation_report_*.txt`** (reports)
+#### 7. **Log Files** (organized in `log/` directory)
+- **`notifications.txt`** - System notifications
+- **`ppe_violations_log.txt`** - PPE violations log
+- **`time_based_detection_log.json`** - Time-based detection logs
+- **`time_based_summary.txt`** - Time-based detection summary
+- **`violation_report_2025-06-11.txt`** - Violation reports
+
+#### 8. **Testing Files** (organized in `test_purposes/` directory)
+- **`cctvconn2.py`** - CCTV connection testing
+- **`cpu_or_gpu_testing.py`** - Hardware testing utilities
+- **`test_imports.py`** - Import testing
+- **`test.py`** - General testing
+- **`test2.py`** - Additional testing
 
 ### Path Updates
 
@@ -112,17 +164,22 @@ face_dir = 'media/faces/'
 All import statements have been updated to use the new module structure:
 
 ```python
-# Before
-import detect
-from detect import detectFace
-import dashdash
-from dashdash import api as dashboard_api
+# Current import structure in app.py
+from db.db import db_util
+from routes.auth import auth_bp
+from routes.camera_dashboard import camera_dashboard_bp
+from routes.camera_management import camera_management_bp
+from routes.employee_configuration import employee_configuration_bp
+from routes.main_dashboard import main_dashboard_bp
+from routes.model_management import model_management_bp
+from routes.model_mapping import model_mapping_bp
+from routes.notification_management import notification_management_bp
 
-# After
-import services.ppe_kit_detector
+# Service imports
 from services.ppe_kit_detector import detectFace
-import services.analytics_api
-from services.analytics_api import api as dashboard_api
+from services.live_cctv_processor import process_cctv_feed
+from services.model_visualizer import visualize_detections
+from services.violation_count import count_violations
 ```
 
 ## 🚀 Quick Start
@@ -185,12 +242,22 @@ from services.analytics_api import api as dashboard_api
 The database configuration is centralized in `db/db.py`:
 
 ```python
+# Database configuration with environment variable support
 db_config = {
-    "host": os.getenv("DB_HOST", "localhost"),
-    "user": os.getenv("DB_USER", "root"),
-    "password": os.getenv("DB_PASS", "12345"),
-    "database": os.getenv("DB_NAME", "EmployeeInfo")
+    "host": os.getenv("DB_HOST"),
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASS"),
+    "database": os.getenv("DB_NAME")
 }
+
+# Database utility class for connection management
+class DBUtil:
+    def __init__(self):
+        self.conn = mysql.connector.connect(**db_config)
+        self.cursor = self.conn.cursor()
+
+# Global database utility instance
+db_util = DBUtil()
 ```
 
 ### Model Configuration
@@ -215,21 +282,53 @@ db_config = {
 - `GET /video_feed` - Live video feed
 - `POST /detect` - PPE detection
 
-### Analytics API (`services/analytics_api.py`)
-- `GET /api/analytics/dashboard` - Dashboard data
-- `GET /api/analytics/violations` - Violations data
-- `GET /api/analytics/employees` - Employee data
+### Main Dashboard API (`routes/main_dashboard.py`)
+- `GET /api/dashboard` - Main dashboard data
+- `GET /api/dashboard/stats` - Dashboard statistics
+- `GET /api/dashboard/violations` - Recent violations
 
-### Database API (`db/Database.py`)
-- `GET /api/db/employees` - Employee management
-- `POST /api/db/employees` - Add employee
-- `PUT /api/db/employees/<id>` - Update employee
-- `DELETE /api/db/employees/<id>` - Delete employee
+### Route APIs (organized by functionality)
 
-### Authentication (`services/auth.py`)
-- `POST /auth/login` - User login
-- `POST /auth/register` - User registration
-- `POST /auth/logout` - User logout
+#### **Camera Dashboard** (`routes/camera_dashboard.py`)
+- `GET /api/camera_dashboard` - Camera dashboard data
+- `GET /api/camera_dashboard/feed` - Live camera feed
+- `POST /api/camera_dashboard/start_detection` - Start detection
+
+#### **Camera Management** (`routes/camera_management.py`)
+- `GET /api/camera_management/cameras` - Get all cameras
+- `GET /api/camera_management/get_camera` - Get single camera by ID
+- `POST /api/camera_management/set_camera` - Create new camera
+- `DELETE /api/camera_management/del_camera` - Delete camera
+
+#### **Employee Configuration** (`routes/employee_configuration.py`)
+- `GET /api/employee_configuration/employees` - Get all employees
+- `POST /api/employee_configuration/employees` - Add employee
+- `PUT /api/employee_configuration/employees/<id>` - Update employee
+- `DELETE /api/employee_configuration/employees/<id>` - Delete employee
+
+#### **Model Management** (`routes/model_management.py`)
+- `GET /api/model_management/models` - Get all models
+- `POST /api/model_management/models` - Create new model
+- `DELETE /api/model_management/models/<id>` - Delete model
+
+#### **Model Mapping** (`routes/model_mapping.py`)
+- `GET /api/model_mapping/get_camera` - Get camera for mapping
+- `GET /api/model_mapping/get_model` - Get model for mapping
+- `POST /api/model_mapping/set_model` - Create model
+- `DELETE /api/model_mapping/del_model` - Delete model
+- `POST /api/model_mapping/link_camera_model` - Link camera with model
+
+#### **Notification Management** (`routes/notification_management.py`)
+- `GET /api/notifications` - Get all notifications
+- `POST /api/notifications` - Create notification
+- `PUT /api/notifications/<id>` - Update notification
+- `DELETE /api/notifications/<id>` - Delete notification
+
+#### **Authentication** (`routes/auth.py`)
+- `POST /api/auth/login` - User login
+- `POST /api/auth/logout` - User logout
+- `POST /api/auth/verify-token` - Token verification
+
 
 ## 🎥 Camera Management
 
@@ -439,21 +538,29 @@ app.run(debug=True, host='0.0.0.0', port=5000)
 
 ## 📋 Migration Guide
 
-### File Mapping
+### Current File Structure
 
-| Old File | New File | New Location | Purpose |
-|----------|----------|--------------|---------|
-| `newapp3.py` | `app.py` | Root | Main application |
-| `detect.py` | `ppe_kit_detector.py` | `services/` | Main PPE + face detection |
-| `detect2.py` | `ppe_violation_detector.py` | `services/` | Alternative PPE detection |
-| `img.py` | `model_visualizer.py` | `services/` | YOLO visualization utilities |
-| `dashdash.py` | `analytics_api.py` | `services/` | Analytics dashboard API |
-| `cctvconn.py` | `live_cctv_processor.py` | `services/` | Live CCTV processing |
-| `start_server.py` | `ppe_server_launcher.py` | `services/` | Server launcher |
-| `db.py` | `db.py` | `db/` | Database configuration |
-| `Database.py` | `Database.py` | `db/` | Database API endpoints |
-| `users.csv` | `users.csv` | `data/` | Employee data |
-| `ppe_violations.csv` | `ppe_violations.csv` | `data/` | Violations data |
+| File | Location | Purpose |
+|------|----------|---------|
+| `app.py` | Root | Main Flask application |
+| `camera_config.py` | `services/` | Camera configuration management |
+| `live_cctv_processor.py` | `services/` | Live CCTV/NVR feed processing |
+| `model_visualizer.py` | `services/` | YOLO visualization utilities |
+| `ppe_kit_detector.py` | `services/` | Main PPE + face detection |
+| `ppe_server_launcher.py` | `services/` | Server launcher |
+| `ppe_violation_detector.py` | `services/` | Alternative PPE detection |
+| `violation_count.py` | `services/` | Violation counting utilities |
+| `auth.py` | `routes/` | Authentication API routes |
+| `camera_dashboard.py` | `routes/` | Camera dashboard API routes |
+| `camera_management.py` | `routes/` | Camera management API routes |
+| `employee_configuration.py` | `routes/` | Employee management API routes |
+| `main_dashboard.py` | `routes/` | Main dashboard API routes |
+| `model_management.py` | `routes/` | Model management API routes |
+| `model_mapping.py` | `routes/` | Model mapping API routes |
+| `notification_management.py` | `routes/` | Notification API routes |
+| `db.py` | `db/` | Database configuration and utilities |
+| `users.csv` | `data/` | Employee data |
+| `ppe_violations.csv` | `data/` | Violations data |
 
 ### Path Mapping
 
@@ -467,19 +574,24 @@ app.run(debug=True, host='0.0.0.0', port=5000)
 
 ### Code Changes Required
 
-#### Import Statements
+#### Current Import Structure
 ```python
-# Before
-import detect
-from detect import detectFace
-import dashdash
-from dashdash import api as dashboard_api
+# Main application imports (app.py)
+from db.db import db_util
+from routes.auth import auth_bp
+from routes.camera_dashboard import camera_dashboard_bp
+from routes.camera_management import camera_management_bp
+from routes.employee_configuration import employee_configuration_bp
+from routes.main_dashboard import main_dashboard_bp
+from routes.model_management import model_management_bp
+from routes.model_mapping import model_mapping_bp
+from routes.notification_management import notification_management_bp
 
-# After
-import services.ppe_kit_detector
+# Service imports
 from services.ppe_kit_detector import detectFace
-import services.analytics_api
-from services.analytics_api import api as dashboard_api
+from services.live_cctv_processor import process_cctv_feed
+from services.model_visualizer import visualize_detections
+from services.violation_count import count_violations
 ```
 
 #### File Paths
@@ -497,6 +609,16 @@ face_dir = 'media/faces/'
 
 ## 🧪 Testing
 
+### Test Purposes Directory
+
+The `test_purposes/` directory contains various testing and development utilities:
+
+- **`cctvconn2.py`** - CCTV connection testing and validation
+- **`cpu_or_gpu_testing.py`** - Hardware capability testing (CPU vs GPU)
+- **`test_imports.py`** - Import testing for all modules
+- **`test.py`** - General testing utilities
+- **`test2.py`** - Additional testing scripts
+
 ### Verification Commands
 
 ```bash
@@ -504,19 +626,77 @@ face_dir = 'media/faces/'
 python app.py
 
 # Test imports
-python -c "import services.ppe_kit_detector; import services.analytics_api; print('All imports working')"
+python -c "import services.ppe_kit_detector; import services.live_cctv_processor; print('All imports working')"
 
 # Test database
-python -c "from db.db import get_db_connection; conn = get_db_connection(); print('DB OK')"
+python -c "from db.db import db_util; print('DB OK')"
 
 # Test file access
 python -c "import pandas as pd; df = pd.read_csv('data/users.csv'); print('CSV OK')"
 
 # Test camera config
 python -c "from services.camera_config import CAMERA_CONFIG; print('Cameras:', len(CAMERA_CONFIG))"
+
+# Test route imports
+python -c "from routes.auth import auth_bp; from routes.camera_management import camera_management_bp; print('Routes OK')"
+
+# Test hardware capabilities
+python test_purposes/cpu_or_gpu_testing.py
+
+# Test imports
+python test_purposes/test_imports.py
 ```
 
 ## 📊 Changelog
+
+### [2.2.0] - 2025-01-18
+
+#### 📚 Documentation Update
+
+**Updated:**
+- Project structure section to reflect actual directory layout
+- Service modules documentation with current files
+- Route modules documentation with current API endpoints
+- Model files documentation with actual model files
+- Import examples to match current structure
+- Testing section with test_purposes directory
+- Key files section with current important files
+- Verification commands to match current structure
+
+**Added:**
+- Test purposes directory documentation
+- Current file structure mapping
+- Updated import structure examples
+- Enhanced testing verification commands
+
+### [2.1.0] - 2025-01-18
+
+#### 🏗️ Database Consolidation & Route Organization
+
+**Added:**
+- Organized route modules in `routes/` directory
+- Centralized database utilities in `db/db.py`
+- Camera management API endpoints
+- Model mapping API endpoints
+- Employee configuration API endpoints
+- Notification management API endpoints
+
+**Changed:**
+- Database.py merged into db/db.py for better organization
+- API routes organized by functionality
+- Import paths updated to use absolute imports
+- Database connection management centralized
+
+**Fixed:**
+- Relative import issues in route files
+- Database connection management
+- API endpoint organization
+- Import path consistency across modules
+
+**Removed:**
+- Duplicate Database.py file
+- Relative imports causing runtime errors
+- Scattered database configuration
 
 ### [2.0.0] - 2025-01-18
 
@@ -585,13 +765,21 @@ python -c "import os; print('Media dirs exist:', all(os.path.exists(d) for d in 
 
 ### Key Files
 - **Main App**: `app.py`
-- **Camera Config**: `services/camera_config.py`
 - **Database Config**: `db/db.py`
-- **Authentication**: `services/auth.py`
+- **Camera Management**: `routes/camera_management.py`
+- **Camera Dashboard**: `routes/camera_dashboard.py`
+- **Model Mapping**: `routes/model_mapping.py`
+- **Employee Config**: `routes/employee_configuration.py`
+- **Authentication**: `routes/auth.py`
 - **PPE Detection**: `services/ppe_kit_detector.py`
+- **Live CCTV Processing**: `services/live_cctv_processor.py`
+- **Violation Counting**: `services/violation_count.py`
+- **Camera Configuration**: `services/camera_config.py`
 
 ### Important URLs
 - **Backend**: `http://127.0.0.1:5000`
 - **Frontend**: `http://127.0.0.1:5173`
-- **Camera API**: `http://127.0.0.1:5000/api/cameras`
-- **Login API**: `http://127.0.0.1:5000/api/login`
+- **Camera Management API**: `http://127.0.0.1:5000/api/camera_management/cameras`
+- **Model Mapping API**: `http://127.0.0.1:5000/api/model_mapping/`
+- **Employee Config API**: `http://127.0.0.1:5000/api/employee_configuration/`
+- **Authentication API**: `http://127.0.0.1:5000/api/auth/login`

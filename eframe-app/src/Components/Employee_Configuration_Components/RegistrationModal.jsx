@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import API_CONFIG, { API_HELPERS, REQUEST_HEADERS } from '../../config/apiConfig';
 
 const RegistrationModal = ({ show, onClose, formData, onChange, onStartCamera, onCaptureComplete }) => {
   const [showCamera, setShowCamera] = useState(false);
@@ -6,11 +7,17 @@ const RegistrationModal = ({ show, onClose, formData, onChange, onStartCamera, o
   const [captureProgress, setCaptureProgress] = useState(0);
   const [isCapturing, setIsCapturing] = useState(false);
   const [captureStatus, setCaptureStatus] = useState('');
+  const [showLightingWarning, setShowLightingWarning] = useState(false);
+  const [captureStartTime, setCaptureStartTime] = useState(null);
+  const [lastProgressTime, setLastProgressTime] = useState(null);
+  const [lastProgressValue, setLastProgressValue] = useState(0);
+  
+  // Use refs to track values that need to be compared in the interval
+  const lastProgressTimeRef = useRef(null);
+  const lastProgressValueRef = useRef(0);
 
   useEffect(() => {
-    if (showCamera) {
-      setStreamUrl('http://127.0.0.1:5000/face_capture_feed');
-    } else {
+    if (!showCamera) {
       setStreamUrl('');
     }
   }, [showCamera]);
@@ -21,13 +28,52 @@ const RegistrationModal = ({ show, onClose, formData, onChange, onStartCamera, o
     if (isCapturing) {
       interval = setInterval(async () => {
         try {
-          const response = await fetch('http://127.0.0.1:5000/face_capture_progress');
+          const response = await fetch(API_CONFIG.EMPLOYEE_CONFIGURATION.FACE_CAPTURE_PROGRESS);
           const progress = await response.json();
+          const currentTime = Date.now();
+          
+          // Check if progress has increased using refs for reliable comparison
+          if (progress.percentage > lastProgressValueRef.current) {
+            // Progress is increasing, hide warning and update tracking
+            console.log('Progress increased:', lastProgressValueRef.current, '->', progress.percentage);
+            setShowLightingWarning(false);
+            lastProgressTimeRef.current = currentTime;
+            lastProgressValueRef.current = progress.percentage;
+            setLastProgressTime(currentTime);
+            setLastProgressValue(progress.percentage);
+          } else if (progress.percentage === lastProgressValueRef.current) {
+            // Progress is stuck at the same value
+            if (lastProgressTimeRef.current) {
+              const timeStuck = currentTime - lastProgressTimeRef.current;
+              console.log('Progress stuck at', progress.percentage, 'for', timeStuck, 'ms');
+              // Check if 10 seconds have passed since progress was last updated
+              if (timeStuck >= 10000) {
+                console.log('Showing lighting warning - progress stuck for 10+ seconds');
+                setShowLightingWarning(true);
+              }
+            } else {
+              // First time we see this progress value, set the time and value
+              console.log('First time seeing progress:', progress.percentage);
+              lastProgressTimeRef.current = currentTime;
+              lastProgressValueRef.current = progress.percentage;
+              setLastProgressTime(currentTime);
+              setLastProgressValue(progress.percentage);
+            }
+          } else {
+            // Progress decreased or first update, reset tracking
+            console.log('Progress decreased or first update:', lastProgressValueRef.current, '->', progress.percentage);
+            lastProgressTimeRef.current = currentTime;
+            lastProgressValueRef.current = progress.percentage;
+            setLastProgressTime(currentTime);
+            setLastProgressValue(progress.percentage);
+          }
+          
           setCaptureProgress(progress.percentage);
           
           if (progress.captured >= progress.target) {
             setIsCapturing(false);
             setCaptureStatus('Capture completed!');
+            setShowLightingWarning(false);
             clearInterval(interval);
             // Call the completion handler after a short delay
             setTimeout(() => {
@@ -45,7 +91,7 @@ const RegistrationModal = ({ show, onClose, formData, onChange, onStartCamera, o
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isCapturing]);
+  }, [isCapturing, captureStartTime]);
 
   if (!show) return null;
 
@@ -109,6 +155,12 @@ const RegistrationModal = ({ show, onClose, formData, onChange, onStartCamera, o
                         <div className="text-sm font-medium">{captureStatus}</div>
                       </div>
                     )}
+                    {showLightingWarning && (
+                      <div className="absolute bottom-4 left-4 right-4 bg-yellow-600 text-white p-3 rounded-lg">
+                        <div className="text-sm font-medium">⚠️ Lighting Warning</div>
+                        <div className="text-xs mt-1">The lighting is insufficient to clearly capture the face. Please adjust the camera angle accordingly.</div>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <div className="text-center text-neutral-400">
@@ -126,13 +178,9 @@ const RegistrationModal = ({ show, onClose, formData, onChange, onStartCamera, o
                 <button
                   type="button"
                   onClick={async () => {
-                    setShowCamera(true);
-                    setIsCapturing(true);
-                    setCaptureStatus('');
-                    setCaptureProgress(0);
-                    
                     try {
-                      const response = await fetch('http://127.0.0.1:5000/start_face_capture', {
+                      // First, start the face capture on the backend
+                      const response = await fetch(API_CONFIG.EMPLOYEE_CONFIGURATION.START_FACE_CAPTURE, {
                         method: 'POST',
                         headers: {
                           'Content-Type': 'application/json',
@@ -146,14 +194,29 @@ const RegistrationModal = ({ show, onClose, formData, onChange, onStartCamera, o
                       const data = await response.json();
                       if (data.status === 'error') {
                         alert(data.message);
-                        setIsCapturing(false);
-                        setShowCamera(false);
+                        return;
                       }
+                      
+                      // If successful, set up the UI states
+                      setShowCamera(true);
+                      setIsCapturing(true);
+                      setCaptureStatus('');
+                      setCaptureProgress(0);
+                      setShowLightingWarning(false);
+                      setCaptureStartTime(Date.now());
+                      setLastProgressTime(null);
+                      setLastProgressValue(0);
+                      lastProgressTimeRef.current = null;
+                      lastProgressValueRef.current = 0;
+                      
+                      // Add a small delay to ensure the camera stream is ready
+                      setTimeout(() => {
+                        setStreamUrl(API_CONFIG.EMPLOYEE_CONFIGURATION.FACE_CAPTURE_FEED);
+                      }, 500);
+                      
                     } catch (error) {
                       console.error('Error starting face capture:', error);
                       alert('Error starting face capture');
-                      setIsCapturing(false);
-                      setShowCamera(false);
                     }
                   }}
                   className="btn btn-primary"
@@ -166,12 +229,18 @@ const RegistrationModal = ({ show, onClose, formData, onChange, onStartCamera, o
                   type="button"
                   onClick={async () => {
                     try {
-                      const response = await fetch('http://127.0.0.1:5000/stop_face_capture', {
+                      const response = await fetch(API_CONFIG.EMPLOYEE_CONFIGURATION.STOP_FACE_CAPTURE, {
                         method: 'POST'
                       });
                       const data = await response.json();
                       setIsCapturing(false);
                       setCaptureStatus(data.message);
+                      setShowLightingWarning(false);
+                      setCaptureStartTime(null);
+                      setLastProgressTime(null);
+                      setLastProgressValue(0);
+                      lastProgressTimeRef.current = null;
+                      lastProgressValueRef.current = 0;
                     } catch (error) {
                       console.error('Error stopping face capture:', error);
                     }
