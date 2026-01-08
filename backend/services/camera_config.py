@@ -12,7 +12,7 @@ CAMERA_CONFIG = {
     "1": {
         "name": "Main Entrance", 
         "type": "rtsp", 
-        "url": "rtsp://admin:admin%401966@192.168.100.108:554/cam/realmonitor?channel=4&subtype=0",
+        "url": "rtsp://admin:admin@1966@192.168.100.101:554/cam/realmonitor?channel=4&subtype=0",
         "description": "Main entrance camera"
     },
     "2": {
