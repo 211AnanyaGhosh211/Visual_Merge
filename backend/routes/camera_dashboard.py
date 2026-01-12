@@ -43,6 +43,13 @@ multi_camera_threads = {}  # Dictionary to store threads for each camera
 multi_camera_selected_classes = []
 multi_camera_ids = []  # List of camera IDs being processed
 
+# Global variables for frontend live detection streaming
+live_detection_stream_running = False
+live_detection_camera_id = "0"
+live_detection_selected_classes = []
+live_detection_cap = None
+live_detection_stop_event = None
+
 # Default email interval in minutes (1 minute)
 DEFAULT_EMAIL_INTERVAL_MINUTES = 1.0
 email_interval_minutes = DEFAULT_EMAIL_INTERVAL_MINUTES
@@ -153,6 +160,37 @@ def draw_violation_box(img, bbox, violations, person_idx=1, color=(0, 0, 255)):
 # NOTE: Original endpoints (demo2, demo3, demo4, live detection, etc.) 
 # need to be restored from your backup or editor history.
 # The multi-camera endpoints below are new and can be added to your restored file.
+
+# =============================================================================
+# CAMERA LIST ENDPOINT
+# =============================================================================
+
+@camera_dashboard_bp.route('/cameras', methods=['GET'])
+def get_cameras():
+    """Get list of all available cameras from CAMERA_CONFIG"""
+    try:
+        cameras = {}
+        for camera_id, camera_config in CAMERA_CONFIG.items():
+            cameras[camera_id] = {
+                "name": camera_config.get("name", f"Camera {camera_id}"),
+                "type": camera_config.get("type", "unknown"),
+                "url": camera_config.get("url"),
+                "description": camera_config.get("description", "")
+            }
+        
+        return jsonify({
+            "cameras": cameras,
+            "total_cameras": len(cameras)
+        })
+    except Exception as e:
+        print(f"Error fetching cameras: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "status": "error",
+            "message": f"Failed to fetch cameras: {str(e)}"
+        }), 500
+
 
 # =============================================================================
 # MULTI-CAMERA SIMULTANEOUS DETECTION
@@ -626,4 +664,465 @@ def get_multi_camera_detection_status():
         "camera_ids": multi_camera_ids,
         "cameras": camera_info,
         "selected_classes": multi_camera_selected_classes
+    })
+
+
+# =============================================================================
+# FRONTEND LIVE DETECTION STREAMING API
+# =============================================================================
+
+def generate_live_detection_frames():
+    """
+    Generator function that yields JPEG-encoded frames with live detection.
+    This streams video to the frontend with real-time PPE detection.
+    """
+    global live_detection_stream_running, live_detection_cap, live_detection_camera_id
+    global live_detection_selected_classes, email_interval_minutes
+    
+    # Class name aliases
+    ALIASES = {
+        "person": {"person", "Person"},
+        "helmet": {"helmet", "hardhat", "safety_helmet", "Helmet"},
+        "safety_vest": {"vest", "safety_vest", "Safety_Vestr"},
+        "no_helmet": {"no_helmet", "no_safety_helmet", "no_hardhat", "NO_helmet"},
+        "no_safety_vest": {"no_vest", "no_safety_vest", "NO_Vestr"},
+        "pvc_suit": {"pvc_suit", "suit"},
+        "no_pvc_suit": {"no_pvc_suit", "no_suit"},
+        "shoes": {"shoes", "safety_shoes", "boots", "Safety Shoes"},
+        "goggles": {"goggles", "safety_goggles", "glasses", "eye_protection", "Safety Goggles"},
+        "no_safety_shoes": {"no_shoes", "NO_safetyshoes", "no_boots", "no_safety_shoes", "No_SafetyShoes"},
+        "no_goggles": {"no_goggles", "NO_goggles", "no_eye_protection", "no_safety_goggles"},
+        "Safety_Gloves": {"Safety_Gloves", "Gloves"},
+        "No_Gloves": {"No_Gloves", "NO_Gloves", "No_Safety_Gloves"},
+    }
+
+    def canonicalize(name: str) -> str:
+        """Converts a class name to its canonical form using the ALIASES map"""
+        n = name.lower().replace(" ", "_")
+        for canon, synonyms in ALIASES.items():
+            canon_lower = canon.lower()
+            synonyms_lower = {s.lower() for s in synonyms}
+            if n == canon_lower or n in synonyms_lower:
+                return canon
+        return n
+
+    def center_of_box(xyxy):
+        """Calculate center point of bounding box"""
+        x1, y1, x2, y2 = xyxy
+        return (int((x1 + x2) / 2), int((y1 + y2) / 2))
+
+    def inside_bbox(point, bbox):
+        """Check if point is inside bounding box"""
+        px, py = point
+        x1, y1, x2, y2 = bbox
+        return x1 <= px <= x2 and y1 <= py <= y2
+
+    def violation_indicates_missing_ppe(violation_name, required_item):
+        """Check if a violation class name indicates missing required PPE"""
+        violation_lower = violation_name.lower()
+        required_lower = required_item.lower()
+        
+        if violation_name.startswith("no_") or violation_name.startswith("No_") or violation_name.startswith("NO_"):
+            if violation_name.startswith("no_"):
+                base = violation_name[3:]
+            elif violation_name.startswith("No_"):
+                base = violation_name[3:]
+            elif violation_name.startswith("NO_"):
+                base = violation_name[3:]
+            else:
+                base = violation_name
+            
+            if base.lower() == required_lower:
+                return True
+            
+            if violation_name == "No_Gloves" and required_item == "Safety_Gloves":
+                return True
+            if violation_name == "no_gloves" and required_item == "Safety_Gloves":
+                return True
+        
+        if required_lower in violation_lower and ("no" in violation_lower or violation_name.startswith("No") or violation_name.startswith("NO")):
+            return True
+        
+        return False
+
+    if not live_detection_cap or not live_detection_cap.isOpened():
+        print("❌ Live detection camera not opened")
+        return
+
+    frame_count = 0
+    
+    try:
+        while live_detection_stream_running:
+            success, frame = live_detection_cap.read()
+            if not success:
+                print(f"Failed to read frame from camera {live_detection_camera_id}")
+                time.sleep(0.1)
+                continue
+
+            frame_count += 1
+            curr_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+            # Determine required PPE types from selected classes
+            required_ppe = set()
+            detect_classes_names = set()
+            violation_classes_to_show = set()
+
+            if not live_detection_selected_classes or len(live_detection_selected_classes) == 0:
+                # No classes selected: Show ALL violations
+                detect_classes_names.add("person")
+                for idx, name in yolo_model.names.items():
+                    canon_name = canonicalize(name)
+                    if (canon_name.startswith("no_") or canon_name.startswith("No_") or 
+                        canon_name.startswith("NO_")):
+                        detect_classes_names.add(canon_name)
+                        violation_classes_to_show.add(canon_name)
+                    elif canon_name in ["helmet", "safety_vest", "pvc_suit", "shoes", "goggles", "Safety_Gloves"]:
+                        detect_classes_names.add(canon_name)
+            else:
+                # Classes selected: Show only violations for selected classes
+                user_ppe_types = set()
+                for cls_name in live_detection_selected_classes:
+                    canon_name = canonicalize(cls_name)
+                    if canon_name.startswith("no_"):
+                        user_ppe_types.add(canon_name[3:])
+                    else:
+                        user_ppe_types.add(canon_name)
+
+                required_ppe = user_ppe_types
+
+                # Build detection class names
+                for ppe_type in required_ppe:
+                    detect_classes_names.add(ppe_type)
+                    violation_class = f"no_{ppe_type}"
+                    detect_classes_names.add(violation_class)
+                    violation_classes_to_show.add(violation_class)
+                    if ppe_type == "Safety_Gloves":
+                        violation_classes_to_show.add("No_Gloves")
+                        detect_classes_names.add("No_Gloves")
+                detect_classes_names.add("person")
+
+            # Map class names to model indices
+            detect_class_indices = []
+            model_class_map = {canonicalize(name): idx for idx, name in yolo_model.names.items()}
+            for name in detect_classes_names:
+                if name in model_class_map:
+                    detect_class_indices.append(model_class_map[name])
+
+            # Run YOLO detection with selected classes only
+            results = yolo_model.predict(
+                frame,
+                conf=0.3,
+                iou=0.5,
+                classes=detect_class_indices,
+                verbose=False
+            )
+
+            dets = results[0].boxes
+            persons = []
+            ppe_items = []
+
+            # Separate persons and PPE items
+            if dets is not None and len(dets) > 0:
+                for i in range(len(dets)):
+                    xyxy = dets.xyxy[i].cpu().tolist()
+                    cls_id = int(dets.cls[i].cpu().item())
+                    conf = float(dets.conf[i].cpu().item())
+                    class_name = canonicalize(yolo_model.names.get(cls_id, ""))
+
+                    if class_name == "person":
+                        persons.append({"bbox": xyxy, "conf": conf})
+                    else:
+                        if conf >= 0.3:
+                            ppe_items.append({"center": center_of_box(xyxy), "name": class_name, "bbox": xyxy})
+
+            # Create annotated frame
+            annotated_frame = frame.copy()
+
+            # Process each person and check for violations
+            for person_idx, person in enumerate(persons):
+                px1, py1, px2, py2 = [int(coord) for coord in person["bbox"]]
+                person_bbox = [px1, py1, px2, py2]
+
+                # Find PPE items and violations associated with this person
+                owned_items = {item["name"] for item in ppe_items if inside_bbox(item["center"], person_bbox)}
+                
+                # Check which violations this person has
+                person_violations = set()
+                
+                if not live_detection_selected_classes or len(live_detection_selected_classes) == 0:
+                    # No classes selected: Show ALL violations found
+                    for item_name in owned_items:
+                        canon_item = canonicalize(item_name)
+                        if (canon_item.startswith("no_") or canon_item.startswith("No_") or 
+                            canon_item.startswith("NO_")):
+                            person_violations.add(canon_item)
+                else:
+                    # Classes selected: Only show violations for selected classes
+                    for required_item in required_ppe:
+                        violation_found = False
+                        
+                        violation_class = f"no_{required_item}"
+                        if violation_class in owned_items:
+                            person_violations.add(required_item)
+                            violation_found = True
+                        else:
+                            for violation_name in owned_items:
+                                if violation_indicates_missing_ppe(violation_name, required_item):
+                                    person_violations.add(required_item)
+                                    violation_found = True
+                                    break
+                        
+                        if not violation_found:
+                            for item_name in owned_items:
+                                if violation_indicates_missing_ppe(item_name, required_item):
+                                    person_violations.add(required_item)
+                                    break
+
+                # Only show persons with violations
+                if person_violations:
+                    annotated_frame = draw_violation_box(
+                        annotated_frame, 
+                        person["bbox"], 
+                        person_violations, 
+                        person_idx=person_idx + 1,
+                        color=(0, 0, 255)
+                    )
+
+                    # Process violations for face detection and saving
+                    for violation_name in person_violations:
+                        try:
+                            os.makedirs("media/face_detect", exist_ok=True)
+                            cv2.imwrite(f"media/face_detect/output_{live_detection_camera_id}_{curr_datetime}.jpg", annotated_frame)
+                            cv2.imwrite(f"media/face_detect/output_{live_detection_camera_id}.jpg", annotated_frame)
+                            
+                            detectFace(violation_name, email_interval_minutes)
+                        except Exception as face_error:
+                            print(f"Warning: Face detection error at frame {frame_count}: {face_error}")
+
+            # Add camera info overlay
+            camera_config = CAMERA_CONFIG.get(live_detection_camera_id, CAMERA_CONFIG["0"])
+            camera_name = camera_config["name"]
+            info_text = f"Camera: {camera_name} (ID: {live_detection_camera_id}) | Frame: {frame_count}"
+            cv2.putText(annotated_frame, info_text, (10, 30), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+            
+            # Add classes info
+            if live_detection_selected_classes:
+                classes_text = f"Detecting: {', '.join(live_detection_selected_classes)}"
+            else:
+                classes_text = "Detecting: ALL violations"
+            cv2.putText(annotated_frame, classes_text, (10, 60), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
+
+            # Resize for better performance
+            display_frame = cv2.resize(annotated_frame, (1280, 720))
+
+            # Validate frame before encoding
+            if display_frame is None or display_frame.size == 0:
+                continue
+
+            # Encode frame as JPEG
+            success, buffer = cv2.imencode('.jpg', display_frame, [
+                int(cv2.IMWRITE_JPEG_QUALITY), 80])
+            
+            if not success or buffer is None or buffer.size == 0:
+                continue
+                
+            frame_bytes = buffer.tobytes()
+
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+
+            # Small delay to prevent overwhelming the system
+            time.sleep(0.033)  # ~30fps
+
+    except Exception as e:
+        print(f"❌ Error in live detection streaming: {e}")
+        import traceback
+        traceback.print_exc()
+    finally:
+        if live_detection_cap:
+            live_detection_cap.release()
+            live_detection_cap = None
+        print(f"✅ Live detection streaming stopped for camera {live_detection_camera_id}")
+
+
+@camera_dashboard_bp.route('/start_live_detection', methods=['POST'])
+def start_live_detection():
+    """Start live detection streaming for frontend"""
+    global live_detection_stream_running, live_detection_cap, live_detection_camera_id
+    global live_detection_selected_classes
+    
+    if live_detection_stream_running:
+        return jsonify({
+            "status": "error",
+            "message": "Live detection is already running. Stop it first."
+        }), 400
+
+    try:
+        # Check if request has JSON data
+        if not request.is_json:
+            return jsonify({
+                "status": "error",
+                "message": "Request must contain JSON data with Content-Type: application/json"
+            }), 400
+        
+        data = request.get_json(force=True)
+        if data is None:
+            return jsonify({
+                "status": "error",
+                "message": "Invalid or empty JSON data in request body"
+            }), 400
+        
+        camera_id = data.get('camera_id', '0')
+        selected_classes = data.get('classes', [])
+        
+        # Validate camera_id
+        if camera_id not in CAMERA_CONFIG:
+            return jsonify({
+                "status": "error",
+                "message": f"Camera ID {camera_id} not found in configuration"
+            }), 400
+        
+        # Validate and filter classes
+        if not isinstance(selected_classes, list):
+            selected_classes = []
+        selected_classes = [cls for cls in selected_classes if cls and cls.strip()]
+
+        # Get camera configuration
+        camera_config = CAMERA_CONFIG[camera_id]
+        camera_name = camera_config["name"]
+        camera_type = camera_config["type"]
+        camera_url = camera_config["url"]
+
+        # Open camera based on type
+        if camera_type == 'rtsp' and camera_url:
+            print(f"Opening RTSP camera: {camera_url}")
+            cap = cv2.VideoCapture(camera_url)
+        elif camera_type == 'laptop':
+            print(f"Opening laptop camera (index 0)")
+            cap = cv2.VideoCapture(0)
+        else:
+            print(f"Opening camera with index: {camera_id}")
+            cap = cv2.VideoCapture(int(camera_id))
+
+        if not cap.isOpened():
+            return jsonify({
+                "status": "error",
+                "message": f"Could not open camera {camera_name} (ID: {camera_id})"
+            }), 400
+
+        # Update global variables
+        live_detection_camera_id = camera_id
+        live_detection_selected_classes = selected_classes
+        live_detection_cap = cap
+        live_detection_stream_running = True
+
+        print(f"🎥 Starting live detection streaming for: {camera_name} (ID: {camera_id})")
+        print(f"   Selected classes: {selected_classes}")
+
+        return jsonify({
+            "status": "success",
+            "message": f"Live detection started for {camera_name}",
+            "camera_id": camera_id,
+            "camera_name": camera_name,
+            "selected_classes": selected_classes,
+            "feed_url": url_for('camera_dashboard.live_detection_feed')
+        })
+
+    except Exception as e:
+        live_detection_stream_running = False
+        if live_detection_cap:
+            live_detection_cap.release()
+            live_detection_cap = None
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"Error in start_live_detection: {str(e)}")
+        print(f"Traceback: {error_trace}")
+        return jsonify({
+            "status": "error",
+            "message": f"Failed to start live detection: {str(e)}"
+        }), 500
+
+
+@camera_dashboard_bp.route('/live_detection_feed')
+def live_detection_feed():
+    """Route for streaming live detection feed to frontend"""
+    global live_detection_stream_running
+    
+    if not live_detection_stream_running:
+        return jsonify({
+            "status": "error",
+            "message": "Live detection is not running. Start it first."
+        }), 400
+    
+    try:
+        return Response(
+            generate_live_detection_frames(),
+            mimetype='multipart/x-mixed-replace; boundary=frame',
+            headers={
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            }
+        )
+    except Exception as e:
+        print(f"Error in live_detection_feed: {str(e)}")
+        return jsonify({
+            "status": "error",
+            "message": f"Failed to stream live detection: {str(e)}"
+        }), 500
+
+
+@camera_dashboard_bp.route('/stop_live_detection', methods=['POST'])
+def stop_live_detection():
+    """Stop live detection streaming"""
+    global live_detection_stream_running, live_detection_cap, live_detection_camera_id
+    
+    if not live_detection_stream_running:
+        return jsonify({
+            "status": "error",
+            "message": "Live detection is not running"
+        }), 400
+
+    try:
+        live_detection_stream_running = False
+        
+        if live_detection_cap:
+            live_detection_cap.release()
+            live_detection_cap = None
+
+        print(f"✅ Live detection stopped for camera {live_detection_camera_id}")
+
+        return jsonify({
+            "status": "success",
+            "message": "Live detection stopped successfully"
+        })
+
+    except Exception as e:
+        print(f"Error stopping live detection: {str(e)}")
+        return jsonify({
+            "status": "error",
+            "message": f"Failed to stop live detection: {str(e)}"
+        }), 500
+
+
+@camera_dashboard_bp.route('/live_detection_status', methods=['GET'])
+def get_live_detection_status():
+    """Get current live detection status"""
+    global live_detection_stream_running, live_detection_camera_id, live_detection_selected_classes
+    
+    camera_info = None
+    if live_detection_camera_id in CAMERA_CONFIG:
+        camera_config = CAMERA_CONFIG[live_detection_camera_id]
+        camera_info = {
+            "camera_id": live_detection_camera_id,
+            "camera_name": camera_config["name"],
+            "camera_type": camera_config["type"]
+        }
+    
+    return jsonify({
+        "running": live_detection_stream_running,
+        "camera": camera_info,
+        "selected_classes": live_detection_selected_classes
     })

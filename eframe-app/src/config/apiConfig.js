@@ -27,6 +27,12 @@ export const API_CONFIG = {
     SAFETY_DETECTION: `${API_BASE_URL}/api/camera_dashboard/safetydetection`,
     STOP_DETECTION: `${API_BASE_URL}/api/camera_dashboard/stopdetection`,
     
+    // New Live Detection Streaming APIs
+    START_LIVE_DETECTION: `${API_BASE_URL}/api/camera_dashboard/start_live_detection`,
+    LIVE_DETECTION_FEED: `${API_BASE_URL}/api/camera_dashboard/live_detection_feed`,
+    STOP_LIVE_DETECTION: `${API_BASE_URL}/api/camera_dashboard/stop_live_detection`,
+    LIVE_DETECTION_STATUS: `${API_BASE_URL}/api/camera_dashboard/live_detection_status`,
+    
     // File Analysis APIs - General Detection
     DEMO2_UPLOAD: `${API_BASE_URL}/api/camera_dashboard/demo2`,
     VIDEO_FEED2: `${API_BASE_URL}/api/camera_dashboard/video_feed2`,

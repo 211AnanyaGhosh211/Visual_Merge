@@ -28,7 +28,39 @@ const LiveDetection = () => {
   // Load cameras from backend on component mount
   React.useEffect(() => {
     loadCameras();
+    
+    // Check live detection status on mount
+    checkLiveDetectionStatus();
+    
+    // Cleanup: Stop detection when component unmounts
+    return () => {
+      if (liveDetectionActive) {
+        stopLiveDetection();
+      }
+    };
   }, []);
+
+  // Check live detection status
+  const checkLiveDetectionStatus = async () => {
+    try {
+      const response = await fetch(API_CONFIG.CAMERA_DASHBOARD.LIVE_DETECTION_STATUS);
+      const data = await response.json();
+      
+      if (data.running) {
+        setLiveDetectionActive(true);
+        if (data.camera) {
+          setSelectedCamera(data.camera.camera_id);
+        }
+        if (data.selected_classes) {
+          setSelectedClasses(data.selected_classes);
+        }
+        // Set the feed URL
+        setLiveStreamUrl(API_CONFIG.CAMERA_DASHBOARD.LIVE_DETECTION_FEED);
+      }
+    } catch (error) {
+      console.error("Error checking live detection status:", error);
+    }
+  };
 
   // Handle class selection
   const handleClassToggle = (classId) => {
@@ -102,55 +134,69 @@ const LiveDetection = () => {
 
   const startLiveDetection = async () => {
     try {
+      setError('');
+      setLoading(true);
       console.log("Starting detection with camera:", selectedCamera);
+      console.log("Selected classes:", selectedClasses);
       
-      const response = await fetch(API_CONFIG.CAMERA_DASHBOARD.SAFETY_DETECTION, {
+      const response = await fetch(API_CONFIG.CAMERA_DASHBOARD.START_LIVE_DETECTION, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          camera_id: selectedCamera
+          camera_id: selectedCamera,
+          classes: selectedClasses
         })
       });
       
       const data = await response.json();
       console.log("API Response:", data);
       
-      if (data.stream_url) {
-        const fullStreamUrl = API_CONFIG.BASE_URL + data.stream_url;
+      if (data.status === 'success' && data.feed_url) {
+        const fullStreamUrl = API_CONFIG.BASE_URL + data.feed_url;
         console.log("Full Stream URL:", fullStreamUrl);
         
         setLiveStreamUrl(fullStreamUrl);
         setLiveDetectionActive(true);
         showAlert(`Live detection started successfully using ${data.camera_name}`, "success");
       } else {
-        console.error("No stream_url in response:", data);
-        showAlert("No stream URL received from server", "error");
+        console.error("Error in response:", data);
+        setError(data.message || "Failed to start live detection");
+        showAlert(data.message || "Failed to start live detection", "error");
       }
     } catch (error) {
       console.error("Error starting live detection:", error);
+      setError("Error starting live detection: " + error.message);
       showAlert("Error starting live detection: " + error.message, "error");
+    } finally {
+      setLoading(false);
     }
   };
 
   const stopLiveDetection = async () => {
-    
     try {
-      const response = await fetch(API_CONFIG.CAMERA_DASHBOARD.STOP_DETECTION, {
+      setLoading(true);
+      const response = await fetch(API_CONFIG.CAMERA_DASHBOARD.STOP_LIVE_DETECTION, {
         method: 'POST'
       });
       
       const data = await response.json();
+      console.log("Stop detection response:", data);
       
-      if (data.message === "Detection stopped") {
-        
+      if (data.status === 'success') {
         setLiveStreamUrl('');
         setLiveDetectionActive(false);
+        setError('');
         showAlert("Live detection stopped", "info");
+      } else {
+        showAlert(data.message || "Failed to stop detection", "error");
       }
     } catch (error) {
+      console.error("Error stopping live detection:", error);
       showAlert("Error stopping live detection: " + error.message, "error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -311,36 +357,36 @@ const LiveDetection = () => {
         <div className="flex flex-wrap gap-4">
           <button
             onClick={startLiveDetection}
-            disabled={liveDetectionActive}
+            disabled={liveDetectionActive || loading}
             className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium ${
-              liveDetectionActive
+              liveDetectionActive || loading
                 ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed'
                 : 'bg-black text-white hover:bg-black'
             }`}
           >
-            <i className="fas fa-play mr-2"></i>
-            Start Live Detection
+            <i className={`fas fa-play mr-2 ${loading ? 'animate-spin' : ''}`}></i>
+            {loading ? 'Starting...' : 'Start Live Detection'}
           </button>
           <button
             onClick={stopLiveDetection}
-            disabled={!liveDetectionActive}
+            disabled={!liveDetectionActive || loading}
             className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium ${
-              !liveDetectionActive
+              !liveDetectionActive || loading
                 ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed'
                 : 'bg-red-600 text-white hover:bg-red-700'
             }`}
           >
-            <i className="fas fa-stop mr-2"></i>
-            Stop Detection
+            <i className={`fas fa-stop mr-2 ${loading ? 'animate-spin' : ''}`}></i>
+            {loading ? 'Stopping...' : 'Stop Detection'}
           </button>
         </div>
 
-        <div className="mt-6 w-3/4 mx-auto aspect-video bg-neutral-900 rounded-xl flex items-center justify-center">
+        <div className="mt-6 w-full mx-auto aspect-video bg-neutral-900 rounded-xl flex items-center justify-center overflow-hidden">
           {liveDetectionActive && liveStreamUrl ? (
             <div className="w-full h-full relative">
               <img
                 src={liveStreamUrl}
-                alt="Live Stream"
+                alt="Live Detection Stream"
                 className="w-full h-full object-contain rounded-xl"
                 onLoad={() => {
                   console.log("Stream loaded successfully");
@@ -348,7 +394,7 @@ const LiveDetection = () => {
                 }}
                 onError={(e) => {
                   console.error("Stream load error:", e);
-                  setError('Failed to load video stream');
+                  setError('Failed to load video stream. Make sure detection is running.');
                 }}
               />
               {error && (
@@ -365,13 +411,35 @@ const LiveDetection = () => {
             <div className="text-center text-neutral-400">
               <i className="fas fa-video text-4xl mb-4"></i>
               <p>Live stream will appear here</p>
-              <p className="text-sm mt-2">Start detection to begin monitoring</p>
-              {liveDetectionActive && !liveStreamUrl && (
-                <p className="text-yellow-400 text-xs mt-2">Waiting for stream URL...</p>
+              <p className="text-sm mt-2">Select a camera and classes, then start detection</p>
+              {loading && (
+                <p className="text-yellow-400 text-xs mt-2">
+                  <i className="fas fa-spinner fa-spin mr-2"></i>
+                  {liveDetectionActive ? 'Connecting to stream...' : 'Processing...'}
+                </p>
               )}
             </div>
           )}
         </div>
+        
+        {/* Display selected classes info */}
+        {liveDetectionActive && selectedClasses.length > 0 && (
+          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <p className="text-sm text-blue-700 dark:text-blue-300">
+              <i className="fas fa-info-circle mr-2"></i>
+              Detecting: <span className="font-semibold">{selectedClasses.join(', ')}</span>
+            </p>
+          </div>
+        )}
+        
+        {liveDetectionActive && selectedClasses.length === 0 && (
+          <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+            <p className="text-sm text-yellow-700 dark:text-yellow-300">
+              <i className="fas fa-exclamation-triangle mr-2"></i>
+              No classes selected - showing ALL violations
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
